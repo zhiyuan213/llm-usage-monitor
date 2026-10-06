@@ -1,0 +1,11 @@
+{
+  "name": "llm-monitor-dashboard",
+  "scripts": {
+    "dev": "next dev"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "typescript": "latest"
+  }
+}
