@@ -774,6 +774,9 @@ footer nav a {
   min-height: 0;
 }
 .docs-layout aside .eyebrow {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: normal;
   margin: 0 12px 20px;
 }
 .docs-layout aside a {
