@@ -812,11 +812,67 @@ footer nav a {
 }
 .console-shell {
   min-height: 100vh;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.console-shell .btn {
+  min-height: 42px;
+  font-size: 15px;
+  padding: 10px 16px;
+}
+.console-shell input,
+.console-shell select {
+  min-height: 42px;
+  font-size: 16px;
+}
+.console-shell label {
+  font-size: 15px;
+}
+.console-shell :where(.muted, small, code, .mono, .badge) {
+  font-size: 14px;
+}
+.console-shell .muted {
+  color: #61738c;
+}
+.console-shell .panel {
+  min-width: 0;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+.console-shell input[type="checkbox"] {
+  min-height: auto;
+}
+.console-shell table {
+  min-width: 680px;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.console-shell th {
+  color: #586d88;
+}
+.console-shell tbody tr:hover {
+  background: #f8faff;
+}
+.console-shell td {
+  overflow-wrap: anywhere;
+}
+.console-shell td .text-button {
+  min-height: 40px;
+}
+.console-shell .inline-form {
+  max-width: 100%;
+}
+.console-shell .inline-form input {
+  width: 220px;
+  max-width: 100%;
+}
+.console-shell .code-input {
+  font-size: 26px;
 }
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  width: 224px;
+  width: 256px;
   background: var(--navy);
   color: #8ca3c0;
   padding: 27px 15px;
@@ -826,8 +882,8 @@ footer nav a {
 }
 .sidebar .brand {
   color: #fff;
-  font-size: 21px;
-  margin: 0 10px 35px;
+  font-size: 24px;
+  margin: 0 10px 24px;
   gap: 8px;
 }
 .sidebar .brand-icon {
@@ -836,7 +892,7 @@ footer nav a {
   background: #2d70e0;
 }
 .workspace-label {
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: 1.7px;
   margin: 0 14px 12px;
   color: #557291;
@@ -845,13 +901,13 @@ footer nav a {
   display: flex;
   align-items: center;
   gap: 11px;
-  margin: 0 8px 28px;
+  margin: 0 8px 18px;
   padding: 12px 8px;
   background: #ffffff05;
   border: 1px solid #ffffff08;
   border-radius: 6px;
   color: #dbe6f5;
-  font-size: 12px;
+  font-size: 16px;
 }
 .avatar {
   width: 30px;
@@ -862,27 +918,28 @@ footer nav a {
   align-items: center;
   justify-content: center;
   color: #b9d4ff;
-  font-size: 12px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 .workspace-switch small {
   display: block;
   margin-top: 4px;
-  font-size: 10px;
+  font-size: 14px;
   color: #728eae;
 }
 .sidebar nav {
   display: grid;
-  gap: 5px;
+  gap: 4px;
 }
 .sidebar nav a {
   display: flex;
   align-items: center;
   gap: 12px;
   color: #9fb2cc;
-  padding: 12px;
+  padding: 10px 12px;
+  min-height: 44px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: 16px;
   letter-spacing: 0.1px;
 }
 .sidebar nav a:hover {
@@ -895,17 +952,20 @@ footer nav a {
   box-shadow: inset 3px 0 #66a2ff;
 }
 .sidebar nav a svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
   opacity: 0.8;
   stroke-width: 1.6;
 }
 .sidebar-bottom {
   margin-top: auto;
-  padding-top: 35px;
+  padding-top: 20px;
 }
 .usage-label {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 14px;
   margin: 0 13px 10px;
   color: #829ab7;
 }
@@ -926,7 +986,7 @@ footer nav a {
   background: #508bff;
 }
 .sidebar-bottom > small {
-  font-size: 9px;
+  font-size: 13px;
   margin-left: 13px;
   color: #627e9e;
 }
@@ -936,7 +996,7 @@ footer nav a {
   align-items: center;
   margin: 23px 10px;
   color: #93abc7;
-  font-size: 11px;
+  font-size: 16px;
 }
 .sidebar-bottom > a svg:last-child {
   margin-left: auto;
@@ -950,7 +1010,7 @@ footer nav a {
   margin: 0 8px;
 }
 .account-summary > span:nth-child(2) {
-  font-size: 10px;
+  font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -963,10 +1023,11 @@ footer nav a {
   margin-left: auto;
 }
 .console-main {
-  margin-left: 224px;
+  min-width: 0;
+  margin-left: 256px;
 }
 .console-header {
-  height: 70px;
+  height: 72px;
   background: #fff;
   border-bottom: 1px solid var(--line);
   padding: 0 32px;
@@ -979,13 +1040,13 @@ footer nav a {
   gap: 12px;
   align-items: center;
   color: #98a5b7;
-  font-size: 12px;
+  font-size: 16px;
 }
 .breadcrumb span {
   color: #4a607c;
 }
 .header-status {
-  font-size: 10px;
+  font-size: 14px;
   color: #8b9bb0;
   margin-right: 115px;
   display: flex;
@@ -993,8 +1054,9 @@ footer nav a {
   gap: 9px;
 }
 .console-content {
-  padding: 32px;
-  max-width: 1600px;
+  width: 100%;
+  padding: 32px clamp(24px, 2vw, 48px);
+  max-width: 2400px;
   margin: auto;
 }
 .page-heading {
@@ -1005,18 +1067,18 @@ footer nav a {
   margin-bottom: 30px;
 }
 .page-heading h1 {
-  font-size: 28px;
+  font-size: 34px;
   margin: 0 0 10px;
   color: #152b47;
   letter-spacing: -0.8px;
 }
 .page-heading p {
-  font-size: 12px;
+  font-size: 16px;
   margin: 0;
-  color: #8a99ad;
+  color: #61738c;
 }
 .page-heading .eyebrow {
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 1.8px;
   margin-bottom: 10px;
 }
@@ -1026,7 +1088,7 @@ footer nav a {
   gap: 10px;
 }
 .toolbar select {
-  font-size: 12px;
+  font-size: 16px;
   min-width: 150px;
   max-width: 250px;
 }
@@ -1040,7 +1102,7 @@ footer nav a {
   margin: 0;
 }
 .count {
-  font-size: 12px;
+  font-size: 16px;
   background: #e8eef7;
   padding: 4px 7px;
   margin-left: 10px;
@@ -1052,11 +1114,11 @@ footer nav a {
   align-items: center;
   gap: 10px;
   margin-bottom: 20px;
-  font-size: 12px;
+  font-size: 16px;
 }
 .project-caption > .muted {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 14px;
 }
 .project-symbol {
   padding: 6px;
@@ -1080,22 +1142,22 @@ footer nav a {
   align-items: center;
   justify-content: space-between;
   color: #74849b;
-  font-size: 11px;
+  font-size: 16px;
 }
 .metric svg {
   color: #699ce8;
 }
 .metric strong {
   display: block;
-  font-size: 27px;
+  font-size: 34px;
   letter-spacing: -0.8px;
   margin: 15px 0 9px;
   overflow-wrap: anywhere;
   font-weight: 650;
 }
 .metric small {
-  font-size: 10px;
-  color: #92a0b2;
+  font-size: 14px;
+  color: #64748b;
 }
 .chart-grid {
   display: grid;
@@ -1103,24 +1165,24 @@ footer nav a {
   gap: 20px;
 }
 .panel-heading {
-  padding: 20px 22px;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 15px;
 }
 .panel-heading h2 {
-  font-size: 13px;
+  font-size: 18px;
   letter-spacing: 0;
   margin: 0;
   font-weight: 600;
 }
 .panel-heading > a {
-  font-size: 11px;
+  font-size: 16px;
 }
 .legend {
-  font-size: 9px;
-  color: #8594a9;
+  font-size: 13px;
+  color: #64748b;
   display: flex;
   gap: 7px;
   align-items: center;
@@ -1163,11 +1225,11 @@ footer nav a {
   border-radius: 4px 4px 0 0;
 }
 .chart-column small {
-  font-size: 8px;
+  font-size: 12px;
   white-space: nowrap;
 }
 .chart-column > span {
-  font-size: 9px;
+  font-size: 13px;
   color: #83a0c3;
 }
 .chart-empty {
@@ -1182,12 +1244,12 @@ footer nav a {
   text-align: center;
 }
 .chart-empty span {
-  font-size: 11px;
+  font-size: 16px;
   color: #94a5b9;
   line-height: 1.7;
 }
 .chart-empty a {
-  font-size: 11px;
+  font-size: 16px;
 }
 .model-list {
   padding: 0 22px 20px;
@@ -1198,7 +1260,7 @@ footer nav a {
   gap: 10px;
   padding: 14px 0;
   border-bottom: 1px solid #f0f4f8;
-  font-size: 11px;
+  font-size: 16px;
 }
 .model-dot {
   width: 7px;
@@ -1208,11 +1270,11 @@ footer nav a {
 .model-list b {
   margin-left: auto;
   font-weight: 500;
-  font-size: 12px;
+  font-size: 16px;
 }
 .model-list small {
   display: block;
-  font-size: 9px;
+  font-size: 13px;
   margin-top: 5px;
 }
 .table-wrap {
@@ -1222,7 +1284,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 11px;
+  font-size: 16px;
 }
 thead {
   background: #f8fafc;
@@ -1230,7 +1292,7 @@ thead {
 th {
   padding: 12px 20px;
   font-weight: 500;
-  color: #8191a7;
+  color: #64748b;
   border-top: 1px solid #eff3f8;
   border-bottom: 1px solid #eff3f8;
   white-space: nowrap;
@@ -1248,7 +1310,7 @@ td strong {
 td small {
   display: block;
   margin-top: 5px;
-  font-size: 10px;
+  font-size: 14px;
 }
 tbody tr:last-child td {
   border-bottom: 0;
@@ -1257,7 +1319,7 @@ tbody tr:last-child td {
   text-align: center;
   color: #99a8bb;
   padding: 40px 20px !important;
-  font-size: 12px;
+  font-size: 16px;
 }
 .empty-cell a {
   margin-left: 8px;
@@ -1274,10 +1336,10 @@ tbody tr:last-child td {
   margin-bottom: 25px;
 }
 .empty h2 {
-  font-size: 22px;
+  font-size: 26px;
 }
 .empty p {
-  font-size: 13px;
+  font-size: 18px;
   max-width: 450px;
 }
 .project-grid {
@@ -1297,14 +1359,14 @@ tbody tr:last-child td {
   margin-bottom: 20px;
 }
 .project-card h3 {
-  font-size: 17px;
+  font-size: 20px;
 }
 .project-card p {
   margin: 20px 0 7px;
-  font-size: 12px;
+  font-size: 16px;
 }
 .project-card small {
-  font-size: 10px;
+  font-size: 14px;
 }
 .project-card:hover {
   border-color: #8ab4f3;
@@ -1318,7 +1380,7 @@ tbody tr:last-child td {
 }
 .filters input,
 .filters select {
-  font-size: 12px;
+  font-size: 16px;
 }
 .search-field {
   display: flex;
@@ -1337,7 +1399,7 @@ tbody tr:last-child td {
 }
 .filters .muted {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 14px;
 }
 .pagination {
   display: flex;
@@ -1346,13 +1408,13 @@ tbody tr:last-child td {
   gap: 12px;
   padding: 17px;
   border-top: 1px solid var(--line);
-  font-size: 12px;
+  font-size: 16px;
 }
 .back-link {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 16px;
   margin: 0 0 18px;
 }
 .trace-title {
@@ -1371,8 +1433,8 @@ tbody tr:last-child td {
   margin-left: auto;
 }
 .trace-title code {
-  font-size: 11px;
-  color: #8da0ba;
+  font-size: 16px;
+  color: #64748b;
 }
 .waterfall {
   display: flex;
@@ -1380,7 +1442,7 @@ tbody tr:last-child td {
   gap: 15px;
   padding: 17px 23px;
   border-top: 1px solid #f1f4f8;
-  font-size: 11px;
+  font-size: 16px;
 }
 .step-number {
   display: flex;
@@ -1403,7 +1465,7 @@ tbody tr:last-child td {
 .waterfall small {
   display: block;
   margin-top: 5px;
-  font-size: 9px;
+  font-size: 13px;
 }
 .waterfall-track {
   flex: 1;
@@ -1420,8 +1482,8 @@ tbody tr:last-child td {
 .waterfall > span:last-child {
   width: 70px;
   text-align: right;
-  font-size: 10px;
-  color: #8a9eb5;
+  font-size: 14px;
+  color: #64748b;
 }
 .detail-card {
   padding-bottom: 15px;
@@ -1430,11 +1492,11 @@ dl {
   display: grid;
   grid-template-columns: 180px 1fr;
   gap: 15px 25px;
-  font-size: 12px;
+  font-size: 16px;
   padding: 10px 23px;
 }
 dt {
-  color: #8d9db2;
+  color: #64748b;
 }
 dd {
   margin: 0;
@@ -1453,7 +1515,7 @@ dd {
   border-bottom: 2px solid transparent;
   padding: 14px 0;
   color: #8091a9;
-  font-size: 12px;
+  font-size: 16px;
 }
 .tabs button.active {
   border-color: #0052d9;
@@ -1463,7 +1525,7 @@ dd {
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 25px;
+  padding: 20px 24px;
 }
 .integration-banner > svg {
   box-sizing: content-box;
@@ -1473,11 +1535,11 @@ dd {
   border-radius: 10px;
 }
 .integration-banner h2 {
-  font-size: 16px;
+  font-size: 20px;
   margin-bottom: 8px;
 }
 .integration-banner p {
-  font-size: 11px;
+  font-size: 16px;
   margin: 0;
 }
 .integration-banner .btn {
@@ -1490,13 +1552,13 @@ dd {
   flex-wrap: wrap;
 }
 .inline-form input {
-  font-size: 12px;
+  font-size: 16px;
 }
 .panel-foot {
   border-top: 1px solid var(--line);
   padding: 15px 22px;
-  font-size: 10px;
-  color: #8f9fb5;
+  font-size: 14px;
+  color: #64748b;
   line-height: 1.7;
 }
 .key-reveal {
@@ -1513,16 +1575,16 @@ dd {
 }
 .danger-text {
   color: #ca5b60;
-  font-size: 11px;
+  font-size: 16px;
 }
 .form-panel {
   padding: 26px;
 }
 .form-panel h2 {
-  font-size: 16px;
+  font-size: 20px;
 }
 .form-panel p {
-  font-size: 12px;
+  font-size: 16px;
 }
 .form-grid {
   display: grid;
@@ -1535,7 +1597,7 @@ dd {
   align-self: end;
 }
 .form-grid label {
-  font-size: 11px;
+  font-size: 16px;
 }
 .billing-usage {
   display: flex;
@@ -1544,10 +1606,10 @@ dd {
   align-items: center;
 }
 .billing-usage strong {
-  font-size: 28px;
+  font-size: 34px;
 }
 .billing-usage span {
-  font-size: 12px;
+  font-size: 16px;
 }
 .billing-usage small {
   font-weight: 400;
@@ -1568,8 +1630,8 @@ dd {
 }
 .console-footer {
   text-align: center;
-  font-size: 9px;
-  color: #9daec2;
+  font-size: 13px;
+  color: #64748b;
   margin: 35px 0 5px;
 }
 .console-footer span {
@@ -1602,7 +1664,7 @@ dd {
   margin: 18px 0 12px;
 }
 .modal p {
-  font-size: 12px;
+  font-size: 16px;
 }
 .modal-close {
   position: absolute;
@@ -1623,10 +1685,10 @@ dd {
 .modal form > .text-button {
   display: block;
   margin: 10px auto 0;
-  font-size: 12px;
+  font-size: 16px;
 }
 .modal form > small {
-  font-size: 10px;
+  font-size: 14px;
 }
 .verification-target {
   background: #f7f9fc;
@@ -1635,12 +1697,12 @@ dd {
   overflow-wrap: anywhere;
 }
 .verification-target code {
-  font-size: 11px;
+  font-size: 16px;
 }
 .verification-target small {
   display: block;
   margin-top: 7px;
-  font-size: 9px;
+  font-size: 13px;
 }
 .code-input {
   font-size: 25px;
@@ -2042,4 +2104,99 @@ dd {
 }
 .sidebar {
   overflow-y: auto;
+}
+
+.console-language select {
+  font-size: 14px;
+}
+
+/* Keep enlarged desktop text readable without forcing a wide page on laptops or phones. */
+@media (max-width: 1100px) {
+  .console-shell .panel-heading {
+    flex-wrap: wrap;
+  }
+  .console-shell .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .console-shell .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .console-shell {
+    font-size: 15px;
+  }
+  .console-shell .page-heading {
+    flex-wrap: wrap;
+  }
+  .console-shell table {
+    font-size: 14px;
+  }
+  .console-shell td,
+  .console-shell th {
+    padding: 13px 16px;
+  }
+  .console-shell td small {
+    font-size: 12px;
+  }
+  .console-shell .console-header {
+    height: 64px;
+  }
+  .console-shell .header-status {
+    display: none;
+  }
+  .console-shell .breadcrumb {
+    font-size: 13px;
+  }
+  .console-shell .page-heading h1 {
+    font-size: 28px;
+  }
+  .console-shell .page-heading p {
+    font-size: 14px;
+  }
+  .console-shell .panel-heading h2 {
+    font-size: 17px;
+  }
+  .console-shell .toolbar > .btn {
+    font-size: 0;
+    min-width: 42px;
+  }
+  .console-shell .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .console-shell .filters {
+    align-items: stretch;
+  }
+  .console-shell .filters .search-field {
+    min-width: 0;
+    flex-basis: 100%;
+  }
+  .console-shell .trace-title {
+    flex-wrap: wrap;
+  }
+  .console-shell .waterfall {
+    flex-wrap: wrap;
+    font-size: 14px;
+  }
+  .console-shell .waterfall-track {
+    min-width: 60px;
+  }
+  .console-shell .metric > div,
+  .console-shell .metric small {
+    font-size: 12px;
+  }
+  .console-shell .panel-foot {
+    font-size: 13px;
+  }
+  .console-shell dl {
+    grid-template-columns: minmax(75px, 100px) minmax(0, 1fr);
+    font-size: 14px;
+  }
+  .console-shell .integration-banner h2 {
+    font-size: 18px;
+  }
+  .console-shell .integration-banner p {
+    font-size: 14px;
+  }
 }

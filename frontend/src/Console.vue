@@ -876,36 +876,38 @@ const usagePercent = computed(() =>
             </button>
           </div>
           <section class="panel table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>{{ t("Identifier", "标识") }}</th>
-                  <th>{{ t("Objects", "对象数") }}</th>
-                  <th>{{ t("Known tokens", "已知 Token") }}</th>
-                  <th>{{ t("Estimated cost", "估算成本") }}</th>
-                  <th>{{ t("Unknown costs", "未知成本调用") }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="r in Array.isArray(data) ? data : []">
-                  <td>{{ r.dimension || t("Not provided", "未提供") }}</td>
-                  <td>{{ n(r.objects) }}</td>
-                  <td>{{ n(r.tokens) }}</td>
-                  <td>{{ money(r.cost) }}</td>
-                  <td>{{ n(r.unknown_costs) }}</td>
-                </tr>
-                <tr v-if="!data.length">
-                  <td colspan="5" class="empty-cell">
-                    {{
-                      t(
-                        "Submit userId, customerId, or feature with your events to explore usage.",
-                        "在事件中提交 userId、customerId 或 feature 后即可分析用量。",
-                      )
-                    }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{{ t("Identifier", "标识") }}</th>
+                    <th>{{ t("Objects", "对象数") }}</th>
+                    <th>{{ t("Known tokens", "已知 Token") }}</th>
+                    <th>{{ t("Estimated cost", "估算成本") }}</th>
+                    <th>{{ t("Unknown costs", "未知成本调用") }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in Array.isArray(data) ? data : []">
+                    <td>{{ r.dimension || t("Not provided", "未提供") }}</td>
+                    <td>{{ n(r.objects) }}</td>
+                    <td>{{ n(r.tokens) }}</td>
+                    <td>{{ money(r.cost) }}</td>
+                    <td>{{ n(r.unknown_costs) }}</td>
+                  </tr>
+                  <tr v-if="!data.length">
+                    <td colspan="5" class="empty-cell">
+                      {{
+                        t(
+                          "Submit userId, customerId, or feature with your events to explore usage.",
+                          "在事件中提交 userId、customerId 或 feature 后即可分析用量。",
+                        )
+                      }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </section></template
         >
         <template v-if="page === 'keys' && selected"
@@ -1065,42 +1067,44 @@ const usagePercent = computed(() =>
             </form>
           </section>
           <section class="panel table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>{{ t("Rule", "规则") }}</th>
-                  <th>{{ t("Metric", "指标") }}</th>
-                  <th>{{ t("Threshold", "阈值") }}</th>
-                  <th>{{ t("Last triggered", "最近触发") }}</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="r in data.rules || []">
-                  <td>{{ r.name }}</td>
-                  <td>{{ r.metric }}</td>
-                  <td>{{ r.threshold }}</td>
-                  <td>{{ date(r.last_triggered_at) }}</td>
-                  <td>
-                    <button
-                      class="btn"
-                      @click="
-                        run(async () => {
-                          await api(path('/alerts/' + r.id), {
-                            enabled: !r.enabled,
-                          });
-                          await refresh();
-                        })
-                      "
-                    >
-                      {{
-                        r.enabled ? t("Disable", "停用") : t("Enable", "启用")
-                      }}
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{{ t("Rule", "规则") }}</th>
+                    <th>{{ t("Metric", "指标") }}</th>
+                    <th>{{ t("Threshold", "阈值") }}</th>
+                    <th>{{ t("Last triggered", "最近触发") }}</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in data.rules || []">
+                    <td>{{ r.name }}</td>
+                    <td>{{ r.metric }}</td>
+                    <td>{{ r.threshold }}</td>
+                    <td>{{ date(r.last_triggered_at) }}</td>
+                    <td>
+                      <button
+                        class="btn"
+                        @click="
+                          run(async () => {
+                            await api(path('/alerts/' + r.id), {
+                              enabled: !r.enabled,
+                            });
+                            await refresh();
+                          })
+                        "
+                      >
+                        {{
+                          r.enabled ? t("Disable", "停用") : t("Enable", "启用")
+                        }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <p v-if="!data.rules?.length" class="empty-cell">
               {{ t("No rules configured.", "尚未配置规则。") }}
             </p>
@@ -1109,20 +1113,22 @@ const usagePercent = computed(() =>
             <div class="panel-heading">
               <h2>{{ t("Recent notifications", "最近告警") }}</h2>
             </div>
-            <table>
-              <tbody>
-                <tr v-for="e in data.events || []">
-                  <td>{{ e.name }}</td>
-                  <td>{{ e.value }}</td>
-                  <td>{{ date(e.created_at) }}</td>
-                </tr>
-                <tr v-if="!data.events?.length">
-                  <td class="empty-cell">
-                    {{ t("No alerts triggered.", "暂无触发记录。") }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-wrap">
+              <table>
+                <tbody>
+                  <tr v-for="e in data.events || []">
+                    <td>{{ e.name }}</td>
+                    <td>{{ e.value }}</td>
+                    <td>{{ date(e.created_at) }}</td>
+                  </tr>
+                  <tr v-if="!data.events?.length">
+                    <td class="empty-cell">
+                      {{ t("No alerts triggered.", "暂无触发记录。") }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </section></template
         >
         <template v-if="page === 'billing'"
@@ -1235,21 +1241,23 @@ const usagePercent = computed(() =>
             <div class="panel-heading">
               <h2>{{ t("Billing history", "账单记录") }}</h2>
             </div>
-            <table>
-              <tbody>
-                <tr v-for="p in data.payments || []">
-                  <td>{{ p.id }}</td>
-                  <td>{{ p.status }}</td>
-                  <td>{{ p.amount }} {{ p.currency }}</td>
-                  <td>{{ date(p.created_at) }}</td>
-                </tr>
-                <tr v-if="!data.payments?.length">
-                  <td class="empty-cell">
-                    {{ t("No payments recorded.", "暂无支付记录。") }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-wrap">
+              <table>
+                <tbody>
+                  <tr v-for="p in data.payments || []">
+                    <td>{{ p.id }}</td>
+                    <td>{{ p.status }}</td>
+                    <td>{{ p.amount }} {{ p.currency }}</td>
+                    <td>{{ date(p.created_at) }}</td>
+                  </tr>
+                  <tr v-if="!data.payments?.length">
+                    <td class="empty-cell">
+                      {{ t("No payments recorded.", "暂无支付记录。") }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </section></template
         >
         <template v-if="page === 'settings' && selected"
@@ -1323,36 +1331,38 @@ const usagePercent = computed(() =>
             </form>
           </section>
           <section class="panel table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Provider / model</th>
-                  <th>{{ t("Input", "输入") }}</th>
-                  <th>{{ t("Output", "输出") }}</th>
-                  <th>{{ t("Cached", "缓存") }}</th>
-                  <th>{{ t("Effective (UTC)", "生效时间 (UTC)") }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="p in Array.isArray(data) ? data : []">
-                  <td>{{ p.provider }} / {{ p.model }}</td>
-                  <td>{{ money(p.input_rate) }}</td>
-                  <td>{{ money(p.output_rate) }}</td>
-                  <td>{{ money(p.cached_rate) }}</td>
-                  <td>{{ date(p.effective_at) }}</td>
-                </tr>
-                <tr v-if="!data.length">
-                  <td colspan="5" class="empty-cell">
-                    {{
-                      t(
-                        "No price versions. Model costs will be shown as unknown.",
-                        "未配置价格版本，模型成本将显示为未知。",
-                      )
-                    }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Provider / model</th>
+                    <th>{{ t("Input", "输入") }}</th>
+                    <th>{{ t("Output", "输出") }}</th>
+                    <th>{{ t("Cached", "缓存") }}</th>
+                    <th>{{ t("Effective (UTC)", "生效时间 (UTC)") }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="p in Array.isArray(data) ? data : []">
+                    <td>{{ p.provider }} / {{ p.model }}</td>
+                    <td>{{ money(p.input_rate) }}</td>
+                    <td>{{ money(p.output_rate) }}</td>
+                    <td>{{ money(p.cached_rate) }}</td>
+                    <td>{{ date(p.effective_at) }}</td>
+                  </tr>
+                  <tr v-if="!data.length">
+                    <td colspan="5" class="empty-cell">
+                      {{
+                        t(
+                          "No price versions. Model costs will be shown as unknown.",
+                          "未配置价格版本，模型成本将显示为未知。",
+                        )
+                      }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </section>
           <section class="panel form-panel danger-zone">
             <h2>{{ t("Delete project", "删除项目") }}</h2>
@@ -1461,40 +1471,42 @@ const usagePercent = computed(() =>
         <AccountSecurity v-if="page === 'account'" />
         <template v-if="page === 'audit'"
           ><section class="panel table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>{{ t("Time (UTC)", "时间 (UTC)") }}</th>
-                  <th>{{ t("Action", "操作") }}</th>
-                  <th>{{ t("Target", "目标") }}</th>
-                  <th>{{ t("Result", "结果") }}</th>
-                  <th>IP</th>
-                  <th>{{ t("Request ID", "请求 ID") }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="a in Array.isArray(data) ? data : []">
-                  <td>{{ date(a.created_at) }}</td>
-                  <td>{{ a.action }}</td>
-                  <td class="mono">{{ a.target }}</td>
-                  <td>
-                    <span
-                      :class="['badge', a.success ? 'success' : 'danger']"
-                      >{{
-                        a.success ? t("Success", "成功") : t("Failed", "失败")
-                      }}</span
-                    >
-                  </td>
-                  <td>{{ a.ip || "—" }}</td>
-                  <td class="mono">{{ a.request_id || "—" }}</td>
-                </tr>
-                <tr v-if="!data.length">
-                  <td colspan="6" class="empty-cell">
-                    {{ t("No audit events.", "暂无审计记录。") }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{{ t("Time (UTC)", "时间 (UTC)") }}</th>
+                    <th>{{ t("Action", "操作") }}</th>
+                    <th>{{ t("Target", "目标") }}</th>
+                    <th>{{ t("Result", "结果") }}</th>
+                    <th>IP</th>
+                    <th>{{ t("Request ID", "请求 ID") }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="a in Array.isArray(data) ? data : []">
+                    <td>{{ date(a.created_at) }}</td>
+                    <td>{{ a.action }}</td>
+                    <td class="mono">{{ a.target }}</td>
+                    <td>
+                      <span
+                        :class="['badge', a.success ? 'success' : 'danger']"
+                        >{{
+                          a.success ? t("Success", "成功") : t("Failed", "失败")
+                        }}</span
+                      >
+                    </td>
+                    <td>{{ a.ip || "—" }}</td>
+                    <td class="mono">{{ a.request_id || "—" }}</td>
+                  </tr>
+                  <tr v-if="!data.length">
+                    <td colspan="6" class="empty-cell">
+                      {{ t("No audit events.", "暂无审计记录。") }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </section></template
         >
         <div class="console-footer">
