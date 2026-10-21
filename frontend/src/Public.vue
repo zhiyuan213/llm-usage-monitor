@@ -181,14 +181,17 @@ async function copy() {
           </p>
           <div class="hero-buttons">
             <RouterLink
+              v-if="sessionChecked"
               :to="session ? '/app/overview' : '/register'"
-              class="btn primary large"
+              class="btn primary large auth-cta"
               >{{
                 session
                   ? t("Open console", "进入控制台")
                   : t("Start building for free", "免费开始接入")
-              }}<ArrowRight :size="17" /></RouterLink
-            ><RouterLink to="/docs" class="btn large">{{
+              }}<ArrowRight :size="17"
+            /></RouterLink>
+            <span v-else class="auth-cta-placeholder" aria-hidden="true"></span>
+            <RouterLink to="/docs" class="btn large">{{
               t("Read the docs", "阅读接入文档")
             }}</RouterLink>
           </div>
@@ -323,7 +326,8 @@ async function copy() {
           </h2>
         </div>
         <RouterLink
-          class="btn primary large"
+          v-if="sessionChecked"
+          class="btn primary large auth-cta"
           :to="session ? '/app/workspace' : '/register'"
           >{{
             session
@@ -331,6 +335,7 @@ async function copy() {
               : t("Create your workspace", "创建工作空间")
           }}<ArrowRight :size="18"
         /></RouterLink>
+        <span v-else class="auth-cta-placeholder" aria-hidden="true"></span>
       </section>
     </main>
     <main v-else-if="page === 'pricing'" class="public-content">
