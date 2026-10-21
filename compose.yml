@@ -1,0 +1,85 @@
+name: metertrail
+x-app: &app
+  image: ${METERTRAIL_IMAGE:-metertrail-api:local}
+  build: ./backend
+  environment: &app-env
+    APP_SECRET: ${APP_SECRET:?Set APP_SECRET in .env}
+    DATABASE_URL: jdbc:postgresql://postgres:5432/metertrail
+    DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in .env}
+    REDIS_HOST: redis
+    SMTP_HOST: ${SMTP_HOST:-mailpit}
+    SMTP_PORT: ${SMTP_PORT:-1025}
+    SMTP_USERNAME: ${SMTP_USERNAME:-}
+    SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    SMTP_AUTH: ${SMTP_AUTH:-false}
+    SMTP_TLS: ${SMTP_TLS:-false}
+    MAIL_FROM: ${MAIL_FROM:-noreply@metertrail.local}
+    SECURE_COOKIES: ${SECURE_COOKIES:-true}
+    PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8088}
+    GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+    GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+    PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET:-}
+    PADDLE_API_KEY: ${PADDLE_API_KEY:-}
+    PADDLE_CORE_PRICE: ${PADDLE_CORE_PRICE:-}
+    PADDLE_PRO_PRICE: ${PADDLE_PRO_PRICE:-}
+    PADDLE_API_URL: ${PADDLE_API_URL:-https://sandbox-api.paddle.com}
+    WORKER_ENABLED: 'false'
+  depends_on:
+    postgres: {condition: service_healthy}
+    redis: {condition: service_healthy}
+  restart: unless-stopped
+  stop_grace_period: 45s
+  mem_limit: 768m
+  cpus: 1.5
+  healthcheck:
+    test: [CMD, wget, -q, --spider, http://localhost:9090/actuator/health/readiness]
+    interval: 10s
+    timeout: 5s
+    retries: 12
+    start_period: 45s
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: metertrail
+      POSTGRES_USER: metertrail
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD}
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U metertrail]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+    mem_limit: 1g
+  redis:
+    image: redis:7-alpine
+    command: [redis-server, --maxmemory, 128mb, --maxmemory-policy, noeviction]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      retries: 10
+    mem_limit: 192m
+    restart: unless-stopped
+  api-blue: *app
+  api-green:
+    <<: *app
+    profiles: [release]
+  worker:
+    <<: *app
+    environment:
+      <<: *app-env
+      WORKER_ENABLED: 'true'
+  web:
+    build: ./frontend
+    ports: ["127.0.0.1:8088:8080"]
+    volumes: [./ops/nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro]
+    depends_on:
+      api-blue: {condition: service_healthy}
+    restart: unless-stopped
+    mem_limit: 128m
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports: ["127.0.0.1:8025:8025"]
+    mem_limit: 128m
+volumes:
+  postgres-data:

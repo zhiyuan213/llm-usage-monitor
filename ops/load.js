@@ -1,0 +1,5 @@
+import http from 'k6/http';import {check} from 'k6';
+const batchSize=Number(__ENV.BATCH_SIZE||50),eps=Number(__ENV.EPS||1000);
+export const options={scenarios:{ingest:{executor:'constant-arrival-rate',rate:Math.max(1,Math.floor(eps/batchSize)),timeUnit:'1s',duration:__ENV.DURATION||'30m',preAllocatedVUs:20,maxVUs:200}},thresholds:{http_req_duration:['p(95)<300'],http_req_failed:['rate<0.01']}};
+function uuid(){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{let r=Math.floor(Math.random()*16);return(c==='x'?r:(r&3)|8).toString(16)})}
+export default function(){const events=Array.from({length:batchSize},()=>({eventId:uuid(),objectId:uuid(),type:'trace',revision:1,traceId:uuid().replaceAll('-',''),startedAt:new Date().toISOString(),data:{name:'load-test',status:'success',durationMs:100}}));const response=http.post(__ENV.METERTRAIL_ENDPOINT+'/v1/events/batch',JSON.stringify({schemaVersion:'1.0',agent:{serviceName:'k6',environment:'load-test',instanceId:String(__VU)},events}),{headers:{Authorization:'Bearer '+__ENV.METERTRAIL_API_KEY,'Content-Type':'application/json'}});check(response,{'durably accepted':r=>r.status===202})}

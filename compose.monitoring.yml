@@ -1,0 +1,37 @@
+services:
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    volumes: [./ops/prometheus:/etc/prometheus:ro, prometheus-data:/prometheus]
+    command: ['--config.file=/etc/prometheus/prometheus.yml', '--storage.tsdb.retention.time=15d']
+    mem_limit: 512m
+    restart: unless-stopped
+  grafana:
+    image: grafana/grafana:12.2.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?Set GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+    volumes: [grafana-data:/var/lib/grafana, ./ops/grafana/provisioning:/etc/grafana/provisioning:ro, ./ops/grafana/dashboards:/var/lib/grafana/dashboards:ro]
+    ports: ['127.0.0.1:3001:3000']
+    mem_limit: 256m
+    restart: unless-stopped
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    volumes: [./ops/alertmanager/config.yml:/etc/alertmanager/alertmanager.yml:ro]
+    mem_limit: 128m
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    command: ['--path.rootfs=/host']
+    volumes: ['/:/host:ro,rslave']
+    mem_limit: 64m
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.52.1
+    volumes: ['/:/rootfs:ro', '/var/run:/var/run:ro', '/sys:/sys:ro', '/var/lib/docker:/var/lib/docker:ro']
+    mem_limit: 256m
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    environment:
+      DATA_SOURCE_NAME: postgresql://metertrail:${DATABASE_PASSWORD}@postgres:5432/metertrail?sslmode=disable
+    mem_limit: 128m
+volumes:
+  prometheus-data:
+  grafana-data:

@@ -1,0 +1,3 @@
+export interface Event { eventId?:string; type:'trace'|'observation'|'score'; objectId:string; revision?:number; startedAt?:string; traceId?:string; spanId?:string; parentSpanId?:string|null; data:Record<string,unknown> }
+export interface Options {apiKey?:string;endpoint?:string;serviceName:string;environment?:string;onResult?:(result:unknown)=>void;onError?:(error:unknown)=>void;intervalMs?:number;maxRetries?:number;fetch?:typeof fetch}
+export class MeterTrail {constructor(options:Options);paused:string|null;record(event:Event):boolean;flush():Promise<void>;resume():Promise<void>;checkQuota():Promise<unknown>;close(timeoutMs?:number):Promise<{remaining:number;pendingBatch?:string;paused:string|null}>}

@@ -1,0 +1,17 @@
+.local/
+.env
+**/node_modules/
+**/dist/
+**/target/
+**/__pycache__/
+*.log
+.idea/
+.DS_Store
+backups/
+playwright-report/
+test-results/
+*.class
+**/bin/
+**/obj/
+*.tsbuildinfo
+examples/batch.json

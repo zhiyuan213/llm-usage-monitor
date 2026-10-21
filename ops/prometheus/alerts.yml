@@ -1,0 +1,36 @@
+groups:
+  - name: metertrail
+    rules:
+      - alert: APIUnavailable
+        expr: up{job="metertrail"} == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations: {summary: 'MeterTrail target is unreachable'}
+      - alert: HighErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count[5m])), 1) > 0.01
+        for: 5m
+        labels: {severity: critical}
+      - alert: SlowIngestion
+        expr: histogram_quantile(0.95, sum by(le) (rate(http_server_requests_seconds_bucket{uri="/v1/events/batch"}[5m]))) > 0.3
+        for: 10m
+        labels: {severity: warning}
+      - alert: IngestBacklog
+        expr: metertrail_oldest_pending_seconds > 60
+        for: 10m
+        labels: {severity: warning}
+      - alert: LedgerMismatch
+        expr: metertrail_ledger_difference != 0
+        for: 1m
+        labels: {severity: critical}
+      - alert: QuarantinedBatch
+        expr: metertrail_quarantined_batches > 0
+        for: 1m
+        labels: {severity: critical}
+      - alert: LowDiskSpace
+        expr: 1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"} > 0.85
+        for: 5m
+        labels: {severity: critical}
+      - alert: LowMemory
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.15
+        for: 10m
+        labels: {severity: warning}

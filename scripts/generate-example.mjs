@@ -1,0 +1,2 @@
+import {writeFileSync} from 'node:fs';import {randomUUID,randomBytes} from 'node:crypto';
+writeFileSync(new URL('../examples/batch.json',import.meta.url),JSON.stringify({schemaVersion:'1.0',agent:{serviceName:'rest-example',environment:'development',instanceId:randomUUID()},events:[{eventId:randomUUID(),type:'trace',objectId:randomUUID(),revision:1,traceId:randomBytes(16).toString('hex'),startedAt:new Date().toISOString(),data:{name:'Example request',status:'success',durationMs:120}}]},null,2)+'\n');

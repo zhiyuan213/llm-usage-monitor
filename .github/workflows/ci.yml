@@ -1,0 +1,76 @@
+name: Verify MeterTrail
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17', cache: maven}
+      - run: mvn -B -f backend/pom.xml verify
+      - run: mvn -B -f sdk/java/pom.xml verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: backend-test-evidence, path: backend/target/surefire-reports}
+  frontend-sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '24', cache: npm, cache-dependency-path: frontend/package-lock.json}
+      - run: npm ci
+        working-directory: frontend
+      - run: npm test && npm run build && npm audit --audit-level=high
+        working-directory: frontend
+      - run: node --test sdk/node/test.mjs scripts/monitor-gate.test.mjs
+      - run: node scripts/sync-doc-examples.mjs --check
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m unittest discover -s sdk/python -p 'test_*.py'
+      - run: python -m py_compile examples/rest/python.py sdk/python/metertrail.py
+      - run: node --check examples/rest/node.mjs && node --check scripts/send-example.mjs
+      - run: javac examples/rest/Send.java
+      - uses: actions/setup-go@v5
+        with: {go-version: '1.24'}
+      - run: go build -o /tmp/metertrail-go examples/rest/main.go
+      - uses: actions/setup-dotnet@v4
+        with: {dotnet-version: '8.0.x'}
+      - run: dotnet build examples/rest/csharp/Send.csproj
+      - run: php -l examples/rest/send.php
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.28.0 git /repo --redact --no-banner
+      - uses: aquasecurity/trivy-action@0.33.1
+        with: {scan-type: fs, scan-ref: '.', severity: 'HIGH,CRITICAL', exit-code: '1', ignore-unfixed: true}
+  images:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend-sdk, security]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        id: api
+        with:
+          context: backend
+          push: false
+          tags: metertrail-api:${{ github.sha }}
+          outputs: type=oci,dest=/tmp/metertrail-api.tar
+      - uses: docker/build-push-action@v6
+        id: web
+        with:
+          context: frontend
+          push: false
+          tags: metertrail-web:${{ github.sha }}
+          outputs: type=oci,dest=/tmp/metertrail-web.tar
+      - run: sha256sum /tmp/metertrail-api.tar /tmp/metertrail-web.tar > /tmp/checksums.txt
+      - uses: actions/upload-artifact@v4
+        with: {name: immutable-images, path: '/tmp/metertrail-*.tar', retention-days: 7}
+      - uses: actions/upload-artifact@v4
+        with: {name: image-checksums, path: /tmp/checksums.txt}
