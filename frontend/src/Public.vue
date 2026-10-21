@@ -132,7 +132,14 @@ async function copy() {
 }
 </script>
 <template>
-  <div class="public" :class="{ 'docs-page': page === 'docs' }">
+  <div
+    class="public"
+    :class="{
+      'docs-page': page === 'docs',
+      'home-page': page === 'home',
+      'pricing-page': page === 'pricing',
+    }"
+  >
     <header class="public-header">
       <RouterLink to="/" class="brand"
         ><span class="brand-icon"><Activity :size="20" /></span
