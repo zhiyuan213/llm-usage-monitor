@@ -6,7 +6,6 @@ import java.util.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.client.RestClient;
 
 @Component
 class PaymentReconciliation {
@@ -25,18 +24,12 @@ class PaymentReconciliation {
 
   @Scheduled(initialDelay = 60000, fixedDelay = 3600000)
   void reconcile() {
-    if (payments.apiKey.isBlank()) return;
+    if (!payments.reconciliationEnabled()) return;
     for (var row :
         store.db.queryForList(
             "SELECT subscription_id FROM workspaces WHERE subscription_id IS NOT NULL")) {
       try {
-        JsonNode response =
-            RestClient.create()
-                .get()
-                .uri(payments.url + "/subscriptions/" + row.get("subscription_id"))
-                .header("Authorization", "Bearer " + payments.apiKey)
-                .retrieve()
-                .body(JsonNode.class);
+        JsonNode response = payments.readSubscription((String) row.get("subscription_id"));
         if (response == null) throw new IllegalStateException();
         JsonNode data = response.path("data");
         String at = data.path("updated_at").asText();

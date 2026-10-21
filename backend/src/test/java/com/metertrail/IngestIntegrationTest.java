@@ -32,6 +32,18 @@ import org.testcontainers.junit.jupiter.*;
 @AutoConfigureMockMvc
 @Testcontainers
 class IngestIntegrationTest {
+  @Autowired PaymentsController payments;
+  @Autowired PaymentReconciliation reconciliation;
+
+  @Test
+  void reconciliationSkipsMissingCredentialsThroughTheRealTransactionProxy() {
+    assertTrue(org.springframework.aop.support.AopUtils.isCglibProxy(payments));
+    assertFalse(payments.reconciliationEnabled());
+    assertDoesNotThrow(reconciliation::reconcile);
+    var failure = assertThrows(ApiError.class, () -> payments.readSubscription("sub_synthetic"));
+    assertEquals("PAYMENTS_NOT_CONFIGURED", failure.code);
+  }
+
   @Test
   void permanentFailureCompensatesOnceAndCorrectedRevisionRereserves() throws Exception {
     var event = event("trace", "recoverable", 1);

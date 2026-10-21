@@ -45,6 +45,21 @@ class PaymentsController {
     this.url = url;
   }
 
+  // Other beans must invoke methods: direct field reads bypass the Spring transaction proxy.
+  boolean reconciliationEnabled() {
+    return apiKey != null && !apiKey.isBlank();
+  }
+
+  JsonNode readSubscription(String subscriptionId) {
+    if (!reconciliationEnabled()) throw new ApiError(503, "PAYMENTS_NOT_CONFIGURED");
+    return RestClient.create()
+        .get()
+        .uri(url + "/subscriptions/" + subscriptionId)
+        .header("Authorization", "Bearer " + apiKey)
+        .retrieve()
+        .body(JsonNode.class);
+  }
+
   @PostMapping("/api/billing/checkout")
   Map<String, String> checkout(@RequestBody JsonNode b, HttpServletRequest req) {
     String plan = b.path("plan").asText();
