@@ -18,6 +18,9 @@
 * {
   box-sizing: border-box;
 }
+html {
+  scrollbar-gutter: stable;
+}
 body {
   margin: 0;
 }
@@ -228,6 +231,7 @@ button {
 }
 .public-header {
   height: 80px;
+  width: 100%;
   max-width: 1360px;
   margin: auto;
   display: flex;
@@ -746,8 +750,7 @@ footer nav a {
   overflow: hidden;
 }
 .docs-page .public-header {
-  flex: 0 0 80px;
-  width: 100%;
+  flex-shrink: 0;
 }
 .docs-layout {
   width: 100%;
