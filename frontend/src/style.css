@@ -837,9 +837,11 @@ footer nav a {
 .code-box pre {
   margin: 0;
   padding: 22px;
-  line-height: 1.9;
+  line-height: 1.75;
   overflow: auto;
-  font-size: 11px;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 13px;
+  tab-size: 4;
 }
 .legal {
   max-width: 880px;

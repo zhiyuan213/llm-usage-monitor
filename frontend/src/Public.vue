@@ -590,7 +590,6 @@ async function copy() {
         tabindex="0"
       >
         <section v-if="activeDoc === 'quickstart'" aria-labelledby="quickstart">
-          <span class="eyebrow">{{ t("GET STARTED", "开始接入") }}</span>
           <h1 id="quickstart">
             {{
               t("Your first trace, in minutes.", "几分钟内接入第一条 Trace。")
