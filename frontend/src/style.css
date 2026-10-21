@@ -252,7 +252,7 @@ button {
 }
 .header-actions {
   margin-left: auto;
-  margin-right: 110px;
+  margin-right: clamp(0px, calc((1580px - 100vw) / 2), 110px);
   display: flex;
   gap: 22px;
   align-items: center;
