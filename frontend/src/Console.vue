@@ -3,7 +3,14 @@ import WorkspaceOverview from "./WorkspaceOverview.vue";
 import ProjectInfoEditor from "./ProjectInfoEditor.vue";
 import BatchHistory from "./BatchHistory.vue";
 import AccountSecurity from "./AccountSecurity.vue";
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   Activity,
@@ -31,7 +38,8 @@ import {
   ArrowLeft,
   BarChart3,
 } from "lucide-vue-next";
-import { api, t, n, money, date, session, loadSession, errorText } from "./lib";
+import { api, t, n, money, date, session, ApiError, errorText } from "./lib";
+import { contextLoader } from "./context-loader";
 const route = useRoute(),
   router = useRouter(),
   page = computed(() => String(route.params.page || "overview"));
@@ -148,31 +156,51 @@ async function run(fn: () => Promise<void>) {
 }
 const navigate = (url: string) => window.location.assign(url);
 const path = (suffix: string) => "/projects/" + selected.value + suffix;
-async function refresh() {
+const loadContext = contextLoader(() =>
+  Promise.all([api("/projects"), api("/me")]),
+);
+let refreshId = 0;
+async function refresh(force = true) {
+  const id = ++refreshId;
+  const stale = Symbol("superseded refresh");
+  const current = () => {
+    if (id !== refreshId) throw stale;
+  };
+  const request = async (url: string) => {
+    const result = await api(url);
+    current();
+    return result;
+  };
   loading.value = true;
   error.value = "";
   try {
-    projects.value = await api("/projects");
-    session.value = await api("/me");
+    const [projectList, user] = await loadContext(
+      force || page.value === "account",
+    );
+    current();
+    projects.value = projectList;
+    session.value = user;
     if (!projects.value.some((p) => p.id === selected.value))
       selected.value = projects.value[0]?.id || "";
     localStorage.setItem("metertrail.project", selected.value);
     if (page.value === "billing") {
-      data.value = await api("/billing");
+      data.value = await request("/billing");
       billing.enabled = data.value.workspace.auto_overage;
       billing.cap = String(data.value.workspace.overage_cap);
-    } else if (page.value === "audit") data.value = await api("/audit");
-    else if (page.value === "account") await loadSession();
-    else if (selected.value) {
+    } else if (page.value === "audit") data.value = await request("/audit");
+    else if (page.value === "account") {
+      /* Account is included in context. */
+    } else if (selected.value) {
       if (page.value === "overview") {
         const [o, r] = await Promise.all([
-          api(path("/overview")),
-          api(path("/objects")),
+          request(path("/overview")),
+          request(path("/objects")),
         ]);
+        current();
         overview.value = o;
         recent.value = r;
       } else if (page.value === "traces")
-        data.value = await api(
+        data.value = await request(
           path("/traces") +
             "?" +
             new URLSearchParams({
@@ -182,41 +210,44 @@ async function refresh() {
             }),
         );
       else if (page.value === "trace")
-        data.value = await api(path("/traces/" + route.params.detail));
+        data.value = await request(path("/traces/" + route.params.detail));
       else if (page.value === "analytics")
-        data.value = await api(
+        data.value = await request(
           path("/analytics") + "?dimension=" + dimension.value,
         );
-      else if (page.value === "keys") data.value = await api(path("/keys"));
-      else if (page.value === "alerts") data.value = await api(path("/alerts"));
+      else if (page.value === "keys") data.value = await request(path("/keys"));
+      else if (page.value === "alerts")
+        data.value = await request(path("/alerts"));
       else if (page.value === "settings")
-        data.value = await api(path("/prices"));
+        data.value = await request(path("/prices"));
     }
   } catch (e) {
+    if (id !== refreshId) return;
     error.value = errorText(e);
+    if (e instanceof ApiError && e.status === 401) {
+      session.value = null;
+      router.replace("/login");
+    }
   } finally {
-    loading.value = false;
+    if (id === refreshId) loading.value = false;
   }
 }
-onMounted(async () => {
-  if (!(await loadSession())) {
-    router.replace("/login");
-    return;
-  }
-  await refresh();
+onBeforeUnmount(() => {
+  refreshId++;
 });
+onMounted(() => refresh(false));
 watch(
   () => route.fullPath,
   () => {
     data.value = {};
     notice.value = "";
     createdKey.value = "";
-    refresh();
+    refresh(false);
   },
 );
 async function changeProject() {
   tracePage.value = 0;
-  await refresh();
+  await refresh(false);
 }
 async function createProject() {
   await run(async () => {
@@ -424,7 +455,7 @@ const usagePercent = computed(() =>
                   ? t('Loading data', '正在加载数据')
                   : t('Refresh', '刷新')
               "
-              @click="refresh"
+              @click="refresh()"
             >
               <RefreshCw
                 :size="15"
@@ -672,7 +703,7 @@ const usagePercent = computed(() =>
               class="filters"
               @submit.prevent="
                 tracePage = 0;
-                refresh();
+                refresh(false);
               "
             >
               <div class="search-field">
@@ -751,7 +782,7 @@ const usagePercent = computed(() =>
                 :disabled="tracePage === 0"
                 @click="
                   tracePage--;
-                  refresh();
+                  refresh(false);
                 "
               >
                 ←</button
@@ -761,7 +792,7 @@ const usagePercent = computed(() =>
                 :disabled="(tracePage + 1) * 50 >= (data.total || 0)"
                 @click="
                   tracePage++;
-                  refresh();
+                  refresh(false);
                 "
               >
                 →
@@ -1475,7 +1506,7 @@ const usagePercent = computed(() =>
         <ProjectInfoEditor
           v-if="page === 'settings' && project"
           :project="project"
-          @saved="refresh"
+          @saved="refresh()"
         />
         <BatchHistory v-if="page === 'keys' && selected" :project="selected" />
         <AccountSecurity v-if="page === 'account'" />
