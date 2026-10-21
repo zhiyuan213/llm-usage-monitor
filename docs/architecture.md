@@ -41,7 +41,7 @@ The current release has one owner per workspace, consistent with the exclusion o
 
 ## Sessions and sensitive operations
 
-Opaque session tokens have 256 bits of entropy, are stored as hashes, expire after 12 hours, and are revocable. SameSite=Lax/HttpOnly cookies hold the token; Secure is enabled by default. State-changing console calls require the session-bound `X-CSRF-Token`. The frontend only holds the CSRF value and public account metadata.
+Opaque session tokens have 256 bits of entropy, are stored as hashes, and are revocable. Normal sessions expire after 12 hours; selecting “Keep me signed in for 30 days” uses a fixed 30-day lifetime for both the database session and persistent cookie. Password and GitHub sign-in honor this choice. Logout revokes the current token; password resets and email changes revoke all sessions, including remembered sessions. SameSite=Lax/HttpOnly cookies hold the token; Secure is enabled by default. State-changing console calls require the session-bound `X-CSRF-Token`. The frontend only holds the CSRF value and public account metadata; it never stores the session token or password in localStorage. An authenticated visit to the login page resumes the workspace automatically.
 
 Codes use a CSPRNG, HMAC with `APP_SECRET`, 5-minute expiry and 5-failure lockout. Challenge validation uses a separate atomic transaction so failed attempts cannot be rolled back by a rejected operation. Consumption occurs before the sensitive mutation; if a later mutation fails, the code remains consumed and the user must request another. Challenges bind the exact key name, project/key ID, target email or overage settings, as applicable.
 

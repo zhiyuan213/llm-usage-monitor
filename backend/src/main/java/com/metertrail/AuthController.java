@@ -79,17 +79,23 @@ class AuthController {
     }
     if (!(boolean) rows.get(0).get("verified")) throw new ApiError(403, "EMAIL_NOT_VERIFIED");
     store.audit((UUID) rows.get(0).get("id"), null, "account.login", "session", true, req);
-    return session((UUID) rows.get(0).get("id"), res);
+    return session((UUID) rows.get(0).get("id"), res, b.path("rememberMe").asBoolean(false));
   }
 
   Map<String, Object> session(UUID user, HttpServletResponse res) {
+    return session(user, res, false);
+  }
+
+  Map<String, Object> session(UUID user, HttpServletResponse res, boolean rememberMe) {
+    long seconds = rememberMe ? 30L * 86400 : 43200;
     String token = Support.token(), csrf = Support.token();
     store.db.update(
-        "INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '12"
-            + " hours')",
+        "INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+(? * interval"
+            + " '1 second'))",
         Support.hash(token),
         user,
-        csrf);
+        csrf,
+        seconds);
     res.addHeader(
         "Set-Cookie",
         ResponseCookie.from("mt_session", token)
@@ -97,7 +103,7 @@ class AuthController {
             .secure(secure)
             .sameSite("Lax")
             .path("/")
-            .maxAge(43200)
+            .maxAge(seconds)
             .build()
             .toString());
     return Map.of("csrf", csrf);
@@ -157,6 +163,8 @@ class AuthController {
         u.get("language"),
         "csrf",
         u.get("csrf"),
+        "expiresAt",
+        ((java.sql.Timestamp) u.get("session_expires_at")).toInstant().toString(),
         "githubConnected",
         u.get("github_id") != null,
         "workspace",

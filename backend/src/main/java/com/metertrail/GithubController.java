@@ -65,8 +65,9 @@ class GithubController {
   }
 
   @GetMapping("/api/auth/github")
-  void start(HttpServletResponse res) throws java.io.IOException {
-    res.sendRedirect(begin("login", res));
+  void start(@RequestParam(defaultValue = "false") boolean rememberMe, HttpServletResponse res)
+      throws java.io.IOException {
+    res.sendRedirect(begin(rememberMe ? "login:remember" : "login", res));
   }
 
   @PostMapping("/api/account/github/link")
@@ -158,7 +159,7 @@ class GithubController {
             s -> {
               var existing =
                   store.db.queryForList("SELECT id FROM users WHERE github_id=?", github);
-              if (!intent.equals("login")) {
+              if (!intent.equals("login") && !intent.equals("login:remember")) {
                 UUID uid = Support.uuid(intent);
                 if (!existing.isEmpty() && !uid.equals(existing.get(0).get("id")))
                   throw new ApiError(409, "GITHUB_ALREADY_LINKED");
@@ -186,7 +187,7 @@ class GithubController {
               store.audit(uid, null, "github.register", "github", true, req);
               return uid;
             });
-    auth.session(user, res);
+    auth.session(user, res, intent.equals("login:remember"));
     res.sendRedirect(publicUrl + "/app/overview");
   }
 }

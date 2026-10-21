@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   ArrowUpRight,
 } from "lucide-vue-next";
-import { api, t, errorText, loadSession } from "./lib";
+import { api, t, errorText, loadSession, session } from "./lib";
 const route = useRoute(),
   router = useRouter(),
   page = computed(() => String(route.params.page || "home"));
@@ -23,6 +23,7 @@ const form = reactive({
     code: "",
     challengeId: "",
     terms: false,
+    rememberMe: true,
   }),
   busy = ref(false),
   error = ref(""),
@@ -32,6 +33,26 @@ watch(page, () => {
   error.value = "";
   message.value = "";
 });
+watch(
+  page,
+  async (value, _previous, onCleanup) => {
+    if (value !== "login") return;
+    let active = true;
+    onCleanup(() => {
+      active = false;
+    });
+    try {
+      const user = await api("/me");
+      if (active && page.value === "login" && !busy.value) {
+        session.value = user;
+        router.replace("/app/overview");
+      }
+    } catch {
+      /* An absent or expired cookie leaves the login form available. */
+    }
+  },
+  { immediate: true },
+);
 const authPage = computed(() =>
   ["login", "register", "verify", "forgot-password", "reset-password"].includes(
     page.value,
@@ -449,6 +470,9 @@ async function copy() {
               :placeholder="
                 t('At least 12 characters', '至少 12 个字符')
               " /></label
+          ><label v-if="page === 'login'" class="check-label remember-login">
+            <input v-model="form.rememberMe" type="checkbox" />
+            {{ t("Keep me signed in for 30 days", "保持登录 30 天") }} </label
           ><template v-if="['verify', 'reset-password'].includes(page)"
             ><label
               >{{ t("Challenge ID", "验证请求 ID")
@@ -486,7 +510,12 @@ async function copy() {
         </form>
         <template v-if="page === 'login' || page === 'register'"
           ><div class="divider">{{ t("or", "或") }}</div>
-          <a href="/api/auth/github" class="btn full"
+          <a
+            :href="
+              '/api/auth/github?rememberMe=' +
+              (page === 'login' && form.rememberMe)
+            "
+            class="btn full"
             ><GitBranch :size="17" />{{
               t("Continue with GitHub", "通过 GitHub 继续")
             }}</a

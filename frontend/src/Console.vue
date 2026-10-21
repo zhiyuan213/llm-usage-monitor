@@ -386,7 +386,7 @@ const usagePercent = computed(() =>
         /></RouterLink>
         <div class="account-summary">
           <span class="avatar">{{ session?.email?.[0]?.toUpperCase() }}</span
-          ><span>{{ session?.email }}</span
+          ><span :title="session?.email">{{ session?.email }}</span
           ><button
             class="icon-button"
             :title="t('Sign out', '退出登录')"
@@ -1472,10 +1472,10 @@ const usagePercent = computed(() =>
               <dt>{{ t("Session", "会话") }}</dt>
               <dd>
                 {{
-                  t(
-                    "12 hours · HttpOnly cookie · revocable",
-                    "12 小时 · HttpOnly Cookie · 可撤销",
-                  )
+                  t("Valid until ", "有效期至 ") +
+                  date(session?.expiresAt) +
+                  " · " +
+                  t("Revocable", "可撤销")
                 }}
               </dd>
             </dl>

@@ -54,8 +54,9 @@ class SessionFilter extends OncePerRequestFilter {
           if (c.getName().equals("mt_session")) token = c.getValue();
       var rows =
           db.queryForList(
-              "SELECT u.*,s.csrf FROM sessions s JOIN users u ON u.id=s.user_id WHERE"
-                  + " s.token_hash=? AND s.expires_at>now() AND u.deleted_at IS NULL",
+              "SELECT u.*,s.csrf,s.expires_at AS session_expires_at FROM sessions s JOIN users u ON"
+                  + " u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>now() AND u.deleted_at"
+                  + " IS NULL",
               Support.hash(token == null ? "" : token));
       if (rows.isEmpty()) {
         error(res, 401, "UNAUTHENTICATED");

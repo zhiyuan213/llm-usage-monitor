@@ -692,6 +692,10 @@ footer nav a {
   height: 15px;
   margin: 0;
 }
+.auth-card .remember-login {
+  font-size: 14px;
+  margin: 12px 0;
+}
 .divider {
   display: flex;
   align-items: center;

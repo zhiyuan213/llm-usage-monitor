@@ -36,6 +36,88 @@ class IngestIntegrationTest {
   @Autowired PaymentReconciliation reconciliation;
 
   @Test
+  void rememberedLoginHasMatchingCookieAndDatabaseExpiryAndLogoutRevokesIt() throws Exception {
+    String password = "synthetic-password-12345";
+    store.db.update(
+        "UPDATE users SET password_hash=? WHERE id=?",
+        new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(4).encode(password),
+        user);
+    for (boolean remember : List.of(false, true)) {
+      var response =
+          mvc.perform(
+                  post("/api/auth/login")
+                      .contentType("application/json")
+                      .content(
+                          new ObjectMapper()
+                              .writeValueAsString(
+                                  Map.of(
+                                      "email",
+                                      user + "@test.local",
+                                      "password",
+                                      password,
+                                      "rememberMe",
+                                      remember))))
+              .andExpect(status().isOk())
+              .andReturn()
+              .getResponse();
+      String cookie = response.getHeader("Set-Cookie");
+      long seconds = remember ? 2592000 : 43200;
+      assertTrue(cookie.contains("Max-Age=" + seconds));
+      assertTrue(cookie.contains("HttpOnly"));
+      assertTrue(cookie.contains("SameSite=Lax"));
+      String token = cookie.substring("mt_session=".length(), cookie.indexOf(';'));
+      var expiry =
+          store
+              .db
+              .queryForObject(
+                  "SELECT expires_at FROM sessions WHERE token_hash=?",
+                  java.sql.Timestamp.class,
+                  Support.hash(token))
+              .toInstant();
+      assertTrue(
+          Math.abs(java.time.Duration.between(Instant.now(), expiry).getSeconds() - seconds) < 10);
+      var browserCookie = new jakarta.servlet.http.Cookie("mt_session", token);
+      // A new HTTP request needs only the saved cookie, not the password or in-memory frontend
+      // state.
+      mvc.perform(get("/api/me").cookie(browserCookie))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.expiresAt").exists());
+      String csrf = Support.parse(response.getContentAsString()).path("csrf").asText();
+      mvc.perform(
+              post("/api/logout")
+                  .cookie(browserCookie)
+                  .header("X-CSRF-Token", csrf)
+                  .contentType("application/json")
+                  .content("{}"))
+          .andExpect(status().isOk())
+          .andExpect(
+              header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Max-Age=0")));
+      mvc.perform(get("/api/me").cookie(browserCookie)).andExpect(status().isUnauthorized());
+    }
+  }
+
+  @Test
+  void rememberedSessionExpiresServerSideAndProductionCookieIsSecure() throws Exception {
+    var response = new org.springframework.mock.web.MockHttpServletResponse();
+    new AuthController(
+            store,
+            challenges,
+            new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(4),
+            rates,
+            true)
+        .session(user, response, true);
+    String cookie = response.getHeader("Set-Cookie");
+    assertTrue(cookie.contains("Secure"));
+    assertTrue(cookie.contains("HttpOnly"));
+    String token = cookie.substring("mt_session=".length(), cookie.indexOf(';'));
+    store.db.update(
+        "UPDATE sessions SET expires_at=now()-interval '1 second' WHERE token_hash=?",
+        Support.hash(token));
+    mvc.perform(get("/api/me").cookie(new jakarta.servlet.http.Cookie("mt_session", token)))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
   void alertsNotifyEachRevisionOnceAndMergeNewEvidenceAcrossCooldown() {
     UUID rule = UUID.randomUUID();
     store.db.update(
@@ -401,8 +483,8 @@ class IngestIntegrationTest {
   void resetRevokesEverySession() throws Exception {
     String token = Support.token();
     store.db.update(
-        "INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1"
-            + " hour')",
+        "INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '30"
+            + " days')",
         Support.hash(token),
         user,
         "csrf-test");
