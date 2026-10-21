@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   ArrowUpRight,
 } from "lucide-vue-next";
-import { api, t, errorText, loadSession, session } from "./lib";
+import { api, t, errorText, loadSession, session, ApiError } from "./lib";
 const route = useRoute(),
   router = useRouter(),
   page = computed(() => String(route.params.page || "home"));
@@ -29,6 +29,7 @@ const form = reactive({
   error = ref(""),
   message = ref(""),
   copied = ref(false);
+const sessionChecked = ref(!!session.value);
 watch(page, () => {
   error.value = "";
   message.value = "";
@@ -36,19 +37,21 @@ watch(page, () => {
 watch(
   page,
   async (value, _previous, onCleanup) => {
-    if (value !== "login") return;
     let active = true;
     onCleanup(() => {
       active = false;
     });
     try {
       const user = await api("/me");
-      if (active && page.value === "login" && !busy.value) {
+      if (active && !busy.value) {
         session.value = user;
-        router.replace("/app/overview");
+        if (value === "login") router.replace("/app/overview");
       }
-    } catch {
-      /* An absent or expired cookie leaves the login form available. */
+    } catch (e) {
+      if (active && !busy.value && e instanceof ApiError && e.status === 401)
+        session.value = null;
+    } finally {
+      if (active) sessionChecked.value = true;
     }
   },
   { immediate: true },
@@ -128,10 +131,15 @@ async function copy() {
         }}</RouterLink>
       </nav>
       <div class="header-actions">
-        <RouterLink to="/login">{{ t("Sign in", "登录") }}</RouterLink
-        ><RouterLink class="btn primary" to="/register"
-          >{{ t("Start free", "免费开始") }} <ArrowUpRight :size="14"
+        <RouterLink v-if="session" class="btn primary" to="/app/overview"
+          >{{ t("Open console", "进入控制台") }} <ArrowUpRight :size="14"
         /></RouterLink>
+        <template v-else-if="sessionChecked"
+          ><RouterLink to="/login">{{ t("Sign in", "登录") }}</RouterLink
+          ><RouterLink class="btn primary" to="/register"
+            >{{ t("Start free", "免费开始") }}
+            <ArrowUpRight :size="14" /></RouterLink
+        ></template>
       </div>
     </header>
     <main v-if="page === 'home'">
@@ -157,8 +165,13 @@ async function copy() {
             }}
           </p>
           <div class="hero-buttons">
-            <RouterLink to="/register" class="btn primary large"
-              >{{ t("Start building for free", "免费开始接入")
+            <RouterLink
+              :to="session ? '/app/overview' : '/register'"
+              class="btn primary large"
+              >{{
+                session
+                  ? t("Open console", "进入控制台")
+                  : t("Start building for free", "免费开始接入")
               }}<ArrowRight :size="17" /></RouterLink
             ><RouterLink to="/docs" class="btn large">{{
               t("Read the docs", "阅读接入文档")
@@ -294,8 +307,13 @@ async function copy() {
             }}
           </h2>
         </div>
-        <RouterLink class="btn primary large" to="/register"
-          >{{ t("Create your workspace", "创建工作空间")
+        <RouterLink
+          class="btn primary large"
+          :to="session ? '/app/workspace' : '/register'"
+          >{{
+            session
+              ? t("Open your workspace", "进入工作空间")
+              : t("Create your workspace", "创建工作空间")
           }}<ArrowRight :size="18"
         /></RouterLink>
       </section>
@@ -360,7 +378,9 @@ async function copy() {
               }}
             </li>
           </ul>
-          <RouterLink to="/register" :class="['btn', i === 1 ? 'primary' : '']"
+          <RouterLink
+            :to="session ? '/app/billing' : '/register'"
+            :class="['btn', i === 1 ? 'primary' : '']"
             >{{ t("Get started", "开始使用") }}<ArrowRight :size="16"
           /></RouterLink>
         </article>
