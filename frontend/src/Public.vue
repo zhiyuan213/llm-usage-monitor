@@ -826,7 +826,7 @@ async function copy() {
         }}
       </p>
     </main>
-    <footer v-if="page !== 'docs'">
+    <footer>
       <RouterLink class="brand" to="/"
         ><Activity :size="20" />MeterTrail</RouterLink
       ><span>{{

@@ -805,6 +805,14 @@ footer nav a {
 .docs-page .public-header {
   flex-shrink: 0;
 }
+.docs-page > footer {
+  width: 100%;
+  flex-shrink: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
 .docs-layout {
   width: 100%;
   max-width: 1440px;
@@ -906,7 +914,7 @@ footer nav a {
   max-width: 880px;
 }
 .docs-content .code-box pre {
-  max-height: clamp(120px, calc(100dvh - 600px), 650px);
+  max-height: clamp(120px, calc(100dvh - 660px), 650px);
   overscroll-behavior: contain;
 }
 @media (min-width: 1101px) {
