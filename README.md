@@ -24,6 +24,8 @@ docker compose up --build -d
 
 `.env`, local credentials, generated data, caches, and build outputs are ignored by Git. The example email server is for development only. Production needs real SMTP, HTTPS with secure cookies, and a reviewed environment configuration.
 
+Tencent Cloud SES API template delivery is also supported, including personal accounts without SMTP access. See [腾讯云邮件推送接入](docs/tencent-ses.zh-CN.md) for approved templates, restricted credentials and server update steps.
+
 ### Send a complete example
 
 ```powershell

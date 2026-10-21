@@ -1,0 +1,12 @@
+MeterTrail 邮箱验证 / Email verification
+
+您的验证码是 / Your verification code is: {{code}}
+
+验证码在申请后 5 分钟内有效。请勿向他人透露验证码。
+This code expires 5 minutes after you request it. Do not share it.
+
+如果不是您本人操作，请忽略本邮件。
+If you did not request this code, please ignore this email.
+
+MeterTrail
+https://metertrail.com

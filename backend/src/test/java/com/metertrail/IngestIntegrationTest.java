@@ -220,7 +220,7 @@ class IngestIntegrationTest {
   @Autowired MockMvc mvc;
   @Autowired Challenges challenges;
   @Autowired org.springframework.transaction.support.TransactionTemplate tx;
-  @Autowired org.springframework.mail.javamail.JavaMailSender mail;
+  @Autowired MailDelivery mail;
   @MockBean RateLimits rates;
   UUID user, workspace, project;
   String key;

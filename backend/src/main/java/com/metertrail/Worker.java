@@ -7,7 +7,6 @@ import java.time.Instant;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -16,14 +15,14 @@ import org.springframework.transaction.support.TransactionTemplate;
 class Worker {
   final Store store;
   final TransactionTemplate tx;
-  final JavaMailSender mail;
+  final MailDelivery mail;
   final boolean enabled;
   final String from;
 
   Worker(
       Store store,
       TransactionTemplate tx,
-      JavaMailSender mail,
+      MailDelivery mail,
       @Value("${metertrail.worker-enabled}") boolean enabled,
       @Value("${metertrail.mail-from}") String from) {
     this.store = store;

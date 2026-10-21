@@ -2,6 +2,8 @@
 
 This is a runnable development release based on V1.1. **Do not describe it as production-approved or as having met the capacity targets.** No real customer data or external paid services were used for local verification.
 
+Follow-up: Tencent Cloud SES API template delivery is now implemented alongside SMTP, including personal accounts without SMTP permission. Separate plain-text verification/notification templates and mocked provider-response tests are supplied. Real delivery still requires approved templates, restricted API credentials and server acceptance. See [SES setup](tencent-ses.zh-CN.md).
+
 ## Implemented
 
 | Area | Delivered behavior | Evidence / remaining qualification |

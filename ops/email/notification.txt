@@ -1,0 +1,11 @@
+MeterTrail 服务通知 / Service notification
+
+{{message}}
+
+您收到本邮件，是因为您的 MeterTrail 账号触发了额度提醒或已配置的告警规则。
+This email concerns your MeterTrail usage quota or a configured alert rule.
+
+请登录控制台查看详情及管理告警设置。
+Sign in to the console for details and to manage your alerts.
+
+https://metertrail.com
