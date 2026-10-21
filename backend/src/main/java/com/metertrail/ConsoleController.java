@@ -102,8 +102,8 @@ class ConsoleController {
   List<Map<String, Object>> keys(@PathVariable UUID project, HttpServletRequest req) {
     store.project(uid(req), project);
     return store.db.queryForList(
-        "SELECT id,name,prefix,created_at,revoked_at FROM api_keys WHERE project_id=? ORDER BY"
-            + " created_at DESC",
+        "SELECT id,name,prefix,created_at,revoked_at FROM api_keys WHERE project_id=? AND"
+            + " deleted_at IS NULL ORDER BY created_at DESC",
         project);
   }
 
@@ -145,6 +145,39 @@ class ConsoleController {
     if (changed == 0) throw new ApiError(404, "KEY_NOT_FOUND");
     store.audit(uid(req), (UUID) p.get("workspace_id"), "key.revoke", key.toString(), true, req);
     return Map.of("status", "revoked");
+  }
+
+  @PostMapping("/api/projects/{project}/keys/{key}/delete")
+  @Transactional
+  Map<String, String> deleteKey(
+      @PathVariable UUID project, @PathVariable UUID key, HttpServletRequest req) {
+    var p = store.project(uid(req), project);
+    var keys =
+        store.db.queryForList(
+            "SELECT revoked_at FROM api_keys WHERE id=? AND project_id=? AND deleted_at IS NULL FOR"
+                + " UPDATE",
+            key,
+            project);
+    if (keys.isEmpty()) throw new ApiError(404, "KEY_NOT_FOUND");
+    if (keys.get(0).get("revoked_at") == null) throw new ApiError(409, "KEY_MUST_BE_REVOKED");
+    store.db.update("UPDATE api_keys SET deleted_at=now() WHERE id=?", key);
+    store.audit(uid(req), (UUID) p.get("workspace_id"), "key.delete", key.toString(), true, req);
+    return Map.of("status", "deleted");
+  }
+
+  @PostMapping("/api/projects/{project}/alerts/{id}/delete")
+  @Transactional
+  Map<String, String> deleteAlert(
+      @PathVariable UUID project, @PathVariable UUID id, HttpServletRequest req) {
+    var p = store.project(uid(req), project);
+    if (store.db.update(
+            "UPDATE alert_rules SET enabled=false,deleted_at=now() WHERE id=? AND project_id=? AND"
+                + " deleted_at IS NULL",
+            id,
+            project)
+        == 0) throw new ApiError(404, "ALERT_NOT_FOUND");
+    store.audit(uid(req), (UUID) p.get("workspace_id"), "alert.delete", id.toString(), true, req);
+    return Map.of("status", "deleted");
   }
 
   @PostMapping("/api/projects/{project}/delete")
@@ -397,7 +430,8 @@ class ConsoleController {
     return Map.of(
         "rules",
         store.db.queryForList(
-            "SELECT * FROM alert_rules WHERE project_id=? ORDER BY name", project),
+            "SELECT * FROM alert_rules WHERE project_id=? AND deleted_at IS NULL ORDER BY name",
+            project),
         "events",
         store.db.queryForList(
             "SELECT e.*,r.name FROM alert_events e JOIN alert_rules r ON r.id=e.rule_id WHERE"
@@ -436,7 +470,7 @@ class ConsoleController {
       HttpServletRequest req) {
     var p = store.project(uid(req), project);
     if (store.db.update(
-            "UPDATE alert_rules SET enabled=? WHERE id=? AND project_id=?",
+            "UPDATE alert_rules SET enabled=? WHERE id=? AND project_id=? AND deleted_at IS NULL",
             b.path("enabled").asBoolean(),
             id,
             project)

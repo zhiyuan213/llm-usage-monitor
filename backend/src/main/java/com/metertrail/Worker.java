@@ -216,7 +216,8 @@ class Worker {
                       + " r.last_triggered_at<now()-interval '1 hour') AS ready FROM alert_rules r"
                       + " JOIN projects p ON p.id=r.project_id JOIN workspaces w ON"
                       + " w.id=p.workspace_id JOIN users u ON u.id=w.owner_id WHERE r.enabled AND"
-                      + " p.deleted_at IS NULL FOR UPDATE OF r SKIP LOCKED");
+                      + " r.deleted_at IS NULL AND p.deleted_at IS NULL FOR UPDATE OF r SKIP"
+                      + " LOCKED");
           for (var r : rules) {
             String metric = (String) r.get("metric");
             String value =

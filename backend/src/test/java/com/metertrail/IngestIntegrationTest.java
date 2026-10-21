@@ -567,6 +567,79 @@ class IngestIntegrationTest {
         Support.hash(key));
   }
 
+  @Test
+  void deletedKeysAndRulesLeaveDataAndHistoryAndEnforceOwnership() throws Exception {
+    String token = Support.token();
+    store.db.update(
+        "INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1"
+            + " hour')",
+        Support.hash(token),
+        user,
+        "csrf-test");
+    var cookie = new jakarta.servlet.http.Cookie("mt_session", token);
+    UUID keyId =
+        store.db.queryForObject("SELECT id FROM api_keys WHERE project_id=?", UUID.class, project);
+    String base = "/api/projects/" + project;
+    String keyUrl = base + "/keys/" + keyId + "/delete";
+    mvc.perform(post(keyUrl).cookie(cookie)).andExpect(status().isForbidden());
+    mvc.perform(post(keyUrl).cookie(cookie).header("X-CSRF-Token", "csrf-test"))
+        .andExpect(status().isConflict());
+    ingest.accept(project, batch(event("trace", "preserved", 1)));
+    new Worker(store, tx, mail, true, "test@test.local").process();
+    long before = units();
+    store.db.update("UPDATE api_keys SET revoked_at=now() WHERE id=?", keyId);
+    UUID otherProject = UUID.randomUUID();
+    store.db.update(
+        "INSERT INTO projects(id,workspace_id,name) VALUES(?,?,'Other')", otherProject, workspace);
+    mvc.perform(
+            post("/api/projects/" + otherProject + "/keys/" + keyId + "/delete")
+                .cookie(cookie)
+                .header("X-CSRF-Token", "csrf-test"))
+        .andExpect(status().isNotFound());
+    mvc.perform(post(keyUrl).cookie(cookie).header("X-CSRF-Token", "csrf-test"))
+        .andExpect(status().isOk());
+    mvc.perform(get(base + "/keys").cookie(cookie)).andExpect(jsonPath("$.length()").value(0));
+    assertEquals(before, units());
+    assertEquals(
+        1,
+        store.db.queryForObject(
+            "SELECT count(*) FROM objects WHERE project_id=?", Integer.class, project));
+    UUID rule = UUID.randomUUID();
+    store.db.update(
+        "INSERT INTO alert_rules(id,project_id,name,metric,threshold) VALUES(?,?,'Delete"
+            + " me','latency_ms',1)",
+        rule,
+        project);
+    store.db.update("INSERT INTO alert_events(rule_id,value) VALUES(?,150)", rule);
+    mvc.perform(
+            post(base + "/alerts/" + rule + "/delete")
+                .cookie(cookie)
+                .header("X-CSRF-Token", "csrf-test"))
+        .andExpect(status().isOk());
+    mvc.perform(get(base + "/alerts").cookie(cookie))
+        .andExpect(jsonPath("$.rules.length()").value(0))
+        .andExpect(jsonPath("$.events.length()").value(1));
+    mvc.perform(
+            post(base + "/alerts/" + rule)
+                .cookie(cookie)
+                .header("X-CSRF-Token", "csrf-test")
+                .contentType("application/json")
+                .content("{\"enabled\":true}"))
+        .andExpect(status().isNotFound());
+    new Worker(store, tx, mail, true, "test@test.local").alerts();
+    assertEquals(
+        1,
+        store.db.queryForObject(
+            "SELECT count(*) FROM alert_events WHERE rule_id=?", Integer.class, rule));
+    assertEquals(
+        2,
+        store.db.queryForObject(
+            "SELECT count(*) FROM audit_logs WHERE workspace_id=? AND action IN"
+                + " ('key.delete','alert.delete')",
+            Integer.class,
+            workspace));
+  }
+
   ObjectNode event(String type, String object, int revision) {
     ObjectNode e = new ObjectMapper().createObjectNode();
     e.put("eventId", UUID.randomUUID().toString());

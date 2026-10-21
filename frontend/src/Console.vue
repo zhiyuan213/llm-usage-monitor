@@ -259,6 +259,24 @@ async function createProject() {
     await refresh();
   });
 }
+async function removeEntry(kind: "keys" | "alerts", id: string) {
+  const message =
+    kind === "keys"
+      ? t(
+          "Delete this revoked key? Historical data and audit records will remain.",
+          "删除这条已撤销密钥？历史数据和审计记录会保留。",
+        )
+      : t(
+          "Delete this alert rule? It will stop evaluating. Alert history and audit records will remain.",
+          "删除这条告警规则？删除后停止检测，历史告警和审计记录会保留。",
+        );
+  if (!window.confirm(message)) return;
+  const url = path("/" + kind + "/" + id + "/delete");
+  await run(async () => {
+    await api(url, {});
+    await refresh();
+  });
+}
 async function createKey() {
   const p = selected.value,
     name = keyName.value;
@@ -1006,6 +1024,13 @@ const usagePercent = computed(() =>
                       >
                         {{ t("Revoke", "撤销") }}
                       </button>
+                      <button
+                        v-else
+                        class="text-button danger-text"
+                        @click="removeEntry('keys', k.id)"
+                      >
+                        {{ t("Delete", "删除") }}
+                      </button>
                     </td>
                   </tr>
                   <tr v-if="!data.length">
@@ -1114,6 +1139,12 @@ const usagePercent = computed(() =>
                         {{
                           r.enabled ? t("Disable", "停用") : t("Enable", "启用")
                         }}
+                      </button>
+                      <button
+                        class="text-button danger-text"
+                        @click="removeEntry('alerts', r.id)"
+                      >
+                        {{ t("Delete", "删除") }}
                       </button>
                     </td>
                   </tr>

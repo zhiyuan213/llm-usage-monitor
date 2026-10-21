@@ -61,6 +61,15 @@ export const money = (v: any) =>
 export const date = (v: string) =>
   v ? new Date(v).toISOString().replace("T", " ").slice(0, 19) + " UTC" : "—";
 const errors: Record<string, [string, string]> = {
+  KEY_MUST_BE_REVOKED: [
+    "Revoke this key before deleting it.",
+    "请先撤销密钥，再删除。",
+  ],
+  KEY_NOT_FOUND: ["This key no longer exists.", "这条密钥已不存在。"],
+  ALERT_NOT_FOUND: [
+    "This alert rule no longer exists.",
+    "这条告警规则已不存在。",
+  ],
   UNAUTHENTICATED: ["Please sign in.", "请先登录。"],
   INVALID_CREDENTIALS: ["Incorrect email or password.", "邮箱或密码错误。"],
   EMAIL_NOT_VERIFIED: [
