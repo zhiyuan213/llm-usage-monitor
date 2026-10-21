@@ -1,19 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import { api, t, n, money, date, errorText } from "./lib";
-const data = ref<any>({}),
-  error = ref("");
-const emit = defineEmits<{ select: [id: string] }>();
-onMounted(async () => {
-  try {
-    data.value = await api("/workspace");
-  } catch (e) {
-    error.value = errorText(e);
-  }
-});
+import { Plus } from "lucide-vue-next";
+import { t, n, money, date } from "./lib";
+defineProps<{ data: any }>();
+const emit = defineEmits<{ select: [id: string]; create: [] }>();
 </script>
 <template>
-  <div v-if="error" class="notice error">{{ error }}</div>
   <section class="panel form-panel">
     <h2>{{ data.workspace?.name }}</h2>
     <p>
@@ -43,6 +34,15 @@ onMounted(async () => {
       </div>
     </div>
   </section>
+  <div class="section-heading">
+    <h2>
+      {{ t("Your projects", "你的项目") }}
+      <span class="count">{{ data.projects?.length || 0 }}</span>
+    </h2>
+    <button class="btn primary" @click="emit('create')">
+      <Plus :size="16" />{{ t("New project", "新建项目") }}
+    </button>
+  </div>
   <section class="panel table-wrap">
     <table>
       <thead>
@@ -70,9 +70,9 @@ onMounted(async () => {
         </tr>
         <tr v-if="!data.projects?.length">
           <td colspan="6" class="empty-cell">
-            <RouterLink to="/app/projects">{{
-              t("Create your first project →", "创建第一个项目 →")
-            }}</RouterLink>
+            <button class="text-button" @click="emit('create')">
+              {{ t("Create your first project →", "创建第一个项目 →") }}
+            </button>
           </td>
         </tr>
       </tbody>

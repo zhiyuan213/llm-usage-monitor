@@ -7,6 +7,7 @@ import "./style.css";
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: "/app/projects", redirect: "/app/workspace" },
     { path: "/app/:page?/:detail?", component: Console },
     { path: "/:page?", component: Public },
   ],

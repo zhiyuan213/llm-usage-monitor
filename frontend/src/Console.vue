@@ -46,7 +46,6 @@ const route = useRoute(),
 const nav = [
   ["workspace", "Workspace", "工作空间", LayoutDashboard],
   ["overview", "Overview", "概览", LayoutDashboard],
-  ["projects", "Projects", "项目", FolderKanban],
   ["traces", "Traces", "调用记录", GitBranch],
   ["analytics", "Users & customers", "用户与客户", Users],
   ["keys", "Integration & API keys", "接入与密钥", KeyRound],
@@ -187,7 +186,9 @@ async function refresh(force = true) {
       data.value = await request("/billing");
       billing.enabled = data.value.workspace.auto_overage;
       billing.cap = String(data.value.workspace.overage_cap);
-    } else if (page.value === "audit") data.value = await request("/audit");
+    } else if (page.value === "workspace")
+      data.value = await request("/workspace");
+    else if (page.value === "audit") data.value = await request("/audit");
     else if (page.value === "account") {
       /* Account is included in context. */
     } else if (selected.value) {
@@ -286,7 +287,7 @@ async function deleteProject() {
   await verify("project.delete", p, async (proof) => {
     await api("/projects/" + p + "/delete", { ...proof, confirm });
     selected.value = "";
-    router.push("/app/projects");
+    router.push("/app/workspace");
   });
 }
 async function copyKey() {
@@ -467,38 +468,11 @@ const usagePercent = computed(() =>
         </div>
         <div v-if="error" class="notice error" role="alert">{{ error }}</div>
         <div v-if="notice" class="notice success">{{ notice }}</div>
-        <template v-if="page === 'projects'"
-          ><div class="section-heading">
-            <h2>
-              {{ t("Your projects", "你的项目") }}
-              <span class="count">{{ projects.length }}</span>
-            </h2>
-            <button class="btn primary" @click="showCreate = true">
-              <Plus :size="16" />{{ t("New project", "新建项目") }}
-            </button>
-          </div>
-          <div class="project-grid">
-            <button
-              v-for="p in projects"
-              class="panel project-card"
-              @click="
-                selected = p.id;
-                router.push('/app/overview');
-              "
-            >
-              <div><FolderKanban :size="24" /><ArrowUpRight :size="18" /></div>
-              <h3>{{ p.name }}</h3>
-              <span class="badge success">{{ p.environment }}</span>
-              <p>{{ n(p.object_count) }} {{ t("objects", "个对象") }}</p>
-              <small>{{ date(p.created_at) }}</small>
-            </button>
-          </div></template
-        >
         <div
           v-if="
             !loading &&
             !selected &&
-            !['billing', 'audit', 'account'].includes(page)
+            !['billing', 'audit', 'account', 'workspace'].includes(page)
           "
           class="panel empty"
         >
@@ -1521,6 +1495,8 @@ const usagePercent = computed(() =>
         >
         <WorkspaceOverview
           v-if="page === 'workspace'"
+          :data="data"
+          @create="showCreate = true"
           @select="
             selected = $event;
             router.push('/app/overview');
