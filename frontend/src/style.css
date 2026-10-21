@@ -738,38 +738,74 @@ footer nav a {
   border-color: #c9eadd;
   color: #257b61;
 }
+.docs-page {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.docs-page .public-header {
+  flex: 0 0 80px;
+  width: 100%;
+}
 .docs-layout {
-  max-width: 1160px;
-  margin: 45px auto 80px;
+  width: 100%;
+  max-width: 1440px;
+  min-height: 0;
+  flex: 1;
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 55px;
-  padding: 0 30px;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 36px;
+  padding: 24px 32px 0;
+  overflow: hidden;
 }
 .docs-layout aside {
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  padding: 28px 20px;
+  gap: 6px;
+  padding: 24px 20px 24px 0;
   border-right: 1px solid var(--line);
+  overflow-y: auto;
+  min-height: 0;
+}
+.docs-layout aside .eyebrow {
+  margin: 0 12px 20px;
 }
 .docs-layout aside a {
-  font-size: 13px;
+  font-size: 15px;
   color: #58708f;
+  padding: 12px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+.docs-layout aside a:hover {
+  background: #f5f7fb;
+}
+.docs-layout aside a.active {
+  color: var(--blue);
+  background: #edf2ff;
+  font-weight: 600;
 }
 .docs-layout article {
-  padding: 25px 0;
+  padding: 24px 20px 48px 0;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 .docs-layout h1 {
   font-size: 35px;
 }
 .docs-layout h2 {
-  margin-top: 35px;
+  margin-top: 0;
+  font-size: 28px;
 }
 .docs-layout p,
 .docs-layout li {
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.9;
   color: #64748b;
 }
@@ -1833,10 +1869,23 @@ dd {
   }
   .docs-layout {
     grid-template-columns: 1fr;
-    gap: 10px;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px 20px 0;
   }
   .docs-layout aside {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .docs-layout aside .eyebrow {
     display: none;
+  }
+  .docs-layout article {
+    padding: 20px 0 32px;
   }
   .sidebar {
     width: 65px;

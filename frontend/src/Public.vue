@@ -17,6 +17,21 @@ import { api, t, errorText, loadSession, session, ApiError } from "./lib";
 const route = useRoute(),
   router = useRouter(),
   page = computed(() => String(route.params.page || "home"));
+const docSections = [
+  { id: "quickstart", en: "Quickstart", zh: "快速开始" },
+  { id: "protocol", en: "Batch protocol", zh: "批次协议" },
+  { id: "sdk", en: "SDK packages", zh: "SDK 包" },
+  { id: "retries", en: "Errors & retries", zh: "错误与重试" },
+  { id: "security", en: "Security", zh: "安全" },
+] as const;
+const activeDoc = computed(() => {
+  const id = route.hash.slice(1);
+  return docSections.find((section) => section.id === id)?.id || "quickstart";
+});
+const docsContent = ref<HTMLElement | null>(null);
+watch(activeDoc, () => docsContent.value?.scrollTo({ top: 0 }), {
+  flush: "post",
+});
 const form = reactive({
     email: "",
     password: "",
@@ -117,7 +132,7 @@ async function copy() {
 }
 </script>
 <template>
-  <div class="public">
+  <div class="public" :class="{ 'docs-page': page === 'docs' }">
     <header class="public-header">
       <RouterLink to="/" class="brand"
         ><span class="brand-icon"><Activity :size="20" /></span
@@ -557,174 +572,200 @@ async function copy() {
       </section>
     </main>
     <main v-else-if="page === 'docs'" class="docs-layout">
-      <aside>
+      <aside :aria-label="t('Documentation sections', '文档目录')">
         <span class="eyebrow">{{ t("DEVELOPER DOCS", "开发者文档") }}</span
-        ><a href="#quickstart">{{ t("Quickstart", "快速开始") }}</a
-        ><a href="#protocol">{{ t("Batch protocol", "批次协议") }}</a
-        ><a href="#sdk">SDKs</a
-        ><a href="#retries">{{ t("Errors & retries", "错误与重试") }}</a
-        ><a href="#security">{{ t("Security", "安全") }}</a>
+        ><RouterLink
+          v-for="section in docSections"
+          :key="section.id"
+          :to="{ path: '/docs', hash: '#' + section.id }"
+          :class="{ active: activeDoc === section.id }"
+          :aria-current="activeDoc === section.id ? 'page' : undefined"
+          >{{ t(section.en, section.zh) }}</RouterLink
+        >
       </aside>
-      <article>
-        <span class="eyebrow">{{ t("GET STARTED", "开始接入") }}</span>
-        <h1 id="quickstart">
-          {{ t("Your first trace, in minutes.", "几分钟内接入第一条 Trace。") }}
-        </h1>
-        <p>
-          {{
-            t(
-              "MeterTrail collects observability events asynchronously. Your application calls the model provider directly.",
-              "MeterTrail 异步采集可观测事件，应用直接调用模型供应商。",
-            )
-          }}
-        </p>
-        <ol>
-          <li>
+      <article
+        ref="docsContent"
+        class="docs-content"
+        :aria-label="t('Documentation content', '文档内容')"
+        tabindex="0"
+      >
+        <section v-if="activeDoc === 'quickstart'" aria-labelledby="quickstart">
+          <span class="eyebrow">{{ t("GET STARTED", "开始接入") }}</span>
+          <h1 id="quickstart">
+            {{
+              t("Your first trace, in minutes.", "几分钟内接入第一条 Trace。")
+            }}
+          </h1>
+          <p>
             {{
               t(
-                "Create an account, verify your email, and create a project.",
-                "创建账号、验证邮箱并创建项目。",
+                "MeterTrail collects observability events asynchronously. Your application calls the model provider directly.",
+                "MeterTrail 异步采集可观测事件，应用直接调用模型供应商。",
               )
             }}
-          </li>
-          <li>
+          </p>
+          <ol>
+            <li>
+              {{
+                t(
+                  "Create an account, verify your email, and create a project.",
+                  "创建账号、验证邮箱并创建项目。",
+                )
+              }}
+            </li>
+            <li>
+              {{
+                t(
+                  "Open Integration & API Keys. Verify the action by email to create a project key.",
+                  "进入接入与密钥，通过邮箱验证码创建项目密钥。",
+                )
+              }}
+            </li>
+            <li>
+              {{
+                t(
+                  "Set METERTRAIL_API_KEY and METERTRAIL_ENDPOINT to your deployment URL.",
+                  "设置 METERTRAIL_API_KEY 和 METERTRAIL_ENDPOINT 为实际部署地址。",
+                )
+              }}
+            </li>
+            <li>
+              {{
+                t(
+                  "Run scripts/send-example.mjs, then open the project overview.",
+                  "运行 scripts/send-example.mjs，再打开项目概览。",
+                )
+              }}
+            </li>
+          </ol>
+          <DocsExamples />
+        </section>
+        <section
+          v-else-if="activeDoc === 'protocol'"
+          aria-labelledby="protocol"
+        >
+          <h2 id="protocol">POST /v1/events/batch</h2>
+          <p>
             {{
               t(
-                "Open Integration & API Keys. Verify the action by email to create a project key.",
-                "进入接入与密钥，通过邮箱验证码创建项目密钥。",
+                'Use schemaVersion "1.0", agent, and events. Each event needs eventId (UUID), type, objectId, revision, startedAt, and data. Trace and Observation also need traceId; Observation needs spanId.',
+                '请求包含 schemaVersion "1.0"、agent 和 events。每条事件包含 eventId（UUID）、type、objectId、revision、startedAt、data；Trace 和 Observation 还需 traceId，Observation 需 spanId。',
               )
             }}
-          </li>
-          <li>
+          </p>
+          <table>
+            <tbody>
+              <tr>
+                <td>{{ t("Batch size", "批次大小") }}</td>
+                <td>1–500 events · 1 MiB · 8 KiB / event</td>
+              </tr>
+              <tr>
+                <td>{{ t("Time window", "时间窗口") }}</td>
+                <td>
+                  {{
+                    t(
+                      "Last 7 days; 5 minutes future tolerance",
+                      "最近 7 天；允许未来 5 分钟偏差",
+                    )
+                  }}
+                </td>
+              </tr>
+              <tr>
+                <td>202 Accepted</td>
+                <td>
+                  {{
+                    t(
+                      "Durably stored. Poll GET /v1/batches/{batchId} for final results.",
+                      "已可靠写入，轮询 GET /v1/batches/{batchId} 获取最终结果。",
+                    )
+                  }}
+                </td>
+              </tr>
+              <tr>
+                <td>usage</td>
+                <td>
+                  {{
+                    t(
+                      "Nonnegative integers or null; cached input is part of total input.",
+                      "非负整数或 null；缓存输入是总输入的子集。",
+                    )
+                  }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section v-else-if="activeDoc === 'sdk'" aria-labelledby="sdk">
+          <h2 id="sdk">{{ t("SDK packages", "SDK 包") }}</h2>
+          <p>
             {{
               t(
-                "Set METERTRAIL_API_KEY and METERTRAIL_ENDPOINT to your deployment URL.",
-                "设置 METERTRAIL_API_KEY 和 METERTRAIL_ENDPOINT 为实际部署地址。",
+                "Node.js / TypeScript, Python, and Java source SDKs are available in the dedicated GitHub repository. Follow its installation instructions; packages are not yet published to npm, PyPI, or Maven Central.",
+                "Node.js / TypeScript、Python、Java 源码 SDK 已放到独立 GitHub 仓库，请按仓库说明安装；尚未发布到 npm、PyPI 或 Maven Central。",
               )
             }}
-          </li>
-          <li>
-            {{
-              t(
-                "Run scripts/send-example.mjs, then open the project overview.",
-                "运行 scripts/send-example.mjs，再打开项目概览。",
-              )
-            }}
-          </li>
-        </ol>
-        <DocsExamples />
-        <h2 id="protocol">POST /v1/events/batch</h2>
-        <p>
-          {{
-            t(
-              'Use schemaVersion "1.0", agent, and events. Each event needs eventId (UUID), type, objectId, revision, startedAt, and data. Trace and Observation also need traceId; Observation needs spanId.',
-              '请求包含 schemaVersion "1.0"、agent 和 events。每条事件包含 eventId（UUID）、type、objectId、revision、startedAt、data；Trace 和 Observation 还需 traceId，Observation 需 spanId。',
-            )
-          }}
-        </p>
-        <table>
-          <tbody>
-            <tr>
-              <td>{{ t("Batch size", "批次大小") }}</td>
-              <td>1–500 events · 1 MiB · 8 KiB / event</td>
-            </tr>
-            <tr>
-              <td>{{ t("Time window", "时间窗口") }}</td>
-              <td>
-                {{
-                  t(
-                    "Last 7 days; 5 minutes future tolerance",
-                    "最近 7 天；允许未来 5 分钟偏差",
-                  )
-                }}
-              </td>
-            </tr>
-            <tr>
-              <td>202 Accepted</td>
-              <td>
-                {{
-                  t(
-                    "Durably stored. Poll GET /v1/batches/{batchId} for final results.",
-                    "已可靠写入，轮询 GET /v1/batches/{batchId} 获取最终结果。",
-                  )
-                }}
-              </td>
-            </tr>
-            <tr>
-              <td>usage</td>
-              <td>
-                {{
-                  t(
-                    "Nonnegative integers or null; cached input is part of total input.",
-                    "非负整数或 null；缓存输入是总输入的子集。",
-                  )
-                }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <h2 id="sdk">{{ t("SDK packages", "SDK 包") }}</h2>
-        <p>
-          {{
-            t(
-              "Node.js / TypeScript, Python, and Java source SDKs are available in the dedicated GitHub repository. Follow its installation instructions; packages are not yet published to npm, PyPI, or Maven Central.",
-              "Node.js / TypeScript、Python、Java 源码 SDK 已放到独立 GitHub 仓库，请按仓库说明安装；尚未发布到 npm、PyPI 或 Maven Central。",
-            )
-          }}
-        </p>
-        <div class="hero-buttons" style="flex-wrap: wrap; margin-bottom: 24px">
-          <a
-            class="btn primary"
-            href="https://github.com/zhiyuan213/llm-usage-monitor-sdk"
-            target="_blank"
-            rel="noopener noreferrer"
-            >{{ t("SDK repository", "SDK GitHub 仓库") }}
-            <ArrowUpRight :size="15"
-          /></a>
-          <a
-            class="btn"
-            href="https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/node"
-            target="_blank"
-            rel="noopener noreferrer"
-            >Node.js / TypeScript</a
+          </p>
+          <div
+            class="hero-buttons"
+            style="flex-wrap: wrap; margin-bottom: 24px"
           >
-          <a
-            class="btn"
-            href="https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/python"
-            target="_blank"
-            rel="noopener noreferrer"
-            >Python</a
-          >
-          <a
-            class="btn"
-            href="https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/java"
-            target="_blank"
-            rel="noopener noreferrer"
-            >Java</a
-          >
-        </div>
-        <h2 id="retries">
-          {{ t("Retries preserve identity", "重试必须保留身份") }}
-        </h2>
-        <p>
-          {{
-            t(
-              "Keep eventId, objectId, revision, and content unchanged. Back off with jitter on network errors and 5xx. Respect Retry-After on RATE_LIMITED. Pause on QUOTA_EXCEEDED or invalid keys. Split on 413. Inspect per-event errors after 202.",
-              "重试保留 eventId、objectId、revision 和内容。网络错误或 5xx 指数退避并加抖动；RATE_LIMITED 遵循 Retry-After；额度不足或密钥无效暂停；413 拆批；202 后检查逐条结果。",
-            )
-          }}
-        </p>
-        <h2 id="security">
-          {{ t("Collect only what you need", "仅采集必要数据") }}
-        </h2>
-        <p>
-          {{
-            t(
-              "Never send API keys, passwords, complete prompts, or model responses in event data. Unknown usage and missing model prices remain unknown, never zero.",
-              "不要在事件中发送 API Key、密码、完整提示词或模型回答。未知用量与缺失价格显示为未知，不会按零处理。",
-            )
-          }}
-        </p>
+            <a
+              class="btn primary"
+              href="https://github.com/zhiyuan213/llm-usage-monitor-sdk"
+              target="_blank"
+              rel="noopener noreferrer"
+              >{{ t("SDK repository", "SDK GitHub 仓库") }}
+              <ArrowUpRight :size="15"
+            /></a>
+            <a
+              class="btn"
+              href="https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/node"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Node.js / TypeScript</a
+            >
+            <a
+              class="btn"
+              href="https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/python"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Python</a
+            >
+            <a
+              class="btn"
+              href="https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/java"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Java</a
+            >
+          </div>
+        </section>
+        <section v-else-if="activeDoc === 'retries'" aria-labelledby="retries">
+          <h2 id="retries">
+            {{ t("Retries preserve identity", "重试必须保留身份") }}
+          </h2>
+          <p>
+            {{
+              t(
+                "Keep eventId, objectId, revision, and content unchanged. Back off with jitter on network errors and 5xx. Respect Retry-After on RATE_LIMITED. Pause on QUOTA_EXCEEDED or invalid keys. Split on 413. Inspect per-event errors after 202.",
+                "重试保留 eventId、objectId、revision 和内容。网络错误或 5xx 指数退避并加抖动；RATE_LIMITED 遵循 Retry-After；额度不足或密钥无效暂停；413 拆批；202 后检查逐条结果。",
+              )
+            }}
+          </p>
+        </section>
+        <section v-else aria-labelledby="security">
+          <h2 id="security">
+            {{ t("Collect only what you need", "仅采集必要数据") }}
+          </h2>
+          <p>
+            {{
+              t(
+                "Never send API keys, passwords, complete prompts, or model responses in event data. Unknown usage and missing model prices remain unknown, never zero.",
+                "不要在事件中发送 API Key、密码、完整提示词或模型回答。未知用量与缺失价格显示为未知，不会按零处理。",
+              )
+            }}
+          </p>
+        </section>
       </article>
     </main>
     <main v-else class="legal public-content">
@@ -774,7 +815,7 @@ async function copy() {
         }}
       </p>
     </main>
-    <footer>
+    <footer v-if="page !== 'docs'">
       <RouterLink class="brand" to="/"
         ><Activity :size="20" />MeterTrail</RouterLink
       ><span>{{
