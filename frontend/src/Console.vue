@@ -1063,8 +1063,8 @@ const usagePercent = computed(() =>
             <p>
               {{
                 t(
-                  "Evaluated every minute against the last hour. Email notifications have a one-hour cooldown.",
-                  "每分钟检查最近一小时数据，邮件通知冷却时间为一小时。",
+                  "Checks the last hour every minute. Each object revision is notified once; new matches during the one-hour cooldown are merged.",
+                  "每分钟检查最近一小时数据。同一对象版本只通知一次；一小时冷却期间的新异常合并通知。",
                 )
               }}
             </p>
@@ -1156,14 +1156,37 @@ const usagePercent = computed(() =>
             </div>
             <div class="table-wrap">
               <table>
+                <thead>
+                  <tr>
+                    <th>{{ t("Rule", "规则") }}</th>
+                    <th>{{ t("Trigger value", "触发值") }}</th>
+                    <th>{{ t("New matching objects", "新增匹配对象数") }}</th>
+                    <th>
+                      {{ t("Event time range (UTC)", "事件时间范围 (UTC)") }}
+                    </th>
+                    <th>
+                      {{ t("Notification time (UTC)", "通知时间 (UTC)") }}
+                    </th>
+                  </tr>
+                </thead>
                 <tbody>
                   <tr v-for="e in data.events || []">
                     <td>{{ e.name }}</td>
                     <td>{{ e.value }}</td>
+                    <td>{{ n(e.evidence_count) }}</td>
+                    <td>
+                      {{
+                        e.first_started_at
+                          ? date(e.first_started_at) +
+                            " — " +
+                            date(e.last_started_at)
+                          : "—"
+                      }}
+                    </td>
                     <td>{{ date(e.created_at) }}</td>
                   </tr>
                   <tr v-if="!data.events?.length">
-                    <td class="empty-cell">
+                    <td colspan="5" class="empty-cell">
                       {{ t("No alerts triggered.", "暂无触发记录。") }}
                     </td>
                   </tr>

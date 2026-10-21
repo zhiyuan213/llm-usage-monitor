@@ -212,33 +212,102 @@ class Worker {
         s -> {
           var rules =
               store.db.queryForList(
-                  "SELECT r.*,u.email FROM alert_rules r JOIN projects p ON p.id=r.project_id JOIN"
-                      + " workspaces w ON w.id=p.workspace_id JOIN users u ON u.id=w.owner_id WHERE"
-                      + " r.enabled AND p.deleted_at IS NULL AND (r.last_triggered_at IS NULL OR"
-                      + " r.last_triggered_at<now()-interval '1 hour') FOR UPDATE OF r SKIP"
-                      + " LOCKED");
+                  "SELECT r.*,u.email,(r.last_triggered_at IS NULL OR"
+                      + " r.last_triggered_at<now()-interval '1 hour') AS ready FROM alert_rules r"
+                      + " JOIN projects p ON p.id=r.project_id JOIN workspaces w ON"
+                      + " w.id=p.workspace_id JOIN users u ON u.id=w.owner_id WHERE r.enabled AND"
+                      + " p.deleted_at IS NULL FOR UPDATE OF r SKIP LOCKED");
           for (var r : rules) {
-            String expr =
-                switch ((String) r.get("metric")) {
-                  case "cost_usd" -> "coalesce(sum(cost),0)";
-                  case "latency_ms" -> "coalesce(max((data->>'durationMs')::numeric),0)";
-                  default -> "count(*) FILTER(WHERE data->>'status'='error')";
+            String metric = (String) r.get("metric");
+            String value =
+                switch (metric) {
+                  case "latency_ms" -> "(o.data->>'durationMs')::numeric";
+                  case "cost_usd" -> "o.cost";
+                  default -> "1::numeric";
                 };
-            BigDecimal value =
+            String qualifies =
+                switch (metric) {
+                  case "latency_ms" ->
+                      "(o.data->>'durationMs')::numeric>="
+                          + ((BigDecimal) r.get("threshold")).toPlainString();
+                  case "cost_usd" -> "o.cost>0";
+                  default -> "o.data->>'status'='error'";
+                };
+            String aggregate = metric.equals("latency_ms") ? "max" : "sum";
+            String window =
+                " FROM objects o WHERE o.project_id=? AND o.started_at>now()-interval '1 hour' AND"
+                    + " o.started_at<=now() AND ("
+                    + qualifies
+                    + ")";
+            BigDecimal actual =
                 store.db.queryForObject(
-                    "SELECT "
-                        + expr
-                        + " FROM objects WHERE project_id=? AND started_at>now()-interval '1 hour'",
+                    "SELECT coalesce(" + aggregate + "(" + value + "),0)" + window,
                     BigDecimal.class,
                     r.get("project_id"));
-            if (value.compareTo((BigDecimal) r.get("threshold")) >= 0) {
+            if (actual.compareTo((BigDecimal) r.get("threshold")) >= 0) {
+              // Capture new evidence even during cooldown, so it survives expiry of the lookback
+              // window.
               store.db.update(
-                  "INSERT INTO alert_events(rule_id,value) VALUES(?,?)", r.get("id"), value);
-              store.db.update(
-                  "UPDATE alert_rules SET last_triggered_at=now() WHERE id=?", r.get("id"));
-              store.mail(
-                  (String) r.get("email"), "MeterTrail alert / 告警", r.get("name") + ": " + value);
+                  "INSERT INTO"
+                      + " alert_evidence(rule_id,type,object_id,revision,value,started_at,window_value)"
+                      + " SELECT ?,o.type,o.object_id,o.revision,"
+                      + value
+                      + ",o.started_at,?::numeric"
+                      + window
+                      + " ON CONFLICT(rule_id,type,object_id) DO UPDATE SET"
+                      + " revision=excluded.revision,value=excluded.value,started_at=excluded.started_at,window_value=excluded.window_value,notified_at=NULL"
+                      + " WHERE excluded.revision>alert_evidence.revision",
+                  r.get("id"),
+                  actual,
+                  r.get("project_id"));
             }
+            if (!Boolean.TRUE.equals(r.get("ready"))) continue;
+            var pending =
+                store.db.queryForMap(
+                    "SELECT max(window_value) AS window_value,count(*) AS count,"
+                        + aggregate
+                        + "(value) AS value,min(started_at) AS first_at,max(started_at) AS last_at"
+                        + " FROM alert_evidence WHERE rule_id=? AND notified_at IS NULL",
+                    r.get("id"));
+            long count = ((Number) pending.get("count")).longValue();
+            if (count == 0) continue;
+            store.db.update(
+                "INSERT INTO"
+                    + " alert_events(rule_id,value,evidence_count,first_started_at,last_started_at)"
+                    + " VALUES(?,?,?,?,?)",
+                r.get("id"),
+                pending.get("window_value"),
+                count,
+                pending.get("first_at"),
+                pending.get("last_at"));
+            store.db.update(
+                "UPDATE alert_evidence SET notified_at=now() WHERE rule_id=? AND notified_at IS"
+                    + " NULL",
+                r.get("id"));
+            store.db.update(
+                "UPDATE alert_rules SET last_triggered_at=now() WHERE id=?", r.get("id"));
+            store.mail(
+                (String) r.get("email"),
+                "MeterTrail alert / 告警",
+                r.get("name")
+                    + ": "
+                    + pending.get("window_value")
+                    + "\nMetric / 指标: "
+                    + metric
+                    + "\nThreshold / 阈值: "
+                    + r.get("threshold")
+                    + "\nNew matching objects / 新增匹配对象数: "
+                    + count
+                    + "\nNew evidence contribution / 新匹配数据指标值: "
+                    + pending.get("value")
+                    + "\nEvent time range / 事件时间范围 (UTC): "
+                    + ((Timestamp) pending.get("first_at")).toInstant()
+                    + " — "
+                    + ((Timestamp) pending.get("last_at")).toInstant()
+                    + "\n"
+                    + "Cooldown-period matches are merged; previously notified revisions are not"
+                    + " sent again.\n"
+                    + "冷却期间的新匹配数据合并通知，已通知的对象版本不再重复提醒。");
           }
         });
   }
@@ -253,6 +322,11 @@ class Worker {
             + " p.workspace_id=w.id AND (p.deleted_at IS NOT NULL OR"
             + " o.started_at<now()-make_interval(days=>CASE w.plan WHEN 'Pro' THEN 1096 WHEN 'Core'"
             + " THEN 90 ELSE 30 END))");
+    store.db.update(
+        "DELETE FROM alert_evidence e USING alert_rules r WHERE e.rule_id=r.id AND (EXISTS(SELECT 1"
+            + " FROM projects p WHERE p.id=r.project_id AND p.deleted_at IS NOT NULL) OR"
+            + " (e.notified_at IS NOT NULL AND NOT EXISTS(SELECT 1 FROM objects o WHERE"
+            + " o.project_id=r.project_id AND o.type=e.type AND o.object_id=e.object_id)))");
     store.db.update(
         "DELETE FROM cost_entries c USING projects p,workspaces w WHERE c.project_id=p.id AND"
             + " p.workspace_id=w.id AND (p.deleted_at IS NOT NULL OR"

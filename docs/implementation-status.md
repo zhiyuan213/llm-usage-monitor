@@ -36,6 +36,8 @@ The full-stack smoke registers a synthetic account through the real HTTP API, re
 - A selected trace returns its Trace, Observation, and Score.
 - Billing, alert-rule creation and audit endpoints return real persisted data.
 
+Alert evaluation checks event times in the previous hour, excluding future events. Ingestion accepts at most five minutes of positive clock skew. Each rule persists its last notified object revision; unchanged evidence cannot trigger another notification after cooldown or worker restart. New matches captured during the one-hour cooldown are merged and delivered once even if their event times have since left the window. Notifications record the trigger-window value, new matching object count, and UTC event time range. A corrected higher revision is treated as new evidence if it still matches. V8 seeds existing notifications to avoid resending historical evidence on upgrade. This is application-level alert deduplication; ambiguous provider delivery failures can still cause an email retry.
+
 The local test account is stored only in ignored `.local/e2e-account.json`; it is not a production credential or included in commits. The browser is left on the local application for review.
 
 ## Required before public launch

@@ -47,7 +47,8 @@ final class Protocol {
             && e.path("revision").asLong() > 0,
         "INVALID_REVISION");
     try {
-      Instant.parse(Support.text(e, "startedAt", 40));
+      Instant started = Instant.parse(Support.text(e, "startedAt", 40));
+      Support.require(!started.isAfter(Instant.now().plusSeconds(300)), "INVALID_TIMESTAMP");
     } catch (Exception x) {
       throw new ApiError(400, "INVALID_TIMESTAMP");
     }

@@ -36,6 +36,235 @@ class IngestIntegrationTest {
   @Autowired PaymentReconciliation reconciliation;
 
   @Test
+  void alertsNotifyEachRevisionOnceAndMergeNewEvidenceAcrossCooldown() {
+    UUID rule = UUID.randomUUID();
+    store.db.update(
+        "INSERT INTO alert_rules(id,project_id,name,metric,threshold)"
+            + " VALUES(?,?,'latency','latency_ms',1000)",
+        rule,
+        project);
+    alertObject("first", 1850, "now()-interval '10 minutes'");
+    Worker worker = new Worker(store, tx, mail, true, "test@test.local");
+    worker.alerts();
+    assertEquals(1, alertCount(rule));
+    // Even after cooldown, the same abnormal object cannot trigger another notification.
+    store.db.update(
+        "UPDATE alert_rules SET last_triggered_at=now()-interval '2 hours' WHERE id=?", rule);
+    worker.alerts();
+    assertEquals(1, alertCount(rule));
+    store.db.update("UPDATE alert_rules SET last_triggered_at=now() WHERE id=?", rule);
+    alertObject("second", 2200, "now()-interval '59 minutes'");
+    alertObject("third", 2100, "now()-interval '59 minutes'");
+    worker.alerts();
+    assertEquals(1, alertCount(rule));
+    // Pending evidence survives its source event leaving the rolling window.
+    store.db.update(
+        "UPDATE objects SET started_at=now()-interval '2 hours' WHERE project_id=?", project);
+    store.db.update(
+        "UPDATE alert_rules SET last_triggered_at=now()-interval '2 hours' WHERE id=?", rule);
+    worker.alerts();
+    assertEquals(2, alertCount(rule));
+    assertEquals(
+        2L,
+        store.db.queryForObject(
+            "SELECT evidence_count FROM alert_events WHERE rule_id=? ORDER BY id DESC LIMIT 1",
+            Long.class,
+            rule));
+    String body =
+        store.secrets.open(
+            store.db.queryForObject(
+                "SELECT body FROM outbox WHERE recipient=? ORDER BY id DESC LIMIT 1",
+                String.class,
+                user + "@test.local"));
+    assertTrue(body.contains("New matching objects / 新增匹配对象数: 2"));
+    assertTrue(body.contains("2200"));
+    assertTrue(body.contains("(UTC)"));
+    store.db.update(
+        "UPDATE alert_rules SET last_triggered_at=now()-interval '2 hours' WHERE id=?", rule);
+    worker.alerts();
+    assertEquals(2, alertCount(rule));
+    store.db.update(
+        "UPDATE objects SET revision=2,started_at=now() WHERE project_id=? AND object_id='first'",
+        project);
+    new Worker(store, tx, mail, true, "test@test.local").alerts();
+    assertEquals(3, alertCount(rule));
+  }
+
+  @Test
+  void alertMigrationPreservesPreviouslyNotifiedEvidence() {
+    String schema = "upgrade_" + UUID.randomUUID().toString().replace("-", "");
+    var flyway =
+        org.flywaydb.core.Flyway.configure()
+            .dataSource(pg.getJdbcUrl(), pg.getUsername(), pg.getPassword())
+            .schemas(schema)
+            .defaultSchema(schema)
+            .target("7")
+            .load();
+    try {
+      flyway.migrate();
+      var db =
+          new org.springframework.jdbc.core.JdbcTemplate(
+              new org.springframework.jdbc.datasource.DriverManagerDataSource(
+                  pg.getJdbcUrl()
+                      + (pg.getJdbcUrl().contains("?") ? "&" : "?")
+                      + "currentSchema="
+                      + schema,
+                  pg.getUsername(),
+                  pg.getPassword()));
+      UUID rule = UUID.randomUUID();
+      db.update("INSERT INTO users(id,email,verified) VALUES(?, 'upgrade@test.local',true)", user);
+      db.update("INSERT INTO workspaces(id,owner_id,name) VALUES(?,?,'Upgrade')", workspace, user);
+      db.update(
+          "INSERT INTO projects(id,workspace_id,name) VALUES(?,?,'Upgrade')", project, workspace);
+      db.update(
+          "INSERT INTO alert_rules(id,project_id,name,metric,threshold,last_triggered_at)"
+              + " VALUES(?,?,'latency','latency_ms',1000,now()-interval '10 minutes')",
+          rule,
+          project);
+      db.update(
+          "INSERT INTO objects(project_id,type,object_id,revision,started_at,data)"
+              + " VALUES(?,'trace','old',1,now()-interval '20 minutes','{\"durationMs\":1850}')",
+          project);
+      db.update(
+          "INSERT INTO objects(project_id,type,object_id,revision,started_at,data)"
+              + " VALUES(?,'trace','new',1,now(),'{\"durationMs\":1850}')",
+          project);
+      org.flywaydb.core.Flyway.configure()
+          .dataSource(pg.getJdbcUrl(), pg.getUsername(), pg.getPassword())
+          .schemas(schema)
+          .defaultSchema(schema)
+          .load()
+          .migrate();
+      assertEquals(
+          List.of("old"),
+          db.queryForList(
+              "SELECT object_id FROM alert_evidence WHERE notified_at IS NOT NULL", String.class));
+    } finally {
+      store.db.execute("DROP SCHEMA IF EXISTS " + schema + " CASCADE");
+    }
+  }
+
+  @Test
+  void alertsExcludeFutureAndNonmatchingObjectsAndAreSafeAcrossWorkers() throws Exception {
+    UUID rule = UUID.randomUUID();
+    store.db.update(
+        "INSERT INTO alert_rules(id,project_id,name,metric,threshold)"
+            + " VALUES(?,?,'latency','latency_ms',1000)",
+        rule,
+        project);
+    alertObject("future", 1850, "now()+interval '2 hours'");
+    alertObject("normal", 100, "now()");
+    Worker worker = new Worker(store, tx, mail, true, "test@test.local");
+    worker.alerts();
+    assertEquals(0, alertCount(rule));
+    alertObject("slow", 1850, "now()");
+    ExecutorService pool = Executors.newFixedThreadPool(2);
+    try {
+      var futures =
+          pool.invokeAll(
+              List.of(Executors.callable(worker::alerts), Executors.callable(worker::alerts)));
+      for (var future : futures) future.get();
+    } finally {
+      pool.shutdownNow();
+    }
+    assertEquals(1, alertCount(rule));
+    assertEquals(
+        1L,
+        store.db.queryForObject(
+            "SELECT evidence_count FROM alert_events WHERE rule_id=?", Long.class, rule));
+  }
+
+  @Test
+  void ingestionRejectsFutureTimestampsButAllowsSmallClockSkew() {
+    var future = event("trace", "future", 1);
+    future.put("startedAt", Instant.now().plusSeconds(3600).toString());
+    assertTrue(
+        result(ingest.accept(project, batch(future)))
+            .get("errors")
+            .toString()
+            .contains("INVALID_TIMESTAMP"));
+    assertEquals(0, units());
+    future.put("eventId", UUID.randomUUID().toString());
+    future.put("startedAt", Instant.now().plusSeconds(120).toString());
+    assertEquals(1, result(ingest.accept(project, batch(future))).get("accepted"));
+  }
+
+  @Test
+  void errorAndCostRulesKeepWindowTriggerValueAndDoNotResendOldEvidence() {
+    for (String metric : List.of("error_count", "cost_usd")) {
+      UUID rule = UUID.randomUUID();
+      store.db.update(
+          "INSERT INTO alert_rules(id,project_id,name,metric,threshold) VALUES(?,?,?,?,2)",
+          rule,
+          project,
+          metric,
+          metric);
+      String first = metric + "-first", second = metric + "-second", third = metric + "-third";
+      alertObject(first, 100, "now()");
+      alertObject(second, 100, "now()");
+      store.db.update(
+          "UPDATE objects SET cost=1,data=jsonb_set(data,'{status}','\"error\"') WHERE project_id=?"
+              + " AND object_id IN (?,?)",
+          project,
+          first,
+          second);
+      Worker worker = new Worker(store, tx, mail, true, "test@test.local");
+      worker.alerts();
+      assertEquals(1, alertCount(rule));
+      alertObject(third, 100, "now()");
+      store.db.update(
+          "UPDATE objects SET cost=1,data=jsonb_set(data,'{status}','\"error\"') WHERE project_id=?"
+              + " AND object_id=?",
+          project,
+          third);
+      worker.alerts();
+      assertEquals(1, alertCount(rule));
+      store.db.update(
+          "UPDATE alert_rules SET last_triggered_at=now()-interval '2 hours' WHERE id=?", rule);
+      worker.alerts();
+      assertEquals(2, alertCount(rule));
+      assertTrue(
+          store
+                  .db
+                  .queryForObject(
+                      "SELECT value FROM alert_events WHERE rule_id=? ORDER BY id DESC LIMIT 1",
+                      java.math.BigDecimal.class,
+                      rule)
+                  .intValue()
+              >= 3);
+      assertEquals(
+          1L,
+          store.db.queryForObject(
+              "SELECT evidence_count FROM alert_events WHERE rule_id=? ORDER BY id DESC LIMIT 1",
+              Long.class,
+              rule));
+      store.db.update(
+          "UPDATE alert_rules SET last_triggered_at=now()-interval '2 hours' WHERE id=?", rule);
+      worker.alerts();
+      assertEquals(2, alertCount(rule));
+      store.db.update("UPDATE alert_rules SET enabled=false WHERE id=?", rule);
+      // Keep fixtures for the next metric isolated.
+      store.db.update("DELETE FROM objects WHERE project_id=?", project);
+    }
+  }
+
+  void alertObject(String id, int duration, String timestamp) {
+    store.db.update(
+        "INSERT INTO objects(project_id,type,object_id,revision,started_at,data)"
+            + " VALUES(?,'trace',?,1,"
+            + timestamp
+            + ",?::jsonb)",
+        project,
+        id,
+        "{\"durationMs\":" + duration + ",\"status\":\"success\"}");
+  }
+
+  int alertCount(UUID rule) {
+    return store.db.queryForObject(
+        "SELECT count(*) FROM alert_events WHERE rule_id=?", Integer.class, rule);
+  }
+
+  @Test
   void reconciliationSkipsMissingCredentialsThroughTheRealTransactionProxy() {
     assertTrue(org.springframework.aop.support.AopUtils.isCglibProxy(payments));
     assertFalse(payments.reconciliationEnabled());
