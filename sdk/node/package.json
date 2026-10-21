@@ -1,1 +1,27 @@
-{"name":"@metertrail/sdk","version":"0.1.0","private":true,"type":"module","main":"index.mjs","types":"index.d.ts","engines":{"node":">=20"},"scripts":{"test":"node --test test.mjs"}}
+{
+  "name": "@metertrail/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "index.mjs",
+  "types": "index.d.ts",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhiyuan213/llm-usage-monitor-sdk.git",
+    "directory": "node"
+  },
+  "homepage": "https://github.com/zhiyuan213/llm-usage-monitor-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/zhiyuan213/llm-usage-monitor-sdk/issues"
+  },
+  "files": [
+    "index.mjs",
+    "index.d.ts"
+  ]
+}

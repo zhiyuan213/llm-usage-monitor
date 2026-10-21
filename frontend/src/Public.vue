@@ -663,15 +663,46 @@ async function copy() {
             </tr>
           </tbody>
         </table>
-        <h2 id="sdk">{{ t("Local SDK packages", "本地 SDK 包") }}</h2>
+        <h2 id="sdk">{{ t("SDK packages", "SDK 包") }}</h2>
         <p>
           {{
             t(
-              "Source SDKs are provided in sdk/python, sdk/node, and sdk/java. They are not published to package registries. Use the repository installation instructions.",
-              "源码 SDK 位于 sdk/python、sdk/node、sdk/java，尚未发布到包仓库，请按仓库说明本地安装。",
+              "Node.js / TypeScript, Python, and Java source SDKs are available in the dedicated GitHub repository. Follow its installation instructions; packages are not yet published to npm, PyPI, or Maven Central.",
+              "Node.js / TypeScript、Python、Java 源码 SDK 已放到独立 GitHub 仓库，请按仓库说明安装；尚未发布到 npm、PyPI 或 Maven Central。",
             )
           }}
         </p>
+        <div class="hero-buttons" style="flex-wrap: wrap; margin-bottom: 24px">
+          <a
+            class="btn primary"
+            href="https://github.com/zhiyuan213/llm-usage-monitor-sdk"
+            target="_blank"
+            rel="noopener noreferrer"
+            >{{ t("SDK repository", "SDK GitHub 仓库") }}
+            <ArrowUpRight :size="15"
+          /></a>
+          <a
+            class="btn"
+            href="https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/node"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Node.js / TypeScript</a
+          >
+          <a
+            class="btn"
+            href="https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/python"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Python</a
+          >
+          <a
+            class="btn"
+            href="https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/java"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Java</a
+          >
+        </div>
         <h2 id="retries">
           {{ t("Retries preserve identity", "重试必须保留身份") }}
         </h2>

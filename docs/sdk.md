@@ -1,13 +1,25 @@
 # Source SDKs and REST examples
 
+Canonical SDK repository: [zhiyuan213/llm-usage-monitor-sdk](https://github.com/zhiyuan213/llm-usage-monitor-sdk), with [Node.js / TypeScript](https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/node), [Python](https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/python), and [Java](https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/java) packages. This application repository retains source copies for its smoke scripts and tests.
+
+Clone the SDK repository into your application directory before following the Node.js or Java installation steps:
+
+```sh
+git clone https://github.com/zhiyuan213/llm-usage-monitor-sdk.git
+```
+
 The SDKs are source packages, version 0.1.0, and are not published to npm, PyPI, or Maven Central. Each client has a bounded in-memory queue: 10,000 events or about 16 MiB. `record` does not make network requests. The client flushes at 100 events, about 256 KiB, or 5 seconds, and supports explicit flush and shutdown.
 
 ## Node.js and TypeScript
 
-Node.js 20+; Node.js 24 is used in CI. Import from the repository or use a local file dependency.
+Node.js 20+; Node.js 24 is used in CI. Install the source package from your application directory:
+
+```sh
+npm install ./llm-usage-monitor-sdk/node
+```
 
 ```js
-import { MeterTrail } from './sdk/node/index.mjs';
+import { MeterTrail } from '@metertrail/sdk';
 const client = new MeterTrail({
   serviceName: 'my-service',
   apiKey: process.env.METERTRAIL_API_KEY,
@@ -27,7 +39,7 @@ await client.close(10000);
 Python 3.10+, no runtime dependencies:
 
 ```sh
-pip install ./sdk/python
+pip install "git+https://github.com/zhiyuan213/llm-usage-monitor-sdk.git@main#subdirectory=python"
 ```
 
 ```python
@@ -45,7 +57,7 @@ Environment variables supply endpoint/key. A daemon thread runs the sender. `flu
 Java 17+, Jackson; build/install from source:
 
 ```sh
-mvn -f sdk/java/pom.xml install
+mvn -f llm-usage-monitor-sdk/java/pom.xml install
 ```
 
 Use the locally installed `com.metertrail:metertrail-sdk:0.1.0` dependency. It is not a public repository coordinate.

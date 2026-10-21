@@ -6,5 +6,9 @@ name = "metertrail-local"
 version = "0.1.0"
 description = "MeterTrail source SDK; not published on PyPI"
 requires-python = ">=3.10"
+[project.urls]
+Homepage = "https://metertrail.com/docs#sdk"
+Repository = "https://github.com/zhiyuan213/llm-usage-monitor-sdk"
+Issues = "https://github.com/zhiyuan213/llm-usage-monitor-sdk/issues"
 [tool.setuptools]
 py-modules = ["metertrail"]

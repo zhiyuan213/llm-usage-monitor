@@ -3,6 +3,19 @@
   <groupId>com.metertrail</groupId>
   <artifactId>metertrail-sdk</artifactId>
   <version>0.1.0</version>
+  <name>MeterTrail Java SDK</name>
+  <description>MeterTrail source SDK for Java 17 and later</description>
+  <url>https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/java</url>
+  <scm>
+    <connection>scm:git:https://github.com/zhiyuan213/llm-usage-monitor-sdk.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/zhiyuan213/llm-usage-monitor-sdk.git</developerConnection>
+    <url>https://github.com/zhiyuan213/llm-usage-monitor-sdk</url>
+    <tag>HEAD</tag>
+  </scm>
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/zhiyuan213/llm-usage-monitor-sdk/issues</url>
+  </issueManagement>
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

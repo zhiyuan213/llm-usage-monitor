@@ -4,6 +4,8 @@ LLM observability and cost tracking, built from **MeterTrail Project Design V1.1
 
 This repository contains a runnable development release, not a production readiness certification. The verified local capabilities and remaining launch gates are tracked in [implementation status](docs/implementation-status.md).
 
+Node.js / TypeScript, Python, and Java SDKs: [llm-usage-monitor-sdk](https://github.com/zhiyuan213/llm-usage-monitor-sdk). See [SDK installation and usage](docs/sdk.md).
+
 ## Start locally
 
 Prerequisites: Docker Desktop (Linux containers) / Docker Engine with Compose v2. Node.js 24 is needed only for local frontend development and smoke scripts; Java 17 / Maven 3.9 for local backend development.
