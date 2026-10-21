@@ -378,7 +378,7 @@ const usagePercent = computed(() =>
           >{{ t("All times in UTC", "时间均为 UTC") }}
         </div>
       </header>
-      <main class="console-content">
+      <main class="console-content" :aria-busy="loading">
         <div class="page-heading">
           <div>
             <div class="eyebrow">
@@ -416,16 +416,26 @@ const usagePercent = computed(() =>
               <option v-for="p in projects" :value="p.id">
                 {{ p.name }}
               </option></select
-            ><button class="btn" :disabled="loading" @click="refresh">
-              <RefreshCw :size="15" :class="{ spin: loading }" />{{
-                t("Refresh", "刷新")
-              }}
+            ><button
+              class="btn"
+              :disabled="loading"
+              :aria-label="
+                loading
+                  ? t('Loading data', '正在加载数据')
+                  : t('Refresh', '刷新')
+              "
+              @click="refresh"
+            >
+              <RefreshCw
+                :size="15"
+                :class="{ spin: loading }"
+                aria-hidden="true"
+              />{{ t("Refresh", "刷新") }}
             </button>
           </div>
         </div>
         <div v-if="error" class="notice error" role="alert">{{ error }}</div>
         <div v-if="notice" class="notice success">{{ notice }}</div>
-        <div v-if="loading" class="loading-line"></div>
         <template v-if="page === 'projects'"
           ><div class="section-heading">
             <h2>
