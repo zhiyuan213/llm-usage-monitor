@@ -808,9 +808,6 @@ async function copy() {
         <RouterLink to="/privacy">{{ t("Privacy", "隐私") }}</RouterLink
         ><RouterLink to="/terms">{{ t("Terms", "条款") }}</RouterLink
         ><RouterLink to="/refunds">{{ t("Refunds", "退款") }}</RouterLink
-        ><a
-          href="mailto:13428961230@163.com"
-          >{{ t("Contact", "联系方式") }}：13428961230@163.com</a
         >
       </nav>
     </footer>
