@@ -5,6 +5,7 @@ import Public from "./Public.vue";
 import Console from "./Console.vue";
 import "./style.css";
 import "./console-v2.css";
+import "./public-v2.css";
 const router = createRouter({
   history: createWebHistory(),
   routes: [

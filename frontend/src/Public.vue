@@ -134,7 +134,7 @@ async function copy() {
 </script>
 <template>
   <div
-    class="public"
+    class="public public-v2"
     :class="{
       'docs-page': page === 'docs',
       'home-page': page === 'home',
@@ -587,8 +587,9 @@ async function copy() {
               )
             }}
           </p>
-          <ol>
+          <ol class="quickstart-steps">
             <li>
+              <strong>{{ t("Create a project", "创建项目") }}</strong>
               {{
                 t(
                   "Create an account, verify your email, and create a project.",
@@ -597,6 +598,7 @@ async function copy() {
               }}
             </li>
             <li>
+              <strong>{{ t("Create an API key", "创建密钥") }}</strong>
               {{
                 t(
                   "Open API key management. Verify the action by email to create a project key.",
@@ -605,6 +607,7 @@ async function copy() {
               }}
             </li>
             <li>
+              <strong>{{ t("Configure your environment", "配置环境") }}</strong>
               {{
                 t(
                   "Set METERTRAIL_API_KEY and METERTRAIL_ENDPOINT to your deployment URL.",
@@ -613,6 +616,7 @@ async function copy() {
               }}
             </li>
             <li>
+              <strong>{{ t("Send an example", "发送示例") }}</strong>
               {{
                 t(
                   "Run scripts/send-example.mjs, then open the project overview.",
@@ -807,8 +811,7 @@ async function copy() {
       <nav>
         <RouterLink to="/privacy">{{ t("Privacy", "隐私") }}</RouterLink
         ><RouterLink to="/terms">{{ t("Terms", "条款") }}</RouterLink
-        ><RouterLink to="/refunds">{{ t("Refunds", "退款") }}</RouterLink
-        >
+        ><RouterLink to="/refunds">{{ t("Refunds", "退款") }}</RouterLink>
       </nav>
     </footer>
   </div>

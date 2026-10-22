@@ -11,3 +11,12 @@ Implemented from the supplied 1920 × 1080 design viewport and design specificat
 - Console-only styles live in frontend/src/console-v2.css. Public pages, backend endpoints, authorization, forms' submit handlers, filtering, pagination sizes and export content remain unchanged.
 
 Validation: screenshots of all ten supplied page layouts at 1920 × 1080, with no horizontal page overflow; default five-row overview, settings and billing fit one screen. 390 px responsive checks cover management, traces, alerts, account and billing. Browser checks cover pagination 10/2 rows, empty filtering, trace details, project shortcuts and analytics dimensions. Actual data and empty states remain dynamic, not copied from the reference screenshots.
+
+## 官网 V2（首页、价格、开发文档）
+
+- 按官网 V2 设计统一 1280px 内容宽度、72px 导航、36px 按钮、颜色与页脚。
+- 首页采用双栏文案与平直预览卡片，四列功能区及底部行动入口。
+- 价格页保留所有套餐价格、配额、保留期及分段超额规则，统一套餐卡片与说明表格。
+- 文档快速开始改为两列编号步骤卡片，代码区域独立滚动；保留目录、语言示例及复制逻辑。
+- 样式独立在 public-v2.css，控制台 V2 不受影响。移动端自动折行。
+- 验证：前端 5 项测试、生产构建、依赖审计、生成示例同步及 Node/脚本 11 项测试通过；浏览器检查三页及 390px 布局。内嵌浏览器未返回剪贴板内容，复制功能仅确认原逻辑未修改。

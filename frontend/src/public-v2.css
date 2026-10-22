@@ -1,0 +1,641 @@
+/* Public website V2: shared geometry, independent of the console. */
+.public-v2 {
+  --blue: #3156e8;
+  --line: #e1e7f0;
+  color: #1b2b44;
+  font-family: "MeterTrail Noto Sans SC", sans-serif;
+  font-synthesis: weight;
+  background: #fff;
+}
+.public-v2:is(.home-page, .pricing-page, .docs-page) {
+  min-height: 100dvh;
+}
+.public-v2 .public-header {
+  height: 72px;
+  max-width: 1280px;
+  padding: 0;
+  gap: 56px;
+  flex-shrink: 0;
+  border-bottom: 0;
+}
+.public-v2 .public-header::before {
+  content: "";
+  position: absolute;
+  top: 71px;
+  left: 0;
+  right: 0;
+  border-bottom: 1px solid var(--line);
+  pointer-events: none;
+}
+.public-v2 .brand {
+  font-size: 26px;
+  letter-spacing: 0.3px;
+}
+.public-v2 .brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #4168ee;
+}
+.public-v2 .public-header nav {
+  height: 100%;
+  gap: 32px;
+  align-items: stretch;
+}
+.public-v2 .public-header nav a {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+  color: #7c8eaa;
+}
+.public-v2 .public-header nav a.router-link-exact-active {
+  color: #3156e8;
+  border-color: #546aff;
+}
+.public-v2 .header-actions {
+  margin-left: auto;
+  margin-right: 98px;
+  gap: 16px;
+}
+.public-v2 .btn {
+  height: 36px;
+  min-height: 36px;
+  min-width: 112px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: none;
+  gap: 12px;
+}
+.public-v2 .btn.primary {
+  background: #3156e8;
+  border-color: #3156e8;
+  color: white;
+}
+.public-language {
+  top: 20px;
+  right: max(24px, calc((100vw - 1280px) / 2));
+}
+.public-language select {
+  font-family: "MeterTrail Noto Sans SC", sans-serif;
+  font-size: 12px;
+  color: #7c8eaa;
+  max-width: 90px;
+}
+.public-v2 p {
+  color: #7c8eaa;
+}
+.public-v2 .hero {
+  flex: 0 0 auto;
+  min-height: 526px;
+  padding: 35px max(24px, calc((100vw - 1280px) / 2));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 608px);
+  gap: 64px;
+  background: #f5f8ff;
+  overflow: visible;
+}
+.public-v2 .hero .eyebrow {
+  width: fit-content;
+  background: #eaf0ff;
+  border: 1px solid #dce6ff;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.public-v2 .hero h1 {
+  font-size: 42px;
+  line-height: 1.45;
+  letter-spacing: -1px;
+  margin: 20px 0;
+}
+.public-v2 .hero h1 span {
+  color: #3156e8;
+}
+.public-v2 .hero p {
+  max-width: 540px;
+  font-size: 16px;
+  line-height: 1.8;
+}
+.public-v2 .hero-buttons {
+  margin: 26px 0 12px;
+}
+.public-v2 .hero-buttons .btn {
+  min-width: 152px;
+}
+.public-v2 .auth-cta-placeholder {
+  min-height: 36px;
+  min-width: 152px;
+}
+.public-v2 .hero-copy > small {
+  font-size: 12px;
+}
+.public-v2 .hero-console {
+  transform: none;
+  max-width: none;
+  border-radius: 10px;
+  box-shadow: 0 14px 32px #1b345908;
+}
+.public-v2 .mock-top {
+  height: 36px;
+  font-size: 12px;
+  gap: 12px;
+}
+.public-v2 .mock-top i {
+  height: 11px;
+  width: 11px;
+  background: #b5c6e1;
+}
+.public-v2 .mock-top .badge {
+  font-size: 12px;
+}
+.public-v2 .mock-body {
+  padding: 20px;
+}
+.public-v2 .mock-title {
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+.public-v2 .mock-title .badge {
+  font-size: 12px;
+}
+.public-v2 .mock-metrics {
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.public-v2 .mock-metrics > div {
+  padding: 12px 14px;
+}
+.public-v2 .mock-metrics small,
+.public-v2 .mock-metrics span {
+  font-size: 12px;
+}
+.public-v2 .mock-metrics strong {
+  font-size: 24px;
+  margin: 4px 0;
+}
+.public-v2 .mock-metrics span {
+  color: #36af91;
+}
+.public-v2 .mock-chart {
+  padding: 14px;
+}
+.public-v2 .chart-label {
+  font-size: 12px;
+}
+.public-v2 .chart-label span {
+  font-size: 12px;
+}
+.public-v2 .bars {
+  height: 100px;
+  margin: 14px 0 8px;
+  gap: 10px;
+  padding: 0;
+}
+.public-v2 .bars > div {
+  background: #869fee;
+}
+.public-v2 .bars > div:nth-child(3n) {
+  background: #3156e8;
+}
+.public-v2 .chart-axis {
+  font-size: 10px;
+}
+.public-v2 .mock-trace {
+  padding-top: 14px;
+  font-size: 12px;
+}
+.public-v2 .mock-trace > span:nth-last-child(-n + 2) {
+  display: none;
+}
+.public-v2 .floating-card {
+  position: absolute;
+  right: 20px;
+  bottom: 17px;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  gap: 8px;
+  color: #a1b1c9;
+}
+.public-v2 .floating-card svg {
+  width: 14px;
+  height: 14px;
+}
+.public-v2 .floating-card strong {
+  font-size: 12px;
+  font-weight: 400;
+  color: #8b9db8;
+}
+.public-v2 .floating-card small {
+  display: none;
+}
+.public-v2 .features {
+  width: 100%;
+  padding: 32px max(24px, calc((100vw - 1280px) / 2)) 24px;
+  gap: 32px;
+  border: 0;
+}
+.public-v2 .features article > svg {
+  padding: 9px;
+  border-radius: 8px;
+  background: #edf1ff;
+  margin-bottom: 12px;
+  width: 18px;
+  height: 18px;
+  color: #546bff;
+}
+.public-v2 .features h3 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.public-v2 .features p {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.public-v2 .bottom-cta {
+  width: calc(100% - 48px);
+  max-width: 1280px;
+  margin: 18px auto 32px;
+  padding: 22px 28px;
+  border-radius: 8px;
+  background: #f5f8ff;
+}
+.public-v2 .bottom-cta h2 {
+  font-size: 24px;
+}
+.public-v2 .bottom-cta .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.public-v2 > footer {
+  max-width: 1280px;
+  width: calc(100% - 48px);
+  min-height: 80px;
+  margin: 0 auto;
+  padding: 20px 0;
+  gap: 24px;
+}
+.public-v2 footer .brand {
+  font-size: 20px;
+}
+.public-v2 footer > span,
+.public-v2 footer nav {
+  font-size: 12px;
+}
+.public-v2 .public-content {
+  max-width: 1280px;
+  width: calc(100% - 48px);
+  padding: 24px 0;
+  color: #1b2b44;
+  min-height: 0;
+}
+.public-v2 .page-intro {
+  margin-bottom: 22px;
+  text-align: center;
+}
+.public-v2 .page-intro .eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.public-v2 .page-intro h1 {
+  font-size: 32px;
+  margin: 10px 0;
+}
+.public-v2 .page-intro p {
+  font-size: 14px;
+  margin: 0;
+}
+.public-v2 .plans {
+  margin: 20px 0 24px;
+  gap: 24px;
+}
+.public-v2 .plans article {
+  border-radius: 8px;
+  padding: 22px;
+  position: relative;
+}
+.public-v2 .plans article.featured {
+  border: 1px solid #546bff;
+  transform: none;
+  box-shadow: none;
+}
+.public-v2 .plans h3 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+.public-v2 .plans .price {
+  font-size: 38px;
+  line-height: 1.4;
+  margin: 0 0 20px;
+}
+.public-v2 .plans .price small {
+  font-size: 12px;
+  font-weight: 400;
+}
+.public-v2 .plans p {
+  font-size: 14px;
+}
+.public-v2 .plans ul {
+  gap: 9px;
+  margin: 24px 0;
+  font-size: 14px;
+}
+.public-v2 .plans .btn {
+  width: 100%;
+}
+.public-v2 .plan-tag {
+  top: 20px;
+  right: 20px;
+  left: auto;
+  transform: none;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: #edf1ff;
+  color: #546bff;
+}
+.public-v2 .pricing-details {
+  padding: 20px;
+  margin: 0;
+  border-radius: 8px;
+}
+.public-v2 .pricing-details h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.public-v2 .pricing-details p {
+  font-size: 14px;
+  margin: 8px 0 16px;
+}
+.public-v2 .pricing-details th,
+.public-v2 .pricing-details td {
+  padding: 10px 16px;
+  font-size: 14px;
+}
+.public-v2 .pricing-details .muted {
+  background: #f5f7fb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.public-v2 .docs-layout {
+  max-width: 1280px;
+  padding: 32px 0 46px;
+  grid-template-columns: 224px minmax(0, 1fr);
+  gap: 40px;
+}
+.public-v2 .docs-layout aside {
+  padding: 0 20px 0 0;
+  gap: 6px;
+}
+.public-v2 .docs-layout aside .eyebrow {
+  margin: 0 14px 16px;
+  font-size: 14px;
+}
+.public-v2 .docs-layout aside a {
+  font-size: 14px;
+  padding: 12px 14px;
+  border-radius: 6px;
+}
+.public-v2 .docs-layout article {
+  padding: 0 0 20px;
+  scrollbar-gutter: auto;
+}
+.public-v2 .docs-layout h1 {
+  font-size: 28px;
+  margin: 0 0 10px;
+}
+.public-v2 .docs-layout h2 {
+  font-size: 24px;
+}
+.public-v2 .docs-layout p,
+.public-v2 .docs-layout li {
+  font-size: 14px;
+  line-height: 1.8;
+}
+.public-v2 .quickstart-steps {
+  list-style: none;
+  counter-reset: steps;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0;
+  margin: 24px 0;
+}
+.public-v2 .quickstart-steps li {
+  counter-increment: steps;
+  position: relative;
+  background: #fafbfe;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px 16px 14px 48px;
+  margin: 0;
+}
+.public-v2 .quickstart-steps li::before {
+  content: counter(steps);
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  border-radius: 50%;
+  background: #edf1ff;
+  color: #546bff;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+}
+.public-v2 .quickstart-steps strong {
+  display: block;
+  font-size: 14px;
+  color: #405777;
+  margin-bottom: 2px;
+}
+.public-v2 .docs-content .tabs {
+  margin-top: 24px;
+}
+.public-v2 .docs-content .tabs button {
+  font-size: 14px;
+}
+.public-v2 .code-box {
+  margin: 16px 0 0;
+  border-radius: 8px;
+  background: #12213d;
+}
+.public-v2 .code-box > div {
+  background: #1b2d4a;
+  padding: 8px 20px;
+  font-size: 12px;
+  min-height: 44px;
+}
+.public-v2 .code-box button {
+  border: 1px solid #3b506e;
+  border-radius: 4px;
+  padding: 5px 18px;
+  font-size: 12px;
+}
+.public-v2 .docs-content .code-box pre {
+  padding: 20px;
+  max-height: clamp(180px, calc(100dvh - 610px), 480px);
+  font-size: 13px;
+  line-height: 2;
+}
+@media (max-width: 1360px) {
+  .public-v2 .public-header {
+    width: calc(100% - 48px);
+    gap: 32px;
+  }
+  .public-v2 .docs-layout {
+    width: calc(100% - 48px);
+    gap: 28px;
+  }
+  .public-v2 .hero {
+    gap: 32px;
+    grid-template-columns: 1fr 1fr;
+  }
+  .public-v2 .hero h1 {
+    font-size: 36px;
+  }
+}
+@media (max-width: 800px) {
+  .public-v2 .public-header {
+    height: auto;
+    min-height: 72px;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    padding: 16px 0;
+  }
+  .public-v2 .public-header::before {
+    display: none;
+  }
+  .public-v2 .brand {
+    font-size: 22px;
+  }
+  .public-v2 .header-actions {
+    margin-right: 90px;
+    gap: 10px;
+  }
+  .public-v2 .public-header nav {
+    order: 3;
+    width: 100%;
+    gap: 28px;
+    height: 36px;
+  }
+  .public-v2 .hero {
+    grid-template-columns: 1fr;
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+  .public-v2 .hero-console {
+    max-width: 608px;
+    margin: auto;
+  }
+  .public-v2 .features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .public-v2 .plans {
+    grid-template-columns: 1fr;
+  }
+  .public-v2 .bottom-cta {
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .public-v2 .docs-layout {
+    display: flex;
+    flex-direction: column;
+    padding: 16px 0;
+    gap: 20px;
+  }
+  .public-v2 .docs-layout aside {
+    flex-direction: row;
+    flex-shrink: 0;
+    overflow-x: auto;
+    border: 0;
+    padding: 0;
+  }
+  .public-v2 .docs-layout aside .eyebrow {
+    display: none;
+  }
+  .public-v2 .quickstart-steps {
+    grid-template-columns: 1fr;
+  }
+  .public-v2 > footer {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .public-v2 footer nav {
+    margin-left: 0;
+  }
+}
+@media (max-width: 480px) {
+  .public-v2 .public-header {
+    gap: 12px;
+  }
+  .public-v2 .header-actions {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .public-v2 .public-header .brand {
+    margin-right: 90px;
+  }
+  .public-v2 .hero h1 {
+    font-size: 32px;
+  }
+  .public-v2 .hero-buttons {
+    flex-wrap: wrap;
+  }
+  .public-v2 .mock-body {
+    padding: 12px;
+  }
+  .public-v2 .mock-metrics {
+    gap: 6px;
+  }
+  .public-v2 .mock-metrics > div {
+    padding: 8px;
+  }
+  .public-v2 .mock-metrics strong {
+    font-size: 19px;
+  }
+  .public-v2 .mock-metrics span {
+    font-size: 10px;
+  }
+  .public-v2 .floating-card {
+    right: 12px;
+    bottom: 12px;
+  }
+  .public-v2 .floating-card strong {
+    font-size: 10px;
+  }
+  .public-v2 .features {
+    grid-template-columns: 1fr;
+  }
+  .public-v2 .page-intro h1 {
+    font-size: 26px;
+  }
+}
+@media (min-width: 801px) and (min-height: 900px) {
+  .public-v2.pricing-page .plans article {
+    padding: 20px 22px;
+  }
+  .public-v2.pricing-page .plans ul {
+    margin: 18px 0;
+    gap: 7px;
+  }
+  .public-v2.pricing-page .plans .price {
+    margin-bottom: 14px;
+  }
+  .public-v2.pricing-page .pricing-details {
+    margin-top: 0;
+  }
+  .public-v2.pricing-page .pricing-details th,
+  .public-v2.pricing-page .pricing-details td {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}

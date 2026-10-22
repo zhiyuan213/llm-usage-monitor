@@ -5,7 +5,10 @@ import { language, setLanguage } from "./lib";
   <RouterView />
   <div
     class="language-floating"
-    :class="{ 'console-language': $route.path.startsWith('/app') }"
+    :class="{
+      'console-language': $route.path.startsWith('/app'),
+      'public-language': !$route.path.startsWith('/app'),
+    }"
   >
     <select
       aria-label="Language / 语言"
