@@ -51,6 +51,7 @@ import {
   errorText,
 } from "./lib";
 import { contextLoader } from "./context-loader";
+import { verificationFlow } from "./verification";
 function statusLabel(status: string | undefined) {
   switch (status) {
     case "success": return t("success", "成功");
@@ -146,45 +147,21 @@ const newProject = reactive({ name: "", environment: "production" }),
   }),
   billing = reactive({ enabled: false, cap: "0", consent: false }),
   deleteConfirm = ref("");
-const verification = reactive({
-  open: false,
-  action: "",
-  target: "",
-  challengeId: "",
-  code: "",
-  busy: false,
-  error: "",
-});
+const { verification, openVerification, sendCode } = verificationFlow(
+  (action, target) => api("/verification", { action, target }),
+  errorText,
+);
 let perform: (proof: any) => Promise<void> = async () => {};
 async function verify(
   action: string,
   target: string,
   fn: (proof: any) => Promise<void>,
 ) {
-  verification.open = true;
-  verification.action = action;
-  verification.target = target;
-  verification.code = "";
-  verification.error = "";
-  verification.challengeId = "";
   perform = fn;
-  await sendCode();
-}
-async function sendCode() {
-  verification.busy = true;
-  try {
-    const r = await api("/verification", {
-      action: verification.action,
-      target: verification.target,
-    });
-    verification.challengeId = r.challengeId;
-  } catch (e) {
-    verification.error = errorText(e);
-  } finally {
-    verification.busy = false;
-  }
+  openVerification(action, target);
 }
 async function confirm() {
+  if (verification.busy || !verification.challengeId) return;
   verification.busy = true;
   verification.error = "";
   try {
@@ -1838,9 +1815,17 @@ const usagePercent = computed(() =>
         <div class="modal-icon"><ShieldCheck :size="26" /></div>
         <h2 id="verify-title">{{ t("Verify it’s you", "验证你的身份") }}</h2>
         <p>
-          {{ t("Enter the code sent to", "请输入发送至") }}
+          {{
+            verification.challengeId
+              ? t("Enter the code sent to", "请输入发送至")
+              : t("Click Send code to receive a verification code at", "点击“发送验证码”，向")
+          }}
           <b>{{ session?.email }}</b>
-          {{ t("to authorize this change.", "的验证码以授权此次变更。") }}
+          {{
+            verification.challengeId
+              ? t("to authorize this change.", "的验证码以授权此次变更。")
+              : t("to authorize this change.", "发送验证码以授权此次变更。")
+          }}
         </p>
         <div class="verification-target">
           <code>{{ verification.action }}</code
@@ -1882,7 +1867,11 @@ const usagePercent = computed(() =>
             :disabled="verification.busy"
             @click="sendCode"
           >
-            {{ t("Resend code", "重新发送") }}
+            {{
+              verification.challengeId
+                ? t("Resend code", "重新发送")
+                : t("Send code", "发送验证码")
+            }}
           </button>
         </form>
       </section>
