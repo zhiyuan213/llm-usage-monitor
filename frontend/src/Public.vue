@@ -809,10 +809,8 @@ async function copy() {
         ><RouterLink to="/terms">{{ t("Terms", "条款") }}</RouterLink
         ><RouterLink to="/refunds">{{ t("Refunds", "退款") }}</RouterLink
         ><a
-          href="https://github.com/zhiyuan213/llm-usage-monitor"
-          target="_blank"
-          rel="noreferrer"
-          >GitHub ↗</a
+          href="mailto:13428961230@163.com"
+          >{{ t("Contact", "联系方式") }}：13428961230@163.com</a
         >
       </nav>
     </footer>
