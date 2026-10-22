@@ -2573,3 +2573,17 @@ dd {
 @media (max-width: 650px) {
   .price-version-form { grid-template-columns: minmax(0, 1fr); }
 }
+/* Keep search and export actions identical in size within the query toolbar. */
+.console-shell .filters .btn {
+  height: 42px;
+  min-height: 42px;
+  min-width: 110px;
+  padding: 10px 16px;
+  font-size: 15px;
+  line-height: 20px;
+}
+.console-shell .filters > select {
+  height: 42px;
+  min-height: 42px;
+  margin: 0;
+}
