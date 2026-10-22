@@ -1,0 +1,212 @@
+package com.metertrail;
+
+import jakarta.servlet.http.*;
+import java.io.*;
+import java.util.*;
+import java.util.function.Function;
+import org.springframework.transaction.annotation.*;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+class QueryReportsController {
+  final Store store;
+  final ConsoleController console;
+
+  QueryReportsController(Store store, ConsoleController console) {
+    this.store = store;
+    this.console = console;
+  }
+
+  record Report(
+      String sql,
+      String order,
+      Object[] args,
+      String[] headers,
+      float[] widths,
+      Function<Map<String, Object>, String[]> row) {}
+
+  String val(Object value, String missing) {
+    return value == null ? missing : value.toString();
+  }
+
+  String utc(Object value) {
+    return java.time.format.DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")
+        .withZone(java.time.ZoneOffset.UTC)
+        .format(((java.sql.Timestamp) value).toInstant());
+  }
+
+  Report report(
+      String kind,
+      UUID project,
+      String dimension,
+      String search,
+      String status,
+      boolean zh,
+      HttpServletRequest req) {
+    UUID user = SessionFilter.uid(req);
+    if (kind.equals("audit"))
+      return new Report(
+          "SELECT a.* FROM audit_logs a WHERE a.user_id=? OR a.workspace_id IN(SELECT id FROM"
+              + " workspaces WHERE owner_id=?)",
+          "id DESC",
+          new Object[] {user, user},
+          zh
+              ? new String[] {"时间 UTC", "操作", "目标", "结果", "IP", "请求 ID"}
+              : new String[] {"Time UTC", "Action", "Target", "Result", "IP", "Request ID"},
+          new float[] {115, 115, 200, 70, 100, 170},
+          r ->
+              new String[] {
+                utc(r.get("created_at")),
+                val(r.get("action"), "—"),
+                val(r.get("target"), "—"),
+                Boolean.TRUE.equals(r.get("success"))
+                    ? (zh ? "成功" : "Success")
+                    : (zh ? "失败" : "Failed"),
+                val(r.get("ip"), "—"),
+                val(r.get("request_id"), "—")
+              });
+    Support.require(Set.of("traces", "analytics").contains(kind), "INVALID_REPORT");
+    Support.require(project != null, "PROJECT_REQUIRED");
+    store.project(user, project);
+    if (kind.equals("analytics")) {
+      Support.require(
+          Set.of("userId", "customerId", "feature").contains(dimension), "INVALID_DIMENSION");
+      return new Report(
+          "SELECT o.data->>? AS dimension,count(*) AS objects,sum(o.cost) AS cost,count(*)"
+              + " FILTER(WHERE o.data->>'observationType'='generation' AND o.cost IS NULL) AS"
+              + " unknown_costs,sum((o.data->'usage'->>'inputTokens')::numeric+(o.data->'usage'->>'outputTokens')::numeric)"
+              + " AS tokens"
+              + console.source()
+              + " GROUP BY 1",
+          "objects DESC,dimension ASC NULLS LAST",
+          new Object[] {dimension, project, user},
+          zh
+              ? new String[] {"标识", "对象数", "已知 Token", "估算成本 USD", "未知成本调用"}
+              : new String[] {
+                "Identifier", "Objects", "Known tokens", "Estimated cost USD", "Unknown costs"
+              },
+          new float[] {230, 110, 130, 160, 140},
+          r ->
+              new String[] {
+                val(r.get("dimension"), zh ? "未提供" : "Not provided"),
+                val(r.get("objects"), "0"),
+                val(r.get("tokens"), "—"),
+                val(r.get("cost"), zh ? "未知" : "Unknown"),
+                val(r.get("unknown_costs"), "0")
+              });
+    }
+    Support.require(search.length() <= 128, "INVALID_FILTER");
+    return new Report(
+        "SELECT o.*"
+            + console.source()
+            + " AND o.type='trace' AND (?='' OR o.data->>'status'=?) AND (?='' OR o.object_id ILIKE"
+            + " ? OR o.data->>'name' ILIKE ?)",
+        "started_at DESC,object_id",
+        new Object[] {
+          project, user, status, status, search, "%" + search + "%", "%" + search + "%"
+        },
+        zh
+            ? new String[] {"开始时间 UTC", "名称", "对象 ID", "耗时 ms", "用户", "客户", "状态"}
+            : new String[] {
+              "Started UTC", "Name", "Object ID", "Duration ms", "User", "Customer", "Status"
+            },
+        new float[] {115, 140, 160, 75, 100, 100, 80},
+        r -> {
+          var d = Support.parse(r.get("data").toString());
+          return new String[] {
+            utc(r.get("started_at")),
+            d.path("name").asText(val(r.get("object_id"), "—")),
+            val(r.get("object_id"), "—"),
+            d.path("durationMs").asText("—"),
+            d.path("userId").asText("—"),
+            d.path("customerId").asText("—"),
+            d.path("status").asText("—")
+          };
+        });
+  }
+
+  @GetMapping("/api/reports/{kind}")
+  @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+  Map<String, Object> page(
+      @PathVariable String kind,
+      @RequestParam(required = false) UUID project,
+      @RequestParam(defaultValue = "customerId") String dimension,
+      @RequestParam(defaultValue = "") String search,
+      @RequestParam(defaultValue = "") String status,
+      @RequestParam(defaultValue = "0") int page,
+      HttpServletRequest req) {
+    Support.require(page >= 0, "INVALID_PAGE");
+    var r = report(kind, project, dimension, search, status, false, req);
+    long total =
+        store.db.queryForObject(
+            "SELECT count(*) FROM (" + r.sql() + ") report_count", Long.class, r.args());
+    var args = new ArrayList<>(Arrays.asList(r.args()));
+    args.add((long) page * 5);
+    var items =
+        store.db.queryForList(
+            "SELECT * FROM ("
+                + r.sql()
+                + ") report_rows ORDER BY "
+                + r.order()
+                + " LIMIT 5 OFFSET ?",
+            args.toArray());
+    if (kind.equals("traces")) console.decode(items);
+    return Map.of("items", items, "total", total, "page", page, "size", 5);
+  }
+
+  @GetMapping("/api/reports/{kind}/export")
+  @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+  void export(
+      @PathVariable String kind,
+      @RequestParam(required = false) UUID project,
+      @RequestParam String format,
+      @RequestParam(defaultValue = "customerId") String dimension,
+      @RequestParam(defaultValue = "") String search,
+      @RequestParam(defaultValue = "") String status,
+      @RequestParam(defaultValue = "en") String lang,
+      HttpServletRequest req,
+      HttpServletResponse res)
+      throws IOException {
+    Support.require(Set.of("xlsx", "pdf").contains(format), "INVALID_FORMAT");
+    var r = report(kind, project, dimension, search, status, lang.equals("zh-CN"), req);
+    res.setContentType(
+        format.equals("xlsx")
+            ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            : "application/pdf");
+    res.setHeader(
+        "Content-Disposition", "attachment; filename=\"metertrail-" + kind + "." + format + "\"");
+    res.setHeader("Cache-Control", "no-store");
+    var excel =
+        format.equals("xlsx") ? new ActivityExport.Excel(res.getOutputStream(), r.headers()) : null;
+    var pdf = format.equals("pdf") ? new ActivityExport.Pdf(r.headers(), r.widths()) : null;
+    try {
+      store.db.query(
+          con -> {
+            var stmt =
+                con.prepareStatement(
+                    "SELECT * FROM (" + r.sql() + ") report_rows ORDER BY " + r.order());
+            for (int i = 0; i < r.args().length; i++) stmt.setObject(i + 1, r.args()[i]);
+            stmt.setFetchSize(500);
+            return stmt;
+          },
+          (org.springframework.jdbc.core.RowCallbackHandler)
+              rs -> {
+                var row = new HashMap<String, Object>();
+                var meta = rs.getMetaData();
+                for (int i = 1; i <= meta.getColumnCount(); i++)
+                  row.put(meta.getColumnLabel(i), rs.getObject(i));
+                try {
+                  var values = r.row().apply(row);
+                  if (excel != null) excel.add(values);
+                  else pdf.add(values);
+                } catch (IOException e) {
+                  throw new UncheckedIOException(e);
+                }
+              });
+      if (pdf != null) pdf.save(res.getOutputStream());
+    } finally {
+      if (excel != null) excel.close();
+      if (pdf != null) pdf.close();
+    }
+  }
+}

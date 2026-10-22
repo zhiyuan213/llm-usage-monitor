@@ -321,7 +321,7 @@ class ConsoleController {
   Map<String, Object> activity(
       @PathVariable UUID project,
       @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(defaultValue = "5") int size,
       HttpServletRequest req) {
     store.project(uid(req), project);
     Support.require(page >= 0 && size >= 1 && size <= 100, "INVALID_PAGE");

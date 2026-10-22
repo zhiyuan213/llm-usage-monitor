@@ -656,7 +656,15 @@ class IngestIntegrationTest {
               + " VALUES(?,'trace',?,1,now(),?::jsonb)",
           project,
           String.format("row-%03d", i),
-          "{\"name\":\"中文活动 " + i + "\",\"status\":\"success\"}");
+          "{\"name\":\"中文活动 "
+              + i
+              + "\",\"status\":\"success\",\"userId\":\"u-"
+              + i
+              + "\",\"customerId\":\"c-"
+              + i
+              + "\",\"feature\":\"f-"
+              + i
+              + "\"}");
     store.db.update(
         "INSERT INTO objects(project_id,type,object_id,revision,started_at,data)"
             + " VALUES(?,'trace','expired',1,now()-interval '40 days','{}')",
@@ -665,8 +673,8 @@ class IngestIntegrationTest {
     mvc.perform(get(base).cookie(cookie))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.total").value(125))
-        .andExpect(jsonPath("$.items.length()").value(20));
-    mvc.perform(get(base + "?page=6").cookie(cookie))
+        .andExpect(jsonPath("$.items.length()").value(5));
+    mvc.perform(get(base + "?page=24").cookie(cookie))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.items.length()").value(5))
         .andExpect(jsonPath("$.items[4].object_id").value("row-000"));
@@ -706,6 +714,79 @@ class IngestIntegrationTest {
     }
     java.nio.file.Files.write(java.nio.file.Path.of("target/activity-export.xlsx"), excel);
     java.nio.file.Files.write(java.nio.file.Path.of("target/activity-export.pdf"), pdf);
+    for (String kind : List.of("traces", "analytics", "audit")) {
+      if (kind.equals("audit"))
+        for (int i = 0; i < 125; i++)
+          store.db.update(
+              "INSERT INTO audit_logs(user_id,workspace_id,action,target,success)"
+                  + " VALUES(?,?,'query.test',?,true)",
+              user,
+              workspace,
+              "audit-" + i);
+      String query = "/api/reports/" + kind + "?project=" + project;
+      mvc.perform(get(query).cookie(cookie))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.total").value(125))
+          .andExpect(jsonPath("$.items.length()").value(5));
+      mvc.perform(get(query + "&page=24").cookie(cookie))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.items.length()").value(5));
+      for (String format : List.of("xlsx", "pdf")) {
+        byte[] bytes =
+            mvc.perform(
+                    get("/api/reports/"
+                            + kind
+                            + "/export?project="
+                            + project
+                            + "&format="
+                            + format
+                            + "&lang=zh-CN")
+                        .cookie(cookie))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsByteArray();
+        if (format.equals("xlsx")) {
+          String xml = "";
+          try (var zip =
+              new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(bytes))) {
+            java.util.zip.ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null)
+              if (entry.getName().endsWith("sheet1.xml"))
+                xml = new String(zip.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+          }
+          assertEquals(126, xml.split("<row r=").length - 1);
+          assertEquals(
+              kind.equals("traces") ? 7 : kind.equals("analytics") ? 5 : 6,
+              xml.substring(xml.indexOf("<row r="), xml.indexOf("</row>")).split("<c r=").length
+                  - 1);
+        } else
+          try (var exported = org.apache.pdfbox.Loader.loadPDF(bytes)) {
+            assertTrue(exported.getNumberOfPages() > 1);
+          }
+      }
+    }
+    for (String dim : List.of("userId", "feature"))
+      mvc.perform(
+              get("/api/reports/analytics?project=" + project + "&dimension=" + dim).cookie(cookie))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.total").value(125));
+    mvc.perform(get("/api/reports/traces?project=" + project + "&search=row-124").cookie(cookie))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(1));
+    byte[] filtered =
+        mvc.perform(
+                get("/api/reports/traces/export?project=" + project + "&search=row-124&format=pdf")
+                    .cookie(cookie))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsByteArray();
+    try (var doc = org.apache.pdfbox.Loader.loadPDF(filtered)) {
+      String text = new org.apache.pdfbox.text.PDFTextStripper().getText(doc);
+      assertTrue(text.contains("row-124"));
+      assertFalse(text.contains("row-123"));
+    }
     UUID foreignUser = UUID.randomUUID(),
         foreignWorkspace = UUID.randomUUID(),
         foreignProject = UUID.randomUUID();
@@ -726,6 +807,23 @@ class IngestIntegrationTest {
     mvc.perform(
             get("/api/projects/" + foreignProject + "/activity/export?format=xlsx").cookie(cookie))
         .andExpect(status().isNotFound());
+    for (String kind : List.of("traces", "analytics"))
+      mvc.perform(
+              get("/api/reports/" + kind + "/export?project=" + foreignProject + "&format=xlsx")
+                  .cookie(cookie))
+          .andExpect(status().isNotFound());
+    String foreignToken = Support.token();
+    store.db.update(
+        "INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1"
+            + " hour')",
+        Support.hash(foreignToken),
+        foreignUser,
+        "foreign-csrf");
+    mvc.perform(
+            get("/api/reports/audit")
+                .cookie(new jakarta.servlet.http.Cookie("mt_session", foreignToken)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(0));
   }
 
   ObjectNode event(String type, String object, int revision) {

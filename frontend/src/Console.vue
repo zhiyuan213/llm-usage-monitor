@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PlanFeatures from "./PlanFeatures.vue";
+import QueryControls from "./QueryControls.vue";
 import WorkspaceOverview from "./WorkspaceOverview.vue";
 import ProjectInfoEditor from "./ProjectInfoEditor.vue";
 import BatchHistory from "./BatchHistory.vue";
@@ -72,7 +73,9 @@ const projects = ref<any[]>([]),
   data = ref<any>({}),
   overview = ref<any>({}),
   recent = ref<any[]>([]);
-const activityPage = ref(0), activitySize = ref(20), activityTotal = ref(0);
+const activityPage = ref(0), activitySize = ref(5), activityTotal = ref(0), reportPage = ref(0);
+const reportExportUrl = computed(() => "/api/reports/" + page.value + "/export?" + new URLSearchParams({project: selected.value, dimension: dimension.value, search: search.value, status: status.value}));
+async function reportTurn(next: number) { reportPage.value = next; await refresh(false); }
 const project = computed(() =>
   projects.value.find((p) => p.id === selected.value),
 );
@@ -194,7 +197,7 @@ async function refresh(force = true) {
       billing.cap = String(data.value.workspace.overage_cap);
     } else if (page.value === "workspace")
       data.value = await request("/workspace");
-    else if (page.value === "audit") data.value = await request("/audit");
+    else if (page.value === "audit") data.value = await request("/reports/audit?page=" + reportPage.value);
     else if (page.value === "account") {
       /* Account is included in context. */
     } else if (selected.value) {
@@ -209,10 +212,11 @@ async function refresh(force = true) {
         activityTotal.value = r.total;
       } else if (page.value === "traces")
         data.value = await request(
-          path("/traces") +
+          "/reports/traces" +
             "?" +
             new URLSearchParams({
               search: search.value,
+              project: selected.value,
               status: status.value,
               page: String(tracePage.value),
             }),
@@ -221,7 +225,7 @@ async function refresh(force = true) {
         data.value = await request(path("/traces/" + route.params.detail));
       else if (page.value === "analytics")
         data.value = await request(
-          path("/analytics") + "?dimension=" + dimension.value,
+          "/reports/analytics?project=" + selected.value + "&dimension=" + dimension.value + "&page=" + reportPage.value,
         );
       else if (page.value === "keys") data.value = await request(path("/keys"));
       else if (page.value === "alerts")
@@ -247,6 +251,8 @@ onMounted(() => refresh(false));
 watch(
   () => route.fullPath,
   () => {
+    reportPage.value = 0;
+    tracePage.value = 0;
     data.value = {};
     notice.value = "";
     createdKey.value = "";
@@ -254,6 +260,7 @@ watch(
   },
 );
 async function changeProject() {
+  reportPage.value = 0;
   activityPage.value = 0;
   tracePage.value = 0;
   await refresh(false);
@@ -796,28 +803,7 @@ const usagePercent = computed(() =>
                 </tbody>
               </table>
             </div>
-            <div class="pagination">
-              <button
-                class="btn"
-                :disabled="tracePage === 0"
-                @click="
-                  tracePage--;
-                  refresh(false);
-                "
-              >
-                ←</button
-              ><span>{{ tracePage + 1 }}</span
-              ><button
-                class="btn"
-                :disabled="(tracePage + 1) * 50 >= (data.total || 0)"
-                @click="
-                  tracePage++;
-                  refresh(false);
-                "
-              >
-                →
-              </button>
-            </div>
+            <QueryControls :page="tracePage" :total="data.total || 0" :loading="loading" :export-url="reportExportUrl" @change="tracePage = $event; refresh(false)" />
           </section></template
         >
         <template v-if="page === 'trace' && selected"
@@ -923,7 +909,7 @@ const usagePercent = computed(() =>
               v-for="d in ['customerId', 'userId', 'feature']"
               :class="{ active: dimension === d }"
               @click="
-                dimension = d;
+                dimension = d; reportPage = 0;
                 refresh();
               "
             >
@@ -949,14 +935,14 @@ const usagePercent = computed(() =>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="r in Array.isArray(data) ? data : []">
+                  <tr v-for="r in data.items || []">
                     <td>{{ r.dimension || t("Not provided", "未提供") }}</td>
                     <td>{{ n(r.objects) }}</td>
                     <td>{{ n(r.tokens) }}</td>
                     <td>{{ money(r.cost) }}</td>
                     <td>{{ n(r.unknown_costs) }}</td>
                   </tr>
-                  <tr v-if="!data.length">
+                  <tr v-if="!data.items?.length">
                     <td colspan="5" class="empty-cell">
                       {{
                         t(
@@ -969,7 +955,7 @@ const usagePercent = computed(() =>
                 </tbody>
               </table>
             </div>
-          </section></template
+          <QueryControls :page="reportPage" :total="data.total || 0" :loading="loading" :export-url="reportExportUrl" @change="reportTurn" /></section></template
         >
         <template v-if="page === 'keys' && selected"
           ><section class="panel integration-banner">
@@ -1566,7 +1552,7 @@ const usagePercent = computed(() =>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="a in Array.isArray(data) ? data : []">
+                  <tr v-for="a in data.items || []">
                     <td>{{ date(a.created_at) }}</td>
                     <td>{{ a.action }}</td>
                     <td class="mono">{{ a.target }}</td>
@@ -1581,7 +1567,7 @@ const usagePercent = computed(() =>
                     <td>{{ a.ip || "—" }}</td>
                     <td class="mono">{{ a.request_id || "—" }}</td>
                   </tr>
-                  <tr v-if="!data.length">
+                  <tr v-if="!data.items?.length">
                     <td colspan="6" class="empty-cell">
                       {{ t("No audit events.", "暂无审计记录。") }}
                     </td>
@@ -1589,7 +1575,7 @@ const usagePercent = computed(() =>
                 </tbody>
               </table>
             </div>
-          </section></template
+          <QueryControls :page="reportPage" :total="data.total || 0" :loading="loading" :export-url="reportExportUrl" @change="reportTurn" /></section></template
         >
         <div class="console-footer">
           MeterTrail <span>·</span>

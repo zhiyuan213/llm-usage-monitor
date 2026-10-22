@@ -56,8 +56,12 @@ final class ActivityExport {
     final String[] headers;
 
     Excel(OutputStream out, boolean zh) throws IOException {
+      this(out, headers(zh));
+    }
+
+    Excel(OutputStream out, String[] labels) throws IOException {
       zip = new ZipOutputStream(out);
-      headers = headers(zh);
+      headers = labels;
       startSheet();
     }
 
@@ -171,12 +175,17 @@ final class ActivityExport {
     final PDDocument doc = new PDDocument();
     final PDType0Font font;
     final String[] headers;
-    final float[] widths = {130, 210, 90, 130, 100, 110};
+    final float[] widths;
     PDPageContentStream stream;
     float y;
 
     Pdf(boolean zh) throws IOException {
-      headers = headers(zh);
+      this(headers(zh), new float[] {130, 210, 90, 130, 100, 110});
+    }
+
+    Pdf(String[] labels, float[] columnWidths) throws IOException {
+      headers = labels;
+      widths = columnWidths;
       try (var in = ActivityExport.class.getResourceAsStream("/fonts/NotoSansSC-Regular.ttf")) {
         font = PDType0Font.load(doc, Objects.requireNonNull(in));
       }
@@ -189,10 +198,10 @@ final class ActivityExport {
       doc.addPage(page);
       stream = new PDPageContentStream(doc, page);
       y = 553;
-      text("MeterTrail  /  Activity  /  UTC  /  " + doc.getNumberOfPages(), 32, y, 12);
+      text("MeterTrail  /  Report  /  UTC  /  " + doc.getNumberOfPages(), 32, y, 12);
       y -= 28;
       float x = 32;
-      for (int i = 0; i < 6; i++) {
+      for (int i = 0; i < headers.length; i++) {
         text(headers[i], x, y, 9);
         x += widths[i];
       }
@@ -246,7 +255,7 @@ final class ActivityExport {
     void add(String[] values) throws IOException {
       List<List<String>> cells = new ArrayList<>();
       int lines = 1;
-      for (int i = 0; i < 6; i++) {
+      for (int i = 0; i < headers.length; i++) {
         var cell = wrap(values[i], widths[i]);
         cells.add(cell);
         lines = Math.max(lines, cell.size());
@@ -254,7 +263,7 @@ final class ActivityExport {
       for (int line = 0; line < lines; line++) {
         if (y < 35) newPage();
         float x = 32;
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < headers.length; i++) {
           if (line < cells.get(i).size()) text(cells.get(i).get(line), x, y, 9);
           x += widths[i];
         }

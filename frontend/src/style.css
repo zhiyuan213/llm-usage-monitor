@@ -1761,6 +1761,16 @@ dd {
   gap: 8px;
   min-width: 300px;
 }
+.query-controls,
+.query-export,
+.query-pages {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.query-controls { padding: 16px 20px; justify-content: space-between; border-top: 1px solid var(--line); }
+.query-pages > span { color: var(--muted); font-size: 14px; }
 .console-shell .project-row-actions .btn {
   min-height: 34px;
   padding: 6px 10px;
