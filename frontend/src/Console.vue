@@ -52,14 +52,6 @@ import {
 } from "./lib";
 import { contextLoader } from "./context-loader";
 import { verificationFlow } from "./verification";
-function statusLabel(status: string | undefined) {
-  switch (status) {
-    case "success": return t("success", "成功");
-    case "error": return t("error", "失败");
-    case "cancelled": return t("cancelled", "已取消");
-    default: return status;
-  }
-}
 const route = useRoute(),
   router = useRouter(),
   page = computed(() => String(route.params.page || "overview"));
@@ -761,7 +753,7 @@ const usagePercent = computed(() =>
                           'badge',
                           o.data.status === 'error' ? 'danger' : 'success',
                         ]"
-                        >{{ statusLabel(o.data.status) || o.data.valueType }}</span
+                        >{{ o.data.status || o.data.valueType }}</span
                       >
                     </td>
                     <td>{{ date(o.started_at) }}</td>
@@ -813,9 +805,9 @@ const usagePercent = computed(() =>
               </div>
               <select v-model="status">
                 <option value="">{{ t("All statuses", "所有状态") }}</option>
-                <option value="success">{{ statusLabel("success") }}</option>
-                <option value="error">{{ statusLabel("error") }}</option>
-                <option value="cancelled">{{ statusLabel("cancelled") }}</option></select
+                <option value="success">success</option>
+                <option value="error">error</option>
+                <option value="cancelled">cancelled</option></select
               ><button class="btn primary">{{ t("Search", "搜索") }}</button>
               <div class="query-export trace-export">
                 <a
@@ -860,7 +852,7 @@ const usagePercent = computed(() =>
                           'badge',
                           o.data.status === 'error' ? 'danger' : 'success',
                         ]"
-                        >{{ statusLabel(o.data.status) }}</span
+                        >{{ o.data.status }}</span
                       >
                     </td>
                     <td>{{ date(o.started_at) }}</td>
@@ -939,7 +931,7 @@ const usagePercent = computed(() =>
                 <b>{{ o.data.name || o.data.model || o.object_id }}</b
                 ><small
                   >{{ o.type }} ·
-                  {{ o.data.observationType || statusLabel(o.data.status) }}</small
+                  {{ o.data.observationType || o.data.status }}</small
                 >
               </div>
               <div class="waterfall-track">
@@ -1720,7 +1712,7 @@ const usagePercent = computed(() =>
                       <span
                         :class="['badge', a.success ? 'success' : 'danger']"
                         >{{
-                          a.success ? t("Success", "成功") : t("Failed", "失败")
+                          a.success ? t("successd", "成功") : t("Failed", "失败")
                         }}</span
                       >
                     </td>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, reactive } from "vue";
 import { api, t, date, errorText } from "./lib";
+import { batchStatusLabel } from "./status-labels";
 const props = defineProps<{ project: string }>(),
   batches = ref<any[]>([]),
   error = ref("");
@@ -93,7 +94,7 @@ watch(() => props.project, refresh, { immediate: true });
                       ? 'success'
                       : '',
                 ]"
-                >{{ b.status }}</span
+                >{{ batchStatusLabel(b.status, t) }}</span
               >
             </td>
             <td>{{ b.accepted }} / {{ b.duplicates }} / {{ b.rejected }}</td>
