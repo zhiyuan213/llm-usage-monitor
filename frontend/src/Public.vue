@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PlanFeatures from "./PlanFeatures.vue";
 import DocsExamples from "./DocsExamples.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -338,7 +339,7 @@ async function copy() {
           :to="session ? '/app/workspace' : '/register'"
           >{{
             session
-              ? t("Open your workspace", "进入工作空间")
+              ? t("Manage projects", "进入项目管理")
               : t("Create your workspace", "创建工作空间")
           }}<ArrowRight :size="18"
         /></RouterLink>
@@ -375,36 +376,7 @@ async function copy() {
           <div class="price">
             ${{ [0, 29, 199][i] }}<small>/ {{ t("month", "月") }}</small>
           </div>
-          <p>
-            {{
-              t(
-                "Everything you need to understand usage.",
-                "掌握应用调用与用量。",
-              )
-            }}
-          </p>
-          <ul>
-            <li>
-              <Check :size="16" />{{ i === 0 ? "50,000" : "100,000" }} units /
-              {{ t("month", "月") }}
-            </li>
-            <li>
-              <Check :size="16" />{{
-                [
-                  t("30 days", "30 天"),
-                  t("90 days", "90 天"),
-                  t("3 years", "3 年"),
-                ][i]
-              }}
-              {{ t("data access", "数据访问") }}
-            </li>
-            <li><Check :size="16" /> Trace · Observation · Score</li>
-            <li>
-              <Check :size="16" />{{
-                t("Stop at quota by default", "默认额度用尽后停止接收")
-              }}
-            </li>
-          </ul>
+          <PlanFeatures :index="i" />
           <RouterLink
             :to="session ? '/app/billing' : '/register'"
             :class="['btn', i === 1 ? 'primary' : '']"
@@ -627,8 +599,8 @@ async function copy() {
             <li>
               {{
                 t(
-                  "Open Integration & API Keys. Verify the action by email to create a project key.",
-                  "进入接入与密钥，通过邮箱验证码创建项目密钥。",
+                  "Open API key management. Verify the action by email to create a project key.",
+                  "进入密钥管理，通过邮箱验证码创建项目密钥。",
                 )
               }}
             </li>

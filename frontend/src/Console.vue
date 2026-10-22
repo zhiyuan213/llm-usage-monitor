@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PlanFeatures from "./PlanFeatures.vue";
 import WorkspaceOverview from "./WorkspaceOverview.vue";
 import ProjectInfoEditor from "./ProjectInfoEditor.vue";
 import BatchHistory from "./BatchHistory.vue";
@@ -44,15 +45,15 @@ const route = useRoute(),
   router = useRouter(),
   page = computed(() => String(route.params.page || "overview"));
 const nav = [
-  ["workspace", "Workspace", "工作空间", LayoutDashboard],
-  ["overview", "Overview", "概览", LayoutDashboard],
+  ["workspace", "Project management", "项目管理", LayoutDashboard],
+  ["overview", "Project overview", "项目概览", LayoutDashboard],
   ["traces", "Traces", "调用记录", GitBranch],
   ["analytics", "Users & customers", "用户与客户", Users],
-  ["keys", "Integration & API keys", "接入与密钥", KeyRound],
-  ["alerts", "Alerts", "告警", Bell],
+  ["keys", "API key management", "密钥管理", KeyRound],
+  ["alerts", "Alert configuration", "告警配置", Bell],
   ["billing", "Billing", "套餐与账单", CreditCard],
   ["settings", "Project settings", "项目设置", Settings],
-  ["account", "Account & security", "账号与安全", ShieldCheck],
+  ["account", "Account security", "账号安全", ShieldCheck],
   ["audit", "Audit logs", "审计日志", ScrollText],
 ] as const;
 const title = computed(() => {
@@ -363,7 +364,7 @@ const usagePercent = computed(() =>
         ><span class="brand-icon"><Activity :size="20" /></span
         >MeterTrail</RouterLink
       >
-      <div class="workspace-label">{{ t("WORKSPACE", "工作空间") }}</div>
+      <div class="workspace-label">{{ t("PROJECT MANAGEMENT", "项目管理") }}</div>
       <div class="workspace-switch">
         <span class="avatar">M</span>
         <div>
@@ -419,7 +420,7 @@ const usagePercent = computed(() =>
     <div class="console-main">
       <header class="console-header">
         <div class="breadcrumb">
-          {{ t("Workspace", "工作空间") }}<ChevronRight :size="13" /><span>{{
+          {{ t("Project management", "项目管理") }}<ChevronRight :size="13" /><span>{{
             title
           }}</span>
         </div>
@@ -1019,14 +1020,14 @@ const usagePercent = computed(() =>
                     <td>
                       <button
                         v-if="!k.revoked_at"
-                        class="text-button danger-text"
+                        class="btn danger-text"
                         @click="revoke(k.id)"
                       >
                         {{ t("Revoke", "撤销") }}
                       </button>
                       <button
                         v-else
-                        class="text-button danger-text"
+                        class="btn danger-text"
                         @click="removeEntry('keys', k.id)"
                       >
                         {{ t("Delete", "删除") }}
@@ -1124,7 +1125,7 @@ const usagePercent = computed(() =>
                     <td>{{ r.metric }}</td>
                     <td>{{ r.threshold }}</td>
                     <td>{{ date(r.last_triggered_at) }}</td>
-                    <td>
+                    <td class="table-actions">
                       <button
                         class="btn"
                         @click="
@@ -1141,7 +1142,7 @@ const usagePercent = computed(() =>
                         }}
                       </button>
                       <button
-                        class="text-button danger-text"
+                        class="btn danger-text"
                         @click="removeEntry('alerts', r.id)"
                       >
                         {{ t("Delete", "删除") }}
@@ -1218,21 +1219,7 @@ const usagePercent = computed(() =>
               <div class="price">
                 ${{ [0, 29, 199][i] }}<small>/ {{ t("month", "月") }}</small>
               </div>
-              <ul>
-                <li>
-                  <Check :size="16" />{{ i === 0 ? "50,000" : "100,000" }} units
-                </li>
-                <li>
-                  <Check :size="16" />{{
-                    [
-                      t("30 days", "30 天"),
-                      t("90 days", "90 天"),
-                      t("3 years", "3 年"),
-                    ][i]
-                  }}
-                  {{ t("data access", "数据访问") }}
-                </li>
-              </ul>
+              <PlanFeatures :index="i" />
               <button
                 class="btn full"
                 :disabled="data.workspace?.plan === plan || plan === 'Free'"

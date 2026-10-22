@@ -1736,6 +1736,15 @@ dd {
   color: #ca5b60;
   font-size: 16px;
 }
+.btn.danger-text {
+  border-color: #efc9cc;
+}
+.btn.danger-text:hover {
+  background: #fff3f3;
+  border-color: #ca5b60;
+}
+.table-actions { white-space: nowrap; }
+.table-actions .btn + .btn { margin-left: 10px; }
 .form-panel {
   padding: 26px;
 }
