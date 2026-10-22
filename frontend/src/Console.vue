@@ -98,7 +98,8 @@ const projects = ref<any[]>([]),
 const activityPage = ref(0),
   activitySize = ref(5),
   activityTotal = ref(0),
-  reportPage = ref(0);
+  reportPage = ref(0),
+  reportSize = ref(5);
 const reportExportUrl = computed(
   () =>
     "/api/reports/" +
@@ -237,7 +238,7 @@ async function refresh(force = true) {
     } else if (page.value === "workspace")
       data.value = await request("/workspace");
     else if (page.value === "audit")
-      data.value = await request("/reports/audit?page=" + reportPage.value);
+      data.value = await request("/reports/audit?page=" + reportPage.value + "&size=" + reportSize.value);
     else if (page.value === "account") {
       /* Account is included in context. */
     } else if (selected.value) {
@@ -265,6 +266,7 @@ async function refresh(force = true) {
               project: selected.value,
               status: status.value,
               page: String(tracePage.value),
+              size: String(reportSize.value),
             }),
         );
       else if (page.value === "trace")
@@ -276,7 +278,7 @@ async function refresh(force = true) {
             "&dimension=" +
             dimension.value +
             "&page=" +
-            reportPage.value,
+            reportPage.value + "&size=" + reportSize.value,
         );
       else if (page.value === "keys") data.value = await request(path("/keys"));
       else if (page.value === "alerts")
@@ -505,7 +507,7 @@ const usagePercent = computed(() =>
           >{{ t("All times in UTC", "时间均为 UTC") }}
         </div>
       </header>
-      <main class="console-content" :aria-busy="loading">
+      <main class="console-content" :class="{ 'overview-content': page === 'overview' }" :aria-busy="loading">
         <div class="page-heading">
           <div>
             <div class="eyebrow">
@@ -647,7 +649,7 @@ const usagePercent = computed(() =>
                   <span>{{ n(d.calls) }}</span
                   ><i
                     :style="{
-                      height: Math.max(3, (150 * d.calls) / maxCalls) + 'px',
+                      height: Math.max(3, (95 * d.calls) / maxCalls) + 'px',
                     }"
                     :title="d.day + ': ' + d.calls"
                   ></i
@@ -786,29 +788,8 @@ const usagePercent = computed(() =>
                 </tbody>
               </table>
             </div>
-            <div class="panel-foot table-actions">
-              <span
-                >{{ t("Total", "共") }} {{ n(activityTotal) }}
-                {{ t("objects", "条") }} · {{ activityPage + 1 }} /
-                {{ Math.max(1, Math.ceil(activityTotal / activitySize)) }}</span
-              >
-              <button
-                class="btn"
-                :disabled="loading || activityPage === 0"
-                @click="activityTurn(activityPage - 1)"
-              >
-                {{ t("Previous", "上一页") }}
-              </button>
-              <button
-                class="btn"
-                :disabled="
-                  loading || (activityPage + 1) * activitySize >= activityTotal
-                "
-                @click="activityTurn(activityPage + 1)"
-              >
-                {{ t("Next", "下一页") }}
-              </button>
-            </div>
+            <QueryControls :page="activityPage" :size="activitySize" :total="activityTotal" :loading="loading"
+              @change="activityTurn" @resize="activitySize = $event; activityTurn(0)" />
           </section></template
         >
         <template v-if="page === 'traces' && selected"
@@ -895,6 +876,8 @@ const usagePercent = computed(() =>
             </div>
             <QueryControls
               :page="tracePage"
+              :size="reportSize"
+              @resize="reportSize = $event; tracePage = 0; refresh(false)"
               :total="data.total || 0"
               :loading="loading"
               @change="
@@ -1063,6 +1046,8 @@ const usagePercent = computed(() =>
             </div>
             <QueryControls
               :page="reportPage"
+              :size="reportSize"
+              @resize="reportSize = $event; reportPage = 0; refresh(false)"
               :total="data.total || 0"
               :loading="loading"
               @change="reportTurn"
@@ -1193,7 +1178,7 @@ const usagePercent = computed(() =>
               }}
             </p>
             <form
-              class="form-grid"
+              class="alert-create-form"
               @submit.prevent="
                 run(async () => {
                   await api(path('/alerts'), alert);
@@ -1691,6 +1676,8 @@ const usagePercent = computed(() =>
             </div>
             <QueryControls
               :page="reportPage"
+              :size="reportSize"
+              @resize="reportSize = $event; reportPage = 0; refresh(false)"
               :total="data.total || 0"
               :loading="loading"
               @change="reportTurn"

@@ -82,11 +82,25 @@ final class ActivityExport {
       write(
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?><worksheet"
               + " xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><sheetViews><sheetView"
-              + " workbookViewId=\"0\"><pane ySplit=\"1\" topLeftCell=\"A2\""
-              + " state=\"frozen\"/></sheetView></sheetViews><cols><col min=\"1\" max=\"1\""
-              + " width=\"28\" customWidth=\"1\"/><col min=\"2\" max=\"2\" width=\"48\""
-              + " customWidth=\"1\"/><col min=\"3\" max=\"6\" width=\"24\""
-              + " customWidth=\"1\"/></cols><sheetData>");
+              + " showGridLines=\"0\" workbookViewId=\"0\"><pane ySplit=\"1\" topLeftCell=\"A2\""
+              + " state=\"frozen\"/></sheetView></sheetViews><sheetFormatPr"
+              + " defaultRowHeight=\"24\"/><cols>");
+      for (int i = 0; i < headers.length; i++) {
+        String label = headers[i].toLowerCase(Locale.ROOT);
+        int width =
+            label.contains("id") || label.contains("目标") || label.contains("target")
+                ? 42
+                : label.contains("时间") || label.contains("utc") ? 28 : i == 0 ? 30 : 24;
+        write(
+            "<col min=\""
+                + (i + 1)
+                + "\" max=\""
+                + (i + 1)
+                + "\" width=\""
+                + width
+                + "\" customWidth=\"1\"/>");
+      }
+      write("</cols><sheetData>");
       add(headers);
     }
 
@@ -96,12 +110,14 @@ final class ActivityExport {
         endSheet();
         startSheet();
       }
-      write("<row r=\"" + (++row) + "\">");
+      write("<row r=\"" + (++row) + "\" ht=\"" + (row == 1 ? 32 : 28) + "\" customHeight=\"1\">");
       for (int i = 0; i < values.length; i++)
         write(
             "<c r=\""
                 + (char) ('A' + i)
                 + row
+                + "\" s=\""
+                + (row == 1 ? 1 : row % 2 == 0 ? 2 : 3)
                 + "\" t=\"inlineStr\"><is><t xml:space=\"preserve\">"
                 + xml(values[i])
                 + "</t></is></c>");
@@ -109,7 +125,12 @@ final class ActivityExport {
     }
 
     void endSheet() throws IOException {
-      write("</sheetData></worksheet>");
+      write(
+          "</sheetData><autoFilter ref=\"A1:"
+              + (char) ('A' + headers.length - 1)
+              + row
+              + "\"/><pageMargins left=\"0.3\" right=\"0.3\" top=\"0.5\" bottom=\"0.5\"/><pageSetup"
+              + " orientation=\"landscape\" paperSize=\"9\"/></worksheet>");
       zip.closeEntry();
     }
 
@@ -152,6 +173,25 @@ final class ActivityExport {
             .append(i)
             .append(".xml\"/>");
       }
+      types.append(
+          "<Override PartName=\"/xl/styles.xml\""
+              + " ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\"/>");
+      rels.append(
+          "<Relationship Id=\"styles\""
+              + " Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\""
+              + " Target=\"styles.xml\"/>");
+      entry(
+          "xl/styles.xml",
+          """
+          <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+          <fonts count="2"><font><sz val="11"/><color rgb="FF324C6F"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts>
+          <fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF2445B7"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF2F5FC"/><bgColor indexed="64"/></patternFill></fill></fills>
+          <borders count="2"><border/><border><bottom style="hair"><color rgb="FFE1E7F0"/></bottom></border></borders>
+          <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+          <cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="center" indent="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment vertical="center" indent="1"/></xf><xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyAlignment="1"><alignment vertical="center" indent="1"/></xf></cellXfs>
+          <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+          </styleSheet>
+          """);
       entry("[Content_Types].xml", types + "</Types>");
       entry(
           "_rels/.rels",
@@ -178,6 +218,7 @@ final class ActivityExport {
     final float[] widths;
     PDPageContentStream stream;
     float y;
+    int rowNumber;
 
     Pdf(boolean zh) throws IOException {
       this(headers(zh), new float[] {210, 90, 130, 100, 110, 130});
@@ -197,15 +238,30 @@ final class ActivityExport {
       var page = new PDPage(new PDRectangle(842, 595));
       doc.addPage(page);
       stream = new PDPageContentStream(doc, page);
-      y = 553;
-      text("MeterTrail  /  Report  /  UTC  /  " + doc.getNumberOfPages(), 32, y, 12);
-      y -= 28;
-      float x = 32;
+      stream.setNonStrokingColor(new java.awt.Color(36, 69, 183));
+      stream.addRect(32, 555, 32, 4);
+      stream.fill();
+      stream.setNonStrokingColor(new java.awt.Color(23, 42, 67));
+      text("MeterTrail / Data report", 32, 530, 18);
+      stream.setNonStrokingColor(new java.awt.Color(110, 126, 149));
+      text(
+          "Exported "
+              + java.time.LocalDate.now(java.time.ZoneOffset.UTC)
+              + "  |  All matching records  |  UTC",
+          32,
+          510,
+          9);
+      text("MeterTrail  /  " + doc.getNumberOfPages(), 32, 20, 8);
+      stream.setNonStrokingColor(new java.awt.Color(36, 69, 183));
+      stream.addRect(32, 466, 770, 28);
+      stream.fill();
+      stream.setNonStrokingColor(new java.awt.Color(255, 255, 255));
+      float x = 38;
       for (int i = 0; i < headers.length; i++) {
-        text(headers[i], x, y, 9);
+        text(headers[i], x, 477, 9);
         x += widths[i];
       }
-      y -= 20;
+      y = 449;
     }
 
     String printable(String s) {
@@ -260,9 +316,17 @@ final class ActivityExport {
         cells.add(cell);
         lines = Math.max(lines, cell.size());
       }
+      if (y - lines * 14 - 8 < 40 && lines * 14 < 400) newPage();
+      rowNumber++;
       for (int line = 0; line < lines; line++) {
         if (y < 35) newPage();
-        float x = 32;
+        if (rowNumber % 2 == 0) {
+          stream.setNonStrokingColor(new java.awt.Color(242, 245, 252));
+          stream.addRect(32, y - 5, 770, 14);
+          stream.fill();
+        }
+        stream.setNonStrokingColor(new java.awt.Color(50, 76, 111));
+        float x = 38;
         for (int i = 0; i < headers.length; i++) {
           if (line < cells.get(i).size()) text(cells.get(i).get(line), x, y, 9);
           x += widths[i];

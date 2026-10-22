@@ -731,6 +731,16 @@ class IngestIntegrationTest {
       mvc.perform(get(query + "&page=24").cookie(cookie))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.items.length()").value(5));
+      for (int size : List.of(5, 10, 50, 100)) {
+        mvc.perform(get(query + "&size=" + size).cookie(cookie))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.size").value(size))
+            .andExpect(jsonPath("$.items.length()").value(size));
+        mvc.perform(get(query + "&size=" + size + "&page=" + (124 / size)).cookie(cookie))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.items.length()").value(125 - (124 / size) * size));
+      }
+      mvc.perform(get(query + "&size=7").cookie(cookie)).andExpect(status().isBadRequest());
       for (String format : List.of("xlsx", "pdf")) {
         byte[] bytes =
             mvc.perform(

@@ -140,24 +140,27 @@ class QueryReportsController {
       @RequestParam(defaultValue = "") String search,
       @RequestParam(defaultValue = "") String status,
       @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "5") int size,
       HttpServletRequest req) {
     Support.require(page >= 0, "INVALID_PAGE");
+    Support.require(Set.of(5, 10, 50, 100).contains(size), "INVALID_PAGE_SIZE");
     var r = report(kind, project, dimension, search, status, false, req);
     long total =
         store.db.queryForObject(
             "SELECT count(*) FROM (" + r.sql() + ") report_count", Long.class, r.args());
     var args = new ArrayList<>(Arrays.asList(r.args()));
-    args.add((long) page * 5);
+    args.add(size);
+    args.add((long) page * size);
     var items =
         store.db.queryForList(
             "SELECT * FROM ("
                 + r.sql()
                 + ") report_rows ORDER BY "
                 + r.order()
-                + " LIMIT 5 OFFSET ?",
+                + " LIMIT ? OFFSET ?",
             args.toArray());
     if (kind.equals("traces")) console.decode(items);
-    return Map.of("items", items, "total", total, "page", page, "size", 5);
+    return Map.of("items", items, "total", total, "page", page, "size", size);
   }
 
   @GetMapping("/api/reports/{kind}/export")
