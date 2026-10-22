@@ -1362,7 +1362,7 @@ const usagePercent = computed(() =>
               </button>
             </article>
           </div>
-          <section class="panel form-panel">
+          <div class="billing-details-grid"><section class="panel form-panel">
             <h2>{{ t("Monthly usage", "当月用量") }}</h2>
             <div class="billing-usage">
               <strong
@@ -1438,7 +1438,7 @@ const usagePercent = computed(() =>
                 </tbody>
               </table>
             </div>
-          </section></template
+          </section></div></template
         >
         <template v-if="page === 'settings' && selected"
           ><section class="panel form-panel">

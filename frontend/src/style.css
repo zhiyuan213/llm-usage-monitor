@@ -2499,3 +2499,20 @@ dd {
 }
 .analytics-toolbar .tabs { margin-bottom: 0; border-bottom: 0; }
 .analytics-toolbar .query-export { padding-bottom: 8px; }
+
+.billing-details-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+.billing-details-grid > .panel { min-width: 0; margin-bottom: 0; }
+.billing-details-grid .form-panel { padding: 20px 24px; }
+.billing-details-grid h2 { margin-bottom: 12px; }
+.billing-details-grid p { margin-bottom: 14px; }
+.billing-details-grid form { gap: 12px; }
+.billing-details-grid .billing-usage { flex-wrap: wrap; gap: 8px 20px; }
+.billing-details-grid .empty-cell { padding: 32px 20px; }
+@media (max-width: 1000px) {
+  .billing-details-grid { grid-template-columns: minmax(0, 1fr); }
+}
