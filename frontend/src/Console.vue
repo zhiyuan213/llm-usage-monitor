@@ -1437,7 +1437,7 @@ const usagePercent = computed(() =>
               }}
             </p>
             <form
-              class="form-grid"
+              class="price-version-form"
               @submit.prevent="
                 run(async () => {
                   await api(path('/prices'), {

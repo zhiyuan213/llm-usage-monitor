@@ -2556,3 +2556,20 @@ dd {
 @media (max-width: 650px) {
   .alert-create-form { grid-template-columns: minmax(0, 1fr); }
 }
+
+.price-version-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 16px;
+  align-items: end;
+}
+.price-version-form > label { min-width: 0; margin: 0; }
+.price-version-form > label:nth-child(4) { grid-column: 1; }
+.price-version-form > .btn { grid-column: 4; grid-row: 2; }
+@media (max-width: 1100px) {
+  .price-version-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .price-version-form > label:nth-child(4), .price-version-form > .btn { grid-column: auto; grid-row: auto; }
+}
+@media (max-width: 650px) {
+  .price-version-form { grid-template-columns: minmax(0, 1fr); }
+}
