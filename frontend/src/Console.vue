@@ -57,7 +57,7 @@ const route = useRoute(),
   page = computed(() => String(route.params.page || "overview"));
 const nav = [
   ["workspace", "Project management", "项目管理", LayoutDashboard],
-  ["overview", "Project overview", "项目概览", LayoutDashboard],
+  ["overview", "Overview", "概览", LayoutDashboard],
   ["traces", "Traces", "调用记录", GitBranch],
   ["analytics", "Data analytics", "数据统计", Users],
   ["keys", "API key management", "密钥管理", KeyRound],
