@@ -273,8 +273,8 @@ const eventErrors = [
     <p>
       {{
         t(
-          "202 means the batch was received, not that every event succeeded. Inspect Recent batches in the console. errors[].index is zero-based; check accepted, duplicates and rejected. These are per-event result codes.",
-          "202 仅表示批次已接收，不表示每条事件成功。在后台“最近上报批次”查看接受、重复、拒绝数量及错误；errors[].index 从 0 开始。下表是逐条事件结果码。",
+          "200 means the batch was received, not that every event succeeded. Inspect Recent batches in the console. errors[].index is zero-based; check accepted, duplicates and rejected. These are per-event result codes.",
+          "200 仅表示批次已接收，不表示每条事件成功。在后台“最近上报批次”查看接受、重复、拒绝数量及错误；errors[].index 从 0 开始。下表是逐条事件结果码。",
         )
       }}
     </p>

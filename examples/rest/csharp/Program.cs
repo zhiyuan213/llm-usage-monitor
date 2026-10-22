@@ -14,4 +14,4 @@ using var response = await client.PostAsync(
 );
 
 Console.WriteLine($"{(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
-return response.StatusCode == System.Net.HttpStatusCode.Accepted ? 0 : 1;
+return response.StatusCode == System.Net.HttpStatusCode.OK ? 0 : 1;

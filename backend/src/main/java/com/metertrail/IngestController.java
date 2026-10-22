@@ -51,7 +51,7 @@ class IngestController {
     }
     var b = Support.parse(new String(bytes, StandardCharsets.UTF_8));
     Protocol.envelope(b);
-    return ResponseEntity.accepted().body(ingest.accept(project, b));
+    return ResponseEntity.ok(ingest.accept(project, b));
   }
 
   @GetMapping("/v1/batches/{id}")

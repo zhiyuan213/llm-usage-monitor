@@ -12,7 +12,7 @@ Follow-up: Tencent Cloud SES API template delivery is now implemented alongside 
 | GitHub | OAuth state binding, provider-ID identity, verified-email requirement, explicit linking/unlinking, no email auto-merge | Code/configuration delivered; real OAuth App credentials still required for provider testing |
 | Workspace/projects | Shared workspace plan, project CRUD and environment, separate workspace/project dashboards | Real local workspace, project and dashboard tested |
 | Keys | 256-bit secrets, hash storage, one-time display, verification for creation/revocation, overlap rotation | Local real creation; isolation/revocation tests |
-| Ingestion | Bounded JSON/gzip, 3 object types, durable 202, per-event validation/results | PostgreSQL and HTTP tests; real local 36-object batch |
+| Ingestion | Bounded JSON/gzip, 3 object types, durable 200, per-event validation/results | PostgreSQL and HTTP tests; real local 36-object batch |
 | Identity/units | Canonical transport dedup, immutable object billing identity, revisions/conflicts, workspace transaction lock | Concurrent final-unit test, cap test, duplicates and revisions tests |
 | Worker | SKIP LOCKED transactional recovery, backoff, quarantine, owner replay | Poison batch does not block following batch; replay retains original unit reservation |
 | Failure compensation | Verified permanent failure of quarantined batch; idempotent eligible-unit release; corrected higher revision re-reserves once | PostgreSQL integration test. Closed-period corrections fail closed for operator review |

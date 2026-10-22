@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.metertrail</groupId>
   <artifactId>metertrail-sdk</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <name>MeterTrail Java SDK</name>
   <description>MeterTrail source SDK for Java 17 and later</description>
   <url>https://github.com/zhiyuan213/llm-usage-monitor-sdk/tree/main/java</url>

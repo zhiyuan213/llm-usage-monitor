@@ -8,7 +8,7 @@ Clone the SDK repository into your application directory before following the No
 git clone https://github.com/zhiyuan213/llm-usage-monitor-sdk.git
 ```
 
-The SDKs are source packages, version 0.1.0, and are not published to npm, PyPI, or Maven Central. Each client has a bounded in-memory queue: 10,000 events or about 16 MiB. `record` does not make network requests. The client flushes at 100 events, about 256 KiB, or 5 seconds, and supports explicit flush and shutdown.
+The SDKs are source packages, version 0.2.0, and are not published to npm, PyPI, or Maven Central. Each client has a bounded in-memory queue: 10,000 events or about 16 MiB. `record` does not make network requests. The client flushes at 100 events, about 256 KiB, or 5 seconds, and supports explicit flush and shutdown.
 
 ## Node.js and TypeScript
 
@@ -60,7 +60,7 @@ Java 17+, Jackson; build/install from source:
 mvn -f llm-usage-monitor-sdk/java/pom.xml install
 ```
 
-Use the locally installed `com.metertrail:metertrail-sdk:0.1.0` dependency. It is not a public repository coordinate.
+Use the locally installed `com.metertrail:metertrail-sdk:0.2.0` dependency. It is not a public repository coordinate.
 
 ```java
 try (var client = new com.metertrail.sdk.MeterTrail(
@@ -76,9 +76,27 @@ try (var client = new com.metertrail.sdk.MeterTrail(
 
 - All SDKs retain exact identities when retrying network errors, 5xx, and temporary throttling; retries are bounded and jittered.
 - 401/403 and full-batch quota errors pause ingestion. A callback reports overflow instead of blocking application requests.
-- 202 is followed by final batch polling. Per-event errors are surfaced through callbacks. All SDKs requeue only quota-rejected events and pause after a partial quota result.
+- HTTP 200 with status pending is the upload receipt. onResult/on_result receives this receipt and sending ends without automatic polling. For rolling upgrades, SDKs also recognize legacy HTTP 202 receipts.
+- Query processing results only when needed: Node getBatch(batchId), Python get_batch(batch_id), Java getBatch(batchId). Each method makes an authenticated query using the current project key and returns the HTTP status and response body. It does not poll in a loop or automatically resend rejected events. Callers decide how to handle final per-event results.
 - 413 causes splitting; single-event failures are reported. No blanket retry of permanent field errors.
 - SDK queues are memory-only. Process crashes may lose unsent data. Graceful shutdown may leave events pending when the deadline expires. Use an application-owned durable spool when crash recovery is required.
 - The seven REST examples demonstrate request construction, not the complete SDK retry engine. Production direct REST callers must implement the documented retry/result handling.
 
 Python/Node/Java SDKs have no model-provider dependency: extract actual `usage` from your provider response, then record an Observation. They do not proxy the model call or automatically create a Trace or Score.
+
+## Optional result query
+
+```js
+const { status, data } = await client.getBatch(batchId);
+```
+
+```python
+status, data = client.get_batch(batch_id)
+```
+
+```java
+var result = client.getBatch(batchId);
+// result.status(), result.data()
+```
+
+A successful POST returns HTTP 200 and a fixed status pending receipt. For live status use GET https://metertrail.com/v1/batches/{batchId} with the same project API key, or the SDK method above. These methods return one result, without automatic repeated polling. SDK receipt callbacks no longer mean final processing completed; applications that relied on final callbacks must query explicitly.

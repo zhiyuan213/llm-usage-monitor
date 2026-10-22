@@ -145,7 +145,7 @@ export const sections = [
         "可选",
         "Nonempty when present; ≤128 UTF-8 bytes",
         "出现时非空；≤128 UTF-8 字节",
-        '"0.1.0"',
+        '"0.2.0"',
       ],
     ],
   },
@@ -482,8 +482,8 @@ export const sections = [
     ],
   },
   {
-    en: "Response: POST 202 Accepted",
-    zh: "响应：POST 202 Accepted",
+    en: "Response: POST 200 OK",
+    zh: "响应：POST 200 OK",
     rows: [
       [
         "batchId",
@@ -514,8 +514,8 @@ export const sections = [
         "string",
         "Required",
         "必填",
-        "pending; does not mean all events succeeded",
-        "固定为 pending；不代表全部处理成功",
+        "Always pending in the upload receipt; not live progress. Query GET https://metertrail.com/v1/batches/{batchId} if needed.",
+        "上报时固定 pending，非实时进度；需要实时状态时调用 GET https://metertrail.com/v1/batches/{batchId}",
         '"pending"',
       ],
     ],

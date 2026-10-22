@@ -20,6 +20,6 @@ $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 echo $status . ' ' . $body . PHP_EOL;
 curl_close($curl);
 
-if ($status !== 202) {
+if ($status !== 200) {
     exit(1);
 }

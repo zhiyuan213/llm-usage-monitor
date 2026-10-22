@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { t } from "./lib";
 import { sections } from "./protocol-reference";
+const ingestionFields = sections.filter(
+  (section) =>
+    section.en === "Request headers" || section.en.startsWith("Body:"),
+);
 </script>
 <template>
   <div class="protocol-reference">
@@ -12,7 +16,7 @@ import { sections } from "./protocol-reference";
         )
       }}
     </p>
-    <section v-for="section in sections" :key="section.en">
+    <section v-for="section in ingestionFields" :key="section.en">
       <h3>{{ t(section.en, section.zh) }}</h3>
       <div class="table-wrap">
         <table>

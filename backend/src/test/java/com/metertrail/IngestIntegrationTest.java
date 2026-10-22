@@ -1076,6 +1076,24 @@ class IngestIntegrationTest {
   }
 
   @Test
+  void receiptIsHttp200WithPendingAndQueryRemainsExplicit() throws Exception {
+    var response = mvc.perform(post("/v1/events/batch")
+        .header("Authorization", "Bearer " + key)
+        .contentType("application/json")
+        .content(batch(event("trace", "http-receipt", 1)).toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("pending"))
+        .andExpect(jsonPath("$.received").value(1))
+        .andExpect(jsonPath("$.batchId").isNotEmpty())
+        .andExpect(jsonPath("$.accepted").doesNotExist())
+        .andReturn().getResponse();
+    String batchId = Support.parse(response.getContentAsString()).path("batchId").asText();
+    mvc.perform(get("/v1/batches/" + batchId).header("Authorization", "Bearer " + key))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("pending"));
+  }
+
+  @Test
   void requestSizesAndCsrf() throws Exception {
     mvc.perform(
             post("/v1/events/batch")

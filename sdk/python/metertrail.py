@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime, timezone
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
 
 
 class MeterTrail:
@@ -20,7 +20,7 @@ class MeterTrail:
         parsed = urlparse(self.endpoint)
         if parsed.scheme != "https" and parsed.hostname not in ("localhost", "127.0.0.1"):
             raise ValueError("HTTPS required outside localhost")
-        self.agent = dict(serviceName=service_name, environment=environment, instanceId=str(uuid.uuid4()), sdkName="metertrail-python", sdkVersion="0.1.0")
+        self.agent = dict(serviceName=service_name, environment=environment, instanceId=str(uuid.uuid4()), sdkName="metertrail-python", sdkVersion="0.2.0")
         self.on_result, self.on_error = on_result, on_error
         self.queue, self.size, self.paused, self.pending = [], 0, None, None
         self.retry_at = 0
@@ -107,37 +107,6 @@ class MeterTrail:
             return False
         try:
             while not self.paused and time.monotonic() < deadline and time.monotonic() >= self.retry_at:
-                if self.pending:
-                    batch_id, events = self.pending
-                    status, result = self._request("/v1/batches/" + batch_id, deadline=deadline)
-                    if status != 200:
-                        self._notify(dict(code=result.get("code", "BATCH_QUERY_FAILED")))
-                        return False
-                    if result.get("status") == "pending":
-                        time.sleep(.3)
-                        continue
-                    if result.get("status") != "completed":
-                        self._notify(dict(code="BATCH_FAILED", batch_id=batch_id, status=result.get("status")))
-                        self.pending = None
-                        return False
-                    for error in result.get("errors", []):
-                        self._notify(dict(error, event=events[error["index"]]))
-                        if error.get("code") == "QUOTA_EXCEEDED":
-                            self.paused = "QUOTA_EXCEEDED"
-                            event = events[error["index"]]
-                            size = len(json.dumps(event, ensure_ascii=False, separators=(",", ":")).encode())
-                            with self.lock:
-                                if len(self.queue) < 10000 and self.size + size <= 16*1024*1024:
-                                    self.queue.append((event, size))
-                                    self.size += size
-                                else:
-                                    self._notify(dict(code="BUFFER_OVERFLOW"))
-                    try:
-                        self.on_result(result)
-                    except Exception:
-                        pass
-                    self.pending = None
-                    continue
                 with self.lock:
                     items, size = [], 0
                     for item in self.queue:
@@ -149,8 +118,11 @@ class MeterTrail:
                     return True
                 events = [x[0] for x in items]
                 status, result = self._request("/v1/events/batch", dict(schemaVersion="1.0", agent=self.agent, events=events), deadline)
-                if status == 202:
-                    self.pending = (result["batchId"], events)
+                if status in (200, 202):
+                    try:
+                        self.on_result(result)
+                    except Exception:
+                        pass
                 elif status in (401, 403) or result.get("code") == "QUOTA_EXCEEDED":
                     self.paused = result.get("code", "INVALID_API_KEY")
                     self._notify(dict(code=self.paused))
@@ -162,18 +134,13 @@ class MeterTrail:
                     # Use individual sends after a server/proxy limit; identities stay unchanged.
                     for event in events:
                         single_status, single = self._request("/v1/events/batch", dict(schemaVersion="1.0", agent=self.agent, events=[event]), deadline)
-                        if single_status != 202:
+                        if single_status not in (200, 202):
                             self._notify(dict(code=single.get("code", "PAYLOAD_TOO_LARGE")))
                             return False
-                        while True:
-                            poll_status, outcome = self._request("/v1/batches/"+single["batchId"], deadline=deadline)
-                            if poll_status != 200:
-                                return False
-                            if outcome.get("status") != "pending":
-                                for error in outcome.get("errors", []):
-                                    self._notify(dict(error, event=event))
-                                break
-                            time.sleep(.3)
+                        try:
+                            self.on_result(single)
+                        except Exception:
+                            pass
                 else:
                     self._notify(dict(code=result.get("code", "PERMANENT_ERROR"), events=events))
                 with self.lock:
@@ -186,6 +153,11 @@ class MeterTrail:
     def resume(self):
         self.paused = None
         self.wake.set()
+
+    def get_batch(self, batch_id):
+        if not batch_id:
+            raise ValueError("batch_id is required")
+        return self._request("/v1/batches/" + quote(str(batch_id), safe=""))
 
     def check_quota(self):
         return self._request("/v1/quota")

@@ -15,6 +15,6 @@ class Send {
             .build();
     var r = HttpClient.newHttpClient().send(req, HttpResponse.BodyHandlers.ofString());
     System.out.println(r.statusCode() + " " + r.body());
-    if (r.statusCode() != 202) System.exit(1);
+    if (r.statusCode() != 200) System.exit(1);
   }
 }

@@ -31,8 +31,6 @@ public final class MeterTrail implements AutoCloseable {
   private volatile String paused;
   private volatile long retryAfterNanos;
   private volatile boolean closed;
-  private String pending;
-  private List<JsonNode> pendingEvents;
 
   public MeterTrail(
       String endpoint,
@@ -59,7 +57,7 @@ public final class MeterTrail implements AutoCloseable {
             "sdkName",
             "metertrail-java",
             "sdkVersion",
-            "0.1.0");
+            "0.2.0");
     executor.scheduleWithFixedDelay(this::drainSafely, 5, 5, TimeUnit.SECONDS);
   }
 
@@ -102,7 +100,7 @@ public final class MeterTrail implements AutoCloseable {
     return true;
   }
 
-  private record Response(int status, JsonNode data) {}
+  public record Response(int status, JsonNode data) {}
 
   private Response request(String path, JsonNode body, long deadline) throws Exception {
     for (int attempt = 0; ; attempt++) {
@@ -160,45 +158,6 @@ public final class MeterTrail implements AutoCloseable {
 
   private void drain(long deadline) throws Exception {
     while (paused == null && System.nanoTime() < deadline && System.nanoTime() >= retryAfterNanos) {
-      if (pending != null) {
-        Response r = request("/v1/batches/" + pending, null, deadline);
-        if (r.status() != 200) {
-          if (r.status() == 401 || r.status() == 403) paused = "INVALID_API_KEY";
-          error("BATCH_QUERY_FAILED");
-          return;
-        }
-        if (r.data().path("status").asText().equals("pending")) {
-          Thread.sleep(300);
-          continue;
-        }
-        if (!r.data().path("status").asText().equals("completed")) {
-          error("BATCH_FAILED: " + r.data().path("status").asText());
-          pending = null;
-          pendingEvents = null;
-          return;
-        }
-        for (JsonNode e : r.data().path("errors")) {
-          error(e.path("code").asText() + " index=" + e.path("index").asInt());
-          if (e.path("code").asText().equals("QUOTA_EXCEEDED")) {
-            paused = "QUOTA_EXCEEDED";
-            JsonNode event = pendingEvents.get(e.path("index").asInt());
-            int size = event.toString().getBytes(StandardCharsets.UTF_8).length;
-            synchronized (queue) {
-              if (queue.size() < 10000 && bytes + size <= 16 * 1024 * 1024) {
-                queue.add(event);
-                bytes += size;
-              } else error("BUFFER_OVERFLOW");
-            }
-          }
-        }
-        try {
-          onResult.accept(r.data());
-        } catch (Exception ignored) {
-        }
-        pending = null;
-        pendingEvents = null;
-        continue;
-      }
       List<JsonNode> events = new ArrayList<>();
       long size = 0;
       synchronized (queue) {
@@ -215,9 +174,11 @@ public final class MeterTrail implements AutoCloseable {
               "/v1/events/batch",
               json.valueToTree(Map.of("schemaVersion", "1.0", "agent", agent, "events", events)),
               deadline);
-      if (r.status() == 202) {
-        pending = r.data().path("batchId").asText();
-        pendingEvents = events;
+      if (r.status() == 200 || r.status() == 202) {
+        try {
+          onResult.accept(r.data());
+        } catch (Exception ignored) {
+        }
       } else if (r.status() == 401
           || r.status() == 403
           || r.data().path("code").asText().equals("QUOTA_EXCEEDED")) {
@@ -235,19 +196,12 @@ public final class MeterTrail implements AutoCloseable {
                   json.valueToTree(
                       Map.of("schemaVersion", "1.0", "agent", agent, "events", List.of(event))),
                   deadline);
-          if (one.status() != 202) {
+          if (one.status() != 200 && one.status() != 202) {
             error(one.data().path("code").asText());
             return;
           }
-          Response result;
-          do {
-            Thread.sleep(100);
-            result = request("/v1/batches/" + one.data().path("batchId").asText(), null, deadline);
-          } while (result.status() == 200
-              && result.data().path("status").asText().equals("pending"));
-          if (result.status() != 200) return;
           try {
-            onResult.accept(result.data());
+            onResult.accept(one.data());
           } catch (Exception ignored) {
           }
         }
@@ -274,12 +228,17 @@ public final class MeterTrail implements AutoCloseable {
               })
           .get(timeout.toMillis(), TimeUnit.MILLISECONDS);
       synchronized (queue) {
-        return queue.isEmpty() && pending == null;
+        return queue.isEmpty();
       }
     } catch (Exception e) {
       error("FLUSH_TIMEOUT");
       return false;
     }
+  }
+
+  public Response getBatch(String batchId) throws Exception {
+    return request("/v1/batches/" + UUID.fromString(batchId), null,
+        System.nanoTime() + TimeUnit.SECONDS.toNanos(10));
   }
 
   public String pausedReason() {

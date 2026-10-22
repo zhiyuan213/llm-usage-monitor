@@ -24,3 +24,5 @@ Validation: screenshots of all ten supplied page layouts at 1920 × 1080, with n
 ## 后续页面更新入口
 
 当前持续维护的样式规范见 [页面样式规范](ui-style-guide.md)。根目录 `AGENTS.md` 已要求后续前端页面修改先阅读并遵守该规范。本文保留 V2 实施与验证记录。
+
+2026-10-23 后续调整：开发文档代码块取消内部滚动和高度上限，长行自动换行，统一使用正文外层滚动。

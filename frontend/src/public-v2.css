@@ -482,7 +482,10 @@
 }
 .public-v2 .docs-content .code-box pre {
   padding: 20px;
-  max-height: clamp(180px, calc(100dvh - 610px), 480px);
+  max-height: none;
+  overflow: visible;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   font-size: 13px;
   line-height: 2;
 }
@@ -701,7 +704,7 @@
   overflow-wrap: anywhere;
 }
 .public-v2 .protocol-reference .code-box pre {
-  max-height: 420px;
+  max-height: none;
 }
 
 .public-v2 .protocol-advanced {

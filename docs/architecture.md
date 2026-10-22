@@ -25,7 +25,7 @@ The API and worker share an image. Compose sets `WORKER_ENABLED=false` for API s
 2. Validate the envelope, then acquire the workspace quota row lock.
 3. Validate each event; compare transport and object identity; reserve new units in array order.
 4. Commit batch, immutable transport payload, object revision placeholder, and usage ledger.
-5. Return 202. The Worker locks a pending batch using `SKIP LOCKED`, upserts only higher object revisions, and marks events/batch complete in the same transaction.
+5. Return 200. The Worker locks a pending batch using `SKIP LOCKED`, upserts only higher object revisions, and marks events/batch complete in the same transaction.
 
 The transaction lock is the worker lease. A crash/connection loss rolls back work and releases it immediately. There is no externally expiring lease that could let a second worker process an uncommitted batch simultaneously. Work transactions are limited to at most 500 small events. No frontend acknowledgement precedes durable persistence.
 

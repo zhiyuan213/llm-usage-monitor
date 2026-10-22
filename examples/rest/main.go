@@ -35,7 +35,7 @@ func main() {
 
 	b, _ := io.ReadAll(r.Body)
 	fmt.Println(r.Status, string(b))
-	if r.StatusCode != 202 {
+	if r.StatusCode != 200 {
 		os.Exit(1)
 	}
 }

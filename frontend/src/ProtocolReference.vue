@@ -50,20 +50,20 @@ import {
     <p>
       {{
         t(
-          "HTTP 202 means the batch was received, not that every event succeeded. Processing results are shown under Recent batches in the console.",
-          "HTTP 202 表示批次已接收，不代表每条数据都处理成功。处理情况可在后台“最近上报批次”中查看。",
+          "HTTP 200 means the batch was received. The upload response always has status pending; this is a fixed receipt, not live progress. If needed, query GET https://metertrail.com/v1/batches/{batchId} with the same project API key.",
+          "HTTP 200 表示批次已接收。上报响应的 status 固定为 pending，不是实时处理进度。如需实时状态，使用同一项目密钥调用 GET https://metertrail.com/v1/batches/{batchId}。",
         )
       }}
     </p>
     <div class="code-box">
-      <div>HTTP 202 · JSON</div>
+      <div>HTTP 200 · JSON</div>
       <pre>{{ minimalReceiptExample }}</pre>
     </div>
     <p>
       <RouterLink :to="{ path: '/docs', hash: '#fields' }">{{
         t(
-          "View Header, Body and Resp field descriptions →",
-          "查看 Header、Body、Resp 字段描述 →",
+          "View ingestion Header and Body fields →",
+          "查看 Header、Body 接入字段 →",
         )
       }}</RouterLink>
     </p>
@@ -93,7 +93,7 @@ POST /v1/events/batch HTTP/1.1
         <pre>{{ bodyExample }}</pre>
       </div>
       <div class="code-box">
-        <div>HTTP 202 · JSON</div>
+        <div>HTTP 200 · JSON</div>
         <pre>{{ receiptExample }}</pre>
       </div>
     </details>

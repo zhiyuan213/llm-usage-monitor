@@ -11,21 +11,24 @@ import org.junit.jupiter.api.Test;
 
 class MeterTrailTest {
   @Test
-  void asynchronousRecordClonesInputAndPollsFinalResult() throws Exception {
+  void receiptEndsWithoutPollingAndQueryIsExplicit() throws Exception {
     var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
     var bodies = new CopyOnWriteArrayList<String>();
     var results = new CopyOnWriteArrayList<String>();
+    var queries = new CopyOnWriteArrayList<String>();
     server.createContext(
         "/",
         exchange -> {
           boolean write = exchange.getRequestMethod().equals("POST");
+          if (!write) queries.add(exchange.getRequestURI().getPath());
+          assertEquals("Bearer test", exchange.getRequestHeaders().getFirst("Authorization"));
           if (write) bodies.add(new String(exchange.getRequestBody().readAllBytes()));
           byte[] result =
               (write
-                      ? "{\"batchId\":\"test\"}"
+                      ? "{\"batchId\":\"550e8400-e29b-41d4-a716-446655440099\",\"status\":\"pending\"}"
                       : "{\"status\":\"completed\",\"accepted\":1,\"errors\":[]}")
                   .getBytes();
-          exchange.sendResponseHeaders(write ? 202 : 200, result.length);
+          exchange.sendResponseHeaders(200, result.length);
           exchange.getResponseBody().write(result);
           exchange.close();
         });
@@ -46,6 +49,12 @@ class MeterTrailTest {
       assertEquals(1, bodies.size());
       assertTrue(bodies.get(0).contains("\"objectId\":\"one\""));
       assertEquals(1, results.size());
+      assertTrue(results.get(0).contains("pending"));
+      assertEquals(0, queries.size());
+      var queried = sdk.getBatch("550e8400-e29b-41d4-a716-446655440099");
+      assertEquals(200, queried.status());
+      assertEquals("completed", queried.data().path("status").asText());
+      assertEquals(1, queries.size());
     } finally {
       server.stop(0);
     }

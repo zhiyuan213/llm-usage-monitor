@@ -55,7 +55,7 @@ Status: `success`, `error`, `cancelled`. Error is a string ≤1 KiB. Business id
 {"batchId":"uuid","received":3,"status":"pending"}
 ```
 
-202 is returned only after quota reservation, identity writes, and batch/event persistence commit. Use the same project key with `GET /v1/batches/{batchId}`:
+HTTP 200 is returned only after quota reservation, identity writes, and batch/event persistence commit. The upload receipt always has `status: "pending"`; this fixed value is not live progress. Query only when needed, using the same project key with `GET https://metertrail.com/v1/batches/{batchId}`:
 
 ```json
 {"status":"completed","received":3,"accepted":2,"duplicates":0,"rejected":1,"errors":[{"index":2,"code":"INVALID_USAGE"}]}
