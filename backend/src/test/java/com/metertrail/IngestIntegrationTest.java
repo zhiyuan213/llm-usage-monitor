@@ -757,7 +757,7 @@ class IngestIntegrationTest {
           }
           assertEquals(126, xml.split("<row r=").length - 1);
           assertEquals(
-              kind.equals("traces") ? 7 : kind.equals("analytics") ? 5 : 6,
+              kind.equals("traces") ? 7 : 6,
               xml.substring(xml.indexOf("<row r="), xml.indexOf("</row>")).split("<c r=").length
                   - 1);
         } else
@@ -787,6 +787,32 @@ class IngestIntegrationTest {
       assertTrue(text.contains("row-124"));
       assertFalse(text.contains("row-123"));
     }
+    mvc.perform(get("/api/workspace").cookie(cookie))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.projects[0].created_at").exists());
+    store.db.update(
+        "UPDATE objects SET data=jsonb_set(data,'{customerId}','\"c-0\"') WHERE project_id=? AND"
+            + " object_id='row-124'",
+        project);
+    var statistics =
+        mvc.perform(get("/api/reports/analytics?project=" + project).cookie(cookie))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.items[0].dimension").value("c-0"))
+            .andExpect(jsonPath("$.items[0].objects").value(2))
+            .andExpect(jsonPath("$.items[0].last_activity_at").exists())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    var latest =
+        store.db.queryForObject(
+            "SELECT started_at FROM objects WHERE project_id=? AND object_id='row-124'",
+            java.sql.Timestamp.class,
+            project);
+    assertEquals(
+        latest.toInstant().toEpochMilli(),
+        java.time.Instant.parse(
+                Support.parse(statistics).path("items").get(0).path("last_activity_at").asText())
+            .toEpochMilli());
     UUID foreignUser = UUID.randomUUID(),
         foreignWorkspace = UUID.randomUUID(),
         foreignProject = UUID.randomUUID();

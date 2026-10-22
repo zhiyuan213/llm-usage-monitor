@@ -11,8 +11,8 @@ import org.apache.pdfbox.pdmodel.font.PDType0Font;
 final class ActivityExport {
   static String[] headers(boolean zh) {
     return zh
-        ? new String[] {"时间 UTC", "对象", "类型", "模型", "成本 USD", "状态"}
-        : new String[] {"Time UTC", "Object", "Type", "Model", "Cost USD", "Status"};
+        ? new String[] {"对象", "类型", "模型", "成本 USD", "状态", "时间 UTC"}
+        : new String[] {"Object", "Type", "Model", "Cost USD", "Status", "Time UTC"};
   }
 
   static String[] row(Map<String, Object> r, boolean zh) {
@@ -22,14 +22,14 @@ final class ActivityExport {
             ? "—"
             : r.get("cost") == null ? (zh ? "未知" : "Unknown") : r.get("cost").toString();
     return new String[] {
-      java.time.format.DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")
-          .withZone(java.time.ZoneOffset.UTC)
-          .format(((java.sql.Timestamp) r.get("started_at")).toInstant()),
       d.path("name").asText(r.get("object_id").toString()),
       r.get("type").toString(),
       d.path("model").asText("—"),
       cost,
-      d.path("status").asText(d.path("valueType").asText("—"))
+      d.path("status").asText(d.path("valueType").asText("—")),
+      java.time.format.DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")
+          .withZone(java.time.ZoneOffset.UTC)
+          .format(((java.sql.Timestamp) r.get("started_at")).toInstant())
     };
   }
 
@@ -180,7 +180,7 @@ final class ActivityExport {
     float y;
 
     Pdf(boolean zh) throws IOException {
-      this(headers(zh), new float[] {130, 210, 90, 130, 100, 110});
+      this(headers(zh), new float[] {210, 90, 130, 100, 110, 130});
     }
 
     Pdf(String[] labels, float[] columnWidths) throws IOException {

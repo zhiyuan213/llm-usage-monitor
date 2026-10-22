@@ -51,19 +51,19 @@ class QueryReportsController {
           "id DESC",
           new Object[] {user, user},
           zh
-              ? new String[] {"时间 UTC", "操作", "目标", "结果", "IP", "请求 ID"}
-              : new String[] {"Time UTC", "Action", "Target", "Result", "IP", "Request ID"},
-          new float[] {115, 115, 200, 70, 100, 170},
+              ? new String[] {"操作", "目标", "结果", "IP", "请求 ID", "时间 UTC"}
+              : new String[] {"Action", "Target", "Result", "IP", "Request ID", "Time UTC"},
+          new float[] {115, 200, 70, 100, 170, 115},
           r ->
               new String[] {
-                utc(r.get("created_at")),
                 val(r.get("action"), "—"),
                 val(r.get("target"), "—"),
                 Boolean.TRUE.equals(r.get("success"))
                     ? (zh ? "成功" : "Success")
                     : (zh ? "失败" : "Failed"),
                 val(r.get("ip"), "—"),
-                val(r.get("request_id"), "—")
+                val(r.get("request_id"), "—"),
+                utc(r.get("created_at"))
               });
     Support.require(Set.of("traces", "analytics").contains(kind), "INVALID_REPORT");
     Support.require(project != null, "PROJECT_REQUIRED");
@@ -75,24 +75,30 @@ class QueryReportsController {
           "SELECT o.data->>? AS dimension,count(*) AS objects,sum(o.cost) AS cost,count(*)"
               + " FILTER(WHERE o.data->>'observationType'='generation' AND o.cost IS NULL) AS"
               + " unknown_costs,sum((o.data->'usage'->>'inputTokens')::numeric+(o.data->'usage'->>'outputTokens')::numeric)"
-              + " AS tokens"
+              + " AS tokens,max(o.started_at) AS last_activity_at"
               + console.source()
               + " GROUP BY 1",
           "objects DESC,dimension ASC NULLS LAST",
           new Object[] {dimension, project, user},
           zh
-              ? new String[] {"标识", "对象数", "已知 Token", "估算成本 USD", "未知成本调用"}
+              ? new String[] {"标识", "对象数", "已知 Token", "估算成本 USD", "未知成本调用", "最近活动时间 UTC"}
               : new String[] {
-                "Identifier", "Objects", "Known tokens", "Estimated cost USD", "Unknown costs"
+                "Identifier",
+                "Objects",
+                "Known tokens",
+                "Estimated cost USD",
+                "Unknown costs",
+                "Last activity UTC"
               },
-          new float[] {230, 110, 130, 160, 140},
+          new float[] {180, 80, 100, 130, 120, 160},
           r ->
               new String[] {
                 val(r.get("dimension"), zh ? "未提供" : "Not provided"),
                 val(r.get("objects"), "0"),
                 val(r.get("tokens"), "—"),
                 val(r.get("cost"), zh ? "未知" : "Unknown"),
-                val(r.get("unknown_costs"), "0")
+                val(r.get("unknown_costs"), "0"),
+                utc(r.get("last_activity_at"))
               });
     }
     Support.require(search.length() <= 128, "INVALID_FILTER");
@@ -106,21 +112,21 @@ class QueryReportsController {
           project, user, status, status, search, "%" + search + "%", "%" + search + "%"
         },
         zh
-            ? new String[] {"开始时间 UTC", "名称", "对象 ID", "耗时 ms", "用户", "客户", "状态"}
+            ? new String[] {"名称", "对象 ID", "耗时 ms", "用户", "客户", "状态", "开始时间 UTC"}
             : new String[] {
-              "Started UTC", "Name", "Object ID", "Duration ms", "User", "Customer", "Status"
+              "Name", "Object ID", "Duration ms", "User", "Customer", "Status", "Started UTC"
             },
-        new float[] {115, 140, 160, 75, 100, 100, 80},
+        new float[] {140, 160, 75, 100, 100, 80, 115},
         r -> {
           var d = Support.parse(r.get("data").toString());
           return new String[] {
-            utc(r.get("started_at")),
             d.path("name").asText(val(r.get("object_id"), "—")),
             val(r.get("object_id"), "—"),
             d.path("durationMs").asText("—"),
             d.path("userId").asText("—"),
             d.path("customerId").asText("—"),
-            d.path("status").asText("—")
+            d.path("status").asText("—"),
+            utc(r.get("started_at"))
           };
         });
   }

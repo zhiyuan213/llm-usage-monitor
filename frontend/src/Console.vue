@@ -40,7 +40,17 @@ import {
   ArrowLeft,
   BarChart3,
 } from "lucide-vue-next";
-import { api, t, n, money, date, session, language, ApiError, errorText } from "./lib";
+import {
+  api,
+  t,
+  n,
+  money,
+  date,
+  session,
+  language,
+  ApiError,
+  errorText,
+} from "./lib";
 import { contextLoader } from "./context-loader";
 const route = useRoute(),
   router = useRouter(),
@@ -58,8 +68,20 @@ const nav = [
   ["audit", "Audit logs", "审计日志", ScrollText],
 ] as const;
 const navGroups = [
-  { en: "Projects", zh: "项目", items: nav.filter(item => !["account", "billing", "audit"].includes(item[0])) },
-  { en: "Account", zh: "账号", items: ["account", "billing", "audit"].map(id => nav.find(item => item[0] === id)!) },
+  {
+    en: "Projects",
+    zh: "项目",
+    items: nav.filter(
+      (item) => !["account", "billing", "audit"].includes(item[0]),
+    ),
+  },
+  {
+    en: "Account",
+    zh: "账号",
+    items: ["account", "billing", "audit"].map((id) =>
+      nav.find((item) => item[0] === id)!,
+    ),
+  },
 ];
 const title = computed(() => {
   const item = nav.find((v) => v[0] === page.value);
@@ -73,9 +95,26 @@ const projects = ref<any[]>([]),
   data = ref<any>({}),
   overview = ref<any>({}),
   recent = ref<any[]>([]);
-const activityPage = ref(0), activitySize = ref(5), activityTotal = ref(0), reportPage = ref(0);
-const reportExportUrl = computed(() => "/api/reports/" + page.value + "/export?" + new URLSearchParams({project: selected.value, dimension: dimension.value, search: search.value, status: status.value}));
-async function reportTurn(next: number) { reportPage.value = next; await refresh(false); }
+const activityPage = ref(0),
+  activitySize = ref(5),
+  activityTotal = ref(0),
+  reportPage = ref(0);
+const reportExportUrl = computed(
+  () =>
+    "/api/reports/" +
+    page.value +
+    "/export?" +
+    new URLSearchParams({
+      project: selected.value,
+      dimension: dimension.value,
+      search: search.value,
+      status: status.value,
+    }),
+);
+async function reportTurn(next: number) {
+  reportPage.value = next;
+  await refresh(false);
+}
 const project = computed(() =>
   projects.value.find((p) => p.id === selected.value),
 );
@@ -197,14 +236,21 @@ async function refresh(force = true) {
       billing.cap = String(data.value.workspace.overage_cap);
     } else if (page.value === "workspace")
       data.value = await request("/workspace");
-    else if (page.value === "audit") data.value = await request("/reports/audit?page=" + reportPage.value);
+    else if (page.value === "audit")
+      data.value = await request("/reports/audit?page=" + reportPage.value);
     else if (page.value === "account") {
       /* Account is included in context. */
     } else if (selected.value) {
       if (page.value === "overview") {
         const [o, r] = await Promise.all([
           request(path("/overview")),
-          request(path("/activity") + "?page=" + activityPage.value + "&size=" + activitySize.value),
+          request(
+            path("/activity") +
+              "?page=" +
+              activityPage.value +
+              "&size=" +
+              activitySize.value,
+          ),
         ]);
         current();
         overview.value = o;
@@ -225,7 +271,12 @@ async function refresh(force = true) {
         data.value = await request(path("/traces/" + route.params.detail));
       else if (page.value === "analytics")
         data.value = await request(
-          "/reports/analytics?project=" + selected.value + "&dimension=" + dimension.value + "&page=" + reportPage.value,
+          "/reports/analytics?project=" +
+            selected.value +
+            "&dimension=" +
+            dimension.value +
+            "&page=" +
+            reportPage.value,
         );
       else if (page.value === "keys") data.value = await request(path("/keys"));
       else if (page.value === "alerts")
@@ -400,21 +451,21 @@ const usagePercent = computed(() =>
       </div>
       <nav>
         <template v-for="group in navGroups" :key="group.en">
-        <div class="nav-group-label">{{ t(group.en, group.zh) }}</div>
-        <RouterLink
-          v-for="item in group.items"
-          :key="item[0]"
-          :to="'/app/' + item[0]"
-          :aria-label="t(item[1], item[2])"
-          :title="t(item[1], item[2])"
-          :class="{
-            active:
-              page === item[0] || (page === 'trace' && item[0] === 'traces'),
-          }"
-          ><component :is="item[3]" :size="17" /><span>{{
-            t(item[1], item[2])
-          }}</span></RouterLink
-        >
+          <div class="nav-group-label">{{ t(group.en, group.zh) }}</div>
+          <RouterLink
+            v-for="item in group.items"
+            :key="item[0]"
+            :to="'/app/' + item[0]"
+            :aria-label="t(item[1], item[2])"
+            :title="t(item[1], item[2])"
+            :class="{
+              active:
+                page === item[0] || (page === 'trace' && item[0] === 'traces'),
+            }"
+            ><component :is="item[3]" :size="17" /><span>{{
+              t(item[1], item[2])
+            }}</span></RouterLink
+          >
         </template>
       </nav>
       <div class="sidebar-bottom">
@@ -652,8 +703,26 @@ const usagePercent = computed(() =>
             <div class="panel-heading">
               <h2>{{ t("Recent activity", "最近活动") }}</h2>
               <div class="project-row-actions">
-                <a class="btn" :href="'/api' + path('/activity/export') + '?format=xlsx&lang=' + language" >{{ t("Export Excel", "导出 Excel") }}</a>
-                <a class="btn" :href="'/api' + path('/activity/export') + '?format=pdf&lang=' + language" >{{ t("Export PDF", "导出 PDF") }}</a>
+                <a
+                  class="btn"
+                  :href="
+                    '/api' +
+                    path('/activity/export') +
+                    '?format=xlsx&lang=' +
+                    language
+                  "
+                  >{{ t("Export Excel", "导出 Excel") }}</a
+                >
+                <a
+                  class="btn"
+                  :href="
+                    '/api' +
+                    path('/activity/export') +
+                    '?format=pdf&lang=' +
+                    language
+                  "
+                  >{{ t("Export PDF", "导出 PDF") }}</a
+                >
               </div>
               <RouterLink to="/app/traces"
                 >{{ t("View traces", "查看调用") }} →</RouterLink
@@ -663,17 +732,16 @@ const usagePercent = computed(() =>
               <table>
                 <thead>
                   <tr>
-                    <th>{{ t("Time", "时间") }}</th>
                     <th>{{ t("Object", "对象") }}</th>
                     <th>{{ t("Type", "类型") }}</th>
                     <th>{{ t("Model", "模型") }}</th>
                     <th>{{ t("Cost", "成本") }}</th>
                     <th>{{ t("Status", "状态") }}</th>
+                    <th>{{ t("Time", "时间") }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="o in recent" :key="o.type + ':' + o.object_id">
-                    <td>{{ date(o.started_at) }}</td>
                     <td>
                       <RouterLink
                         v-if="o.trace_id"
@@ -700,6 +768,7 @@ const usagePercent = computed(() =>
                         >{{ o.data.status || o.data.valueType }}</span
                       >
                     </td>
+                    <td>{{ date(o.started_at) }}</td>
                   </tr>
                   <tr v-if="!recent.length">
                     <td colspan="6" class="empty-cell">
@@ -718,9 +787,27 @@ const usagePercent = computed(() =>
               </table>
             </div>
             <div class="panel-foot table-actions">
-              <span>{{ t("Total", "共") }} {{ n(activityTotal) }} {{ t("objects", "条") }} · {{ activityPage + 1 }} / {{ Math.max(1, Math.ceil(activityTotal / activitySize)) }}</span>
-              <button class="btn" :disabled="loading || activityPage === 0" @click="activityTurn(activityPage - 1)">{{ t("Previous", "上一页") }}</button>
-              <button class="btn" :disabled="loading || (activityPage + 1) * activitySize >= activityTotal" @click="activityTurn(activityPage + 1)">{{ t("Next", "下一页") }}</button>
+              <span
+                >{{ t("Total", "共") }} {{ n(activityTotal) }}
+                {{ t("objects", "条") }} · {{ activityPage + 1 }} /
+                {{ Math.max(1, Math.ceil(activityTotal / activitySize)) }}</span
+              >
+              <button
+                class="btn"
+                :disabled="loading || activityPage === 0"
+                @click="activityTurn(activityPage - 1)"
+              >
+                {{ t("Previous", "上一页") }}
+              </button>
+              <button
+                class="btn"
+                :disabled="
+                  loading || (activityPage + 1) * activitySize >= activityTotal
+                "
+                @click="activityTurn(activityPage + 1)"
+              >
+                {{ t("Next", "下一页") }}
+              </button>
             </div>
           </section></template
         >
@@ -755,17 +842,16 @@ const usagePercent = computed(() =>
               <table>
                 <thead>
                   <tr>
-                    <th>{{ t("Started at", "开始时间") }}</th>
                     <th>{{ t("Name", "名称") }}</th>
                     <th>{{ t("Duration", "耗时") }}</th>
                     <th>{{ t("User / Customer", "用户 / 客户") }}</th>
                     <th>{{ t("Status", "状态") }}</th>
+                    <th>{{ t("Started at", "开始时间") }}</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="o in data.items || []" :key="o.object_id">
-                    <td>{{ date(o.started_at) }}</td>
                     <td>
                       <strong>{{ o.data.name }}</strong
                       ><small class="mono">{{ o.object_id }}</small>
@@ -784,6 +870,7 @@ const usagePercent = computed(() =>
                         >{{ o.data.status }}</span
                       >
                     </td>
+                    <td>{{ date(o.started_at) }}</td>
                     <td>
                       <RouterLink :to="'/app/trace/' + o.trace_id"
                         >{{ t("View", "查看") }} →</RouterLink
@@ -803,9 +890,17 @@ const usagePercent = computed(() =>
                 </tbody>
               </table>
             </div>
-            <QueryControls :page="tracePage" :total="data.total || 0" :loading="loading" :export-url="reportExportUrl" @change="tracePage = $event; refresh(false)" />
-          </section></template
-        >
+            <QueryControls
+              :page="tracePage"
+              :total="data.total || 0"
+              :loading="loading"
+              :export-url="reportExportUrl"
+              @change="
+                tracePage = $event;
+                refresh(false);
+              "
+            /></section
+        ></template>
         <template v-if="page === 'trace' && selected"
           ><RouterLink class="back-link" to="/app/traces"
             ><ArrowLeft :size="16" />{{
@@ -909,7 +1004,8 @@ const usagePercent = computed(() =>
               v-for="d in ['customerId', 'userId', 'feature']"
               :class="{ active: dimension === d }"
               @click="
-                dimension = d; reportPage = 0;
+                dimension = d;
+                reportPage = 0;
                 refresh();
               "
             >
@@ -932,6 +1028,9 @@ const usagePercent = computed(() =>
                     <th>{{ t("Known tokens", "已知 Token") }}</th>
                     <th>{{ t("Estimated cost", "估算成本") }}</th>
                     <th>{{ t("Unknown costs", "未知成本调用") }}</th>
+                    <th>
+                      {{ t("Last activity (UTC)", "最近活动时间 (UTC)") }}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -941,9 +1040,10 @@ const usagePercent = computed(() =>
                     <td>{{ n(r.tokens) }}</td>
                     <td>{{ money(r.cost) }}</td>
                     <td>{{ n(r.unknown_costs) }}</td>
+                    <td>{{ date(r.last_activity_at) }}</td>
                   </tr>
                   <tr v-if="!data.items?.length">
-                    <td colspan="5" class="empty-cell">
+                    <td colspan="6" class="empty-cell">
                       {{
                         t(
                           "Submit userId, customerId, or feature with your events to explore usage.",
@@ -955,8 +1055,14 @@ const usagePercent = computed(() =>
                 </tbody>
               </table>
             </div>
-          <QueryControls :page="reportPage" :total="data.total || 0" :loading="loading" :export-url="reportExportUrl" @change="reportTurn" /></section></template
-        >
+            <QueryControls
+              :page="reportPage"
+              :total="data.total || 0"
+              :loading="loading"
+              :export-url="reportExportUrl"
+              @change="reportTurn"
+            /></section
+        ></template>
         <template v-if="page === 'keys' && selected"
           ><section class="panel integration-banner">
             <CodeIcon />
@@ -1011,8 +1117,8 @@ const usagePercent = computed(() =>
                   <tr>
                     <th>{{ t("Name", "名称") }}</th>
                     <th>{{ t("Prefix", "前缀") }}</th>
-                    <th>{{ t("Created", "创建时间") }}</th>
                     <th>{{ t("Status", "状态") }}</th>
+                    <th>{{ t("Created", "创建时间") }}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -1022,7 +1128,6 @@ const usagePercent = computed(() =>
                     <td>
                       <code>{{ k.prefix }}…</code>
                     </td>
-                    <td>{{ date(k.created_at) }}</td>
                     <td>
                       <span :class="['badge', k.revoked_at ? '' : 'success']">{{
                         k.revoked_at
@@ -1030,6 +1135,7 @@ const usagePercent = computed(() =>
                           : t("Active", "有效")
                       }}</span>
                     </td>
+                    <td>{{ date(k.created_at) }}</td>
                     <td>
                       <button
                         v-if="!k.revoked_at"
@@ -1543,17 +1649,16 @@ const usagePercent = computed(() =>
               <table>
                 <thead>
                   <tr>
-                    <th>{{ t("Time (UTC)", "时间 (UTC)") }}</th>
                     <th>{{ t("Action", "操作") }}</th>
                     <th>{{ t("Target", "目标") }}</th>
                     <th>{{ t("Result", "结果") }}</th>
                     <th>IP</th>
                     <th>{{ t("Request ID", "请求 ID") }}</th>
+                    <th>{{ t("Time (UTC)", "时间 (UTC)") }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="a in data.items || []">
-                    <td>{{ date(a.created_at) }}</td>
                     <td>{{ a.action }}</td>
                     <td class="mono">{{ a.target }}</td>
                     <td>
@@ -1566,6 +1671,7 @@ const usagePercent = computed(() =>
                     </td>
                     <td>{{ a.ip || "—" }}</td>
                     <td class="mono">{{ a.request_id || "—" }}</td>
+                    <td>{{ date(a.created_at) }}</td>
                   </tr>
                   <tr v-if="!data.items?.length">
                     <td colspan="6" class="empty-cell">
@@ -1575,8 +1681,14 @@ const usagePercent = computed(() =>
                 </tbody>
               </table>
             </div>
-          <QueryControls :page="reportPage" :total="data.total || 0" :loading="loading" :export-url="reportExportUrl" @change="reportTurn" /></section></template
-        >
+            <QueryControls
+              :page="reportPage"
+              :total="data.total || 0"
+              :loading="loading"
+              :export-url="reportExportUrl"
+              @change="reportTurn"
+            /></section
+        ></template>
         <div class="console-footer">
           MeterTrail <span>·</span>
           {{

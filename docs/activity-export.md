@@ -14,6 +14,13 @@
 - Traces, all three analytics dimensions and audit logs use `GET /api/reports/{traces|analytics|audit}` with a zero-based page and fixed page size 5. Responses contain items, total, page and size.
 - Project queries require `project`; analytics accepts `dimension=customerId|userId|feature`; traces accepts `search` and `status`. Account audit queries always apply the authenticated account's ownership filter.
 - The same path plus `/export?format=xlsx|pdf` exports every matching row, including rows beyond the former 100-row limits, with the same project, filters, dimension and authorization as the table query. Export results do not depend on the current page.
-- Traces export seven data columns: start UTC, name, object ID, duration ms, user, customer, status. Name/ID and user/customer are separate export columns to retain all displayed values. Analytics exports all five columns; audit exports all six columns. View/detail buttons are navigation controls, not data.
+- Traces export seven data columns: name, object ID, duration ms, user, customer, status, start UTC. Name/ID and user/customer are separate export columns to retain all displayed values. Analytics exports six columns including latest activity UTC; audit exports six columns with UTC time last. View/detail buttons are navigation controls, not data.
 - Shared controls show export buttons, total count, page count and previous/next buttons even on a single page. Project or dimension changes reset pagination.
 - Regression coverage validates 125-row exports for each report, five-row pagination including the final page, all column counts, PDF page breaks, trace-filtered export, three dimensions and cross-account project/audit isolation.
+
+## Time columns
+
+- Project management shows project creation time from `projects.created_at`.
+- Customer/user/feature statistics show the latest event time (`max(started_at)`) among retained objects in the group, not the time the query was run.
+- Time columns are placed last when no operation column exists; otherwise immediately before the operation column. This convention applies to project rows, activity, traces, statistics, keys, batch history, alert rules/history, model prices and audit logs.
+- Excel and PDF follow the same data-column order; operation buttons are excluded. Times are explicitly UTC.

@@ -73,19 +73,16 @@ watch(() => props.project, refresh, { immediate: true });
       <table>
         <thead>
           <tr>
-            <th>{{ t("Received (UTC)", "接收时间 (UTC)") }}</th>
             <th>{{ t("Status", "状态") }}</th>
             <th>
               {{ t("Accepted / duplicate / rejected", "接受 / 重复 / 拒绝") }}
             </th>
+            <th>{{ t("Received (UTC)", "接收时间 (UTC)") }}</th>
             <th>{{ t("Details", "详情") }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="b in batches" :key="b.id">
-            <td>
-              {{ date(b.created_at) }}<small class="mono">{{ b.id }}</small>
-            </td>
             <td>
               <span
                 :class="[
@@ -100,6 +97,9 @@ watch(() => props.project, refresh, { immediate: true });
               >
             </td>
             <td>{{ b.accepted }} / {{ b.duplicates }} / {{ b.rejected }}</td>
+            <td>
+              {{ date(b.created_at) }}<small class="mono">{{ b.id }}</small>
+            </td>
             <td>
               <details v-if="b.errors.length">
                 <summary>
