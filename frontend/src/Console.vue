@@ -39,7 +39,7 @@ import {
   ArrowLeft,
   BarChart3,
 } from "lucide-vue-next";
-import { api, t, n, money, date, session, ApiError, errorText } from "./lib";
+import { api, t, n, money, date, session, language, ApiError, errorText } from "./lib";
 import { contextLoader } from "./context-loader";
 const route = useRoute(),
   router = useRouter(),
@@ -72,6 +72,7 @@ const projects = ref<any[]>([]),
   data = ref<any>({}),
   overview = ref<any>({}),
   recent = ref<any[]>([]);
+const activityPage = ref(0), activitySize = ref(20), activityTotal = ref(0);
 const project = computed(() =>
   projects.value.find((p) => p.id === selected.value),
 );
@@ -200,11 +201,12 @@ async function refresh(force = true) {
       if (page.value === "overview") {
         const [o, r] = await Promise.all([
           request(path("/overview")),
-          request(path("/objects")),
+          request(path("/activity") + "?page=" + activityPage.value + "&size=" + activitySize.value),
         ]);
         current();
         overview.value = o;
-        recent.value = r;
+        recent.value = r.items;
+        activityTotal.value = r.total;
       } else if (page.value === "traces")
         data.value = await request(
           path("/traces") +
@@ -252,7 +254,18 @@ watch(
   },
 );
 async function changeProject() {
+  activityPage.value = 0;
   tracePage.value = 0;
+  await refresh(false);
+}
+function openProject(id: string, target = "overview") {
+  activityPage.value = 0;
+  selected.value = id;
+  localStorage.setItem("metertrail.project", id);
+  router.push("/app/" + target);
+}
+async function activityTurn(page: number) {
+  activityPage.value = page;
   await refresh(false);
 }
 async function createProject() {
@@ -631,6 +644,10 @@ const usagePercent = computed(() =>
           <section class="panel">
             <div class="panel-heading">
               <h2>{{ t("Recent activity", "最近活动") }}</h2>
+              <div class="project-row-actions">
+                <a class="btn" :href="'/api' + path('/activity/export') + '?format=xlsx&lang=' + language" >{{ t("Export Excel", "导出 Excel") }}</a>
+                <a class="btn" :href="'/api' + path('/activity/export') + '?format=pdf&lang=' + language" >{{ t("Export PDF", "导出 PDF") }}</a>
+              </div>
               <RouterLink to="/app/traces"
                 >{{ t("View traces", "查看调用") }} →</RouterLink
               >
@@ -648,7 +665,7 @@ const usagePercent = computed(() =>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="o in recent" :key="o.object_id">
+                  <tr v-for="o in recent" :key="o.type + ':' + o.object_id">
                     <td>{{ date(o.started_at) }}</td>
                     <td>
                       <RouterLink
@@ -692,6 +709,11 @@ const usagePercent = computed(() =>
                   </tr>
                 </tbody>
               </table>
+            </div>
+            <div class="panel-foot table-actions">
+              <span>{{ t("Total", "共") }} {{ n(activityTotal) }} {{ t("objects", "条") }} · {{ activityPage + 1 }} / {{ Math.max(1, Math.ceil(activityTotal / activitySize)) }}</span>
+              <button class="btn" :disabled="loading || activityPage === 0" @click="activityTurn(activityPage - 1)">{{ t("Previous", "上一页") }}</button>
+              <button class="btn" :disabled="loading || (activityPage + 1) * activitySize >= activityTotal" @click="activityTurn(activityPage + 1)">{{ t("Next", "下一页") }}</button>
             </div>
           </section></template
         >
@@ -1520,10 +1542,7 @@ const usagePercent = computed(() =>
           v-if="page === 'workspace'"
           :data="data"
           @create="showCreate = true"
-          @select="
-            selected = $event;
-            router.push('/app/overview');
-          "
+          @select="openProject"
         />
         <ProjectInfoEditor
           v-if="page === 'settings' && project"

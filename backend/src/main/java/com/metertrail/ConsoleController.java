@@ -282,7 +282,11 @@ class ConsoleController {
         "objects",
         decode(
             store.db.queryForList(
-                "SELECT o.*"
+                "SELECT o.*,CASE WHEN o.type='observation' THEN NOT EXISTS(SELECT 1 FROM objects t"
+                    + " WHERE t.project_id=o.project_id AND t.type='trace' AND"
+                    + " t.trace_id=o.trace_id) WHEN o.type='score' THEN NOT EXISTS(SELECT 1 FROM"
+                    + " objects t WHERE t.project_id=o.project_id AND t.type=o.data->>'targetType'"
+                    + " AND t.object_id=o.data->>'targetId') ELSE false END AS unmatched"
                     + source()
                     + " AND (o.trace_id=? OR (o.type='score' AND EXISTS (SELECT 1 FROM objects t"
                     + " WHERE t.project_id=o.project_id AND t.trace_id=? AND"
@@ -308,6 +312,89 @@ class ConsoleController {
                 + " ORDER BY o.started_at DESC LIMIT 100",
             project,
             uid(req)));
+  }
+
+  @GetMapping("/api/projects/{project}/activity")
+  @Transactional(
+      readOnly = true,
+      isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+  Map<String, Object> activity(
+      @PathVariable UUID project,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      HttpServletRequest req) {
+    store.project(uid(req), project);
+    Support.require(page >= 0 && size >= 1 && size <= 100, "INVALID_PAGE");
+    long total =
+        store.db.queryForObject("SELECT count(*)" + source(), Long.class, project, uid(req));
+    var rows =
+        decode(
+            store.db.queryForList(
+                "SELECT o.*"
+                    + source()
+                    + " ORDER BY o.started_at DESC,o.type,o.object_id LIMIT ? OFFSET ?",
+                project,
+                uid(req),
+                size,
+                (long) page * size));
+    return Map.of("items", rows, "total", total, "page", page, "size", size);
+  }
+
+  @GetMapping("/api/projects/{project}/activity/export")
+  @Transactional(
+      readOnly = true,
+      isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+  void exportActivity(
+      @PathVariable UUID project,
+      @RequestParam String format,
+      @RequestParam(defaultValue = "en") String lang,
+      HttpServletRequest req,
+      jakarta.servlet.http.HttpServletResponse res)
+      throws java.io.IOException {
+    store.project(uid(req), project);
+    Support.require(Set.of("xlsx", "pdf").contains(format), "INVALID_FORMAT");
+    res.setContentType(
+        format.equals("xlsx")
+            ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            : "application/pdf");
+    res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=\"metertrail-activity-" + project + "." + format + "\"");
+    res.setHeader("Cache-Control", "no-store");
+    boolean zh = lang.equals("zh-CN");
+    var excel = format.equals("xlsx") ? new ActivityExport.Excel(res.getOutputStream(), zh) : null;
+    var pdf = format.equals("pdf") ? new ActivityExport.Pdf(zh) : null;
+    try {
+      store.db.query(
+          con -> {
+            var stmt =
+                con.prepareStatement(
+                    "SELECT o.started_at,o.object_id,o.type,o.data,o.cost"
+                        + source()
+                        + " ORDER BY o.started_at DESC,o.type,o.object_id");
+            stmt.setObject(1, project);
+            stmt.setObject(2, uid(req));
+            stmt.setFetchSize(500);
+            return stmt;
+          },
+          (org.springframework.jdbc.core.RowCallbackHandler)
+              rs -> {
+                Map<String, Object> row = new HashMap<>();
+                for (String key : List.of("started_at", "object_id", "type", "data", "cost"))
+                  row.put(key, rs.getObject(key));
+                try {
+                  var values = ActivityExport.row(row, zh);
+                  if (excel != null) excel.add(values);
+                  else pdf.add(values);
+                } catch (java.io.IOException e) {
+                  throw new java.io.UncheckedIOException(e);
+                }
+              });
+      if (pdf != null) pdf.save(res.getOutputStream());
+    } finally {
+      if (excel != null) excel.close();
+      if (pdf != null) pdf.close();
+    }
   }
 
   @GetMapping("/api/projects/{project}/analytics")

@@ -2,7 +2,15 @@
 import { Plus } from "lucide-vue-next";
 import { t, n, money, date } from "./lib";
 defineProps<{ data: any }>();
-const emit = defineEmits<{ select: [id: string]; create: [] }>();
+const emit = defineEmits<{ select: [id: string, page?: string]; create: [] }>();
+const actions = [
+  ["overview", "Overview", "概览"],
+  ["traces", "Traces", "调用记录"],
+  ["analytics", "Data analytics", "数据统计"],
+  ["keys", "API keys", "密钥管理"],
+  ["alerts", "Alert configuration", "告警配置"],
+  ["settings", "Project settings", "项目配置"],
+] as const;
 </script>
 <template>
   <section class="panel form-panel">
@@ -53,10 +61,11 @@ const emit = defineEmits<{ select: [id: string]; create: [] }>();
           <th>{{ t("Objects", "对象") }}</th>
           <th>{{ t("Model cost (USD)", "模型成本 (USD)") }}</th>
           <th>{{ t("Unknown costs", "未知成本调用") }}</th>
+          <th>{{ t("Actions", "操作") }}</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="p in data.projects || []">
+        <tr v-for="p in data.projects || []" :key="p.id">
           <td>
             <button class="text-button" @click="emit('select', p.id)">
               {{ p.name }}
@@ -67,9 +76,16 @@ const emit = defineEmits<{ select: [id: string]; create: [] }>();
           <td>{{ n(p.objects) }}</td>
           <td>{{ money(p.cost) }}</td>
           <td>{{ n(p.unknown_costs) }}</td>
+          <td>
+            <div class="project-row-actions">
+              <button v-for="action in actions" :key="action[0]" class="btn"
+                :aria-label="p.name + ' · ' + t(action[1], action[2])"
+                @click="emit('select', p.id, action[0])">{{ t(action[1], action[2]) }}</button>
+            </div>
+          </td>
         </tr>
         <tr v-if="!data.projects?.length">
-          <td colspan="6" class="empty-cell">
+          <td colspan="7" class="empty-cell">
             <button class="text-button" @click="emit('create')">
               {{ t("Create your first project →", "创建第一个项目 →") }}
             </button>

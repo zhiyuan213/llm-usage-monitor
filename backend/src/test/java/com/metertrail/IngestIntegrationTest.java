@@ -640,6 +640,94 @@ class IngestIntegrationTest {
             workspace));
   }
 
+  @Test
+  void activityPagesAndExportsIncludeAllRetainedRowsAndEnforceProjectOwnership() throws Exception {
+    String token = Support.token();
+    store.db.update(
+        "INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1"
+            + " hour')",
+        Support.hash(token),
+        user,
+        "csrf-test");
+    var cookie = new jakarta.servlet.http.Cookie("mt_session", token);
+    for (int i = 0; i < 125; i++)
+      store.db.update(
+          "INSERT INTO objects(project_id,type,object_id,revision,started_at,data)"
+              + " VALUES(?,'trace',?,1,now(),?::jsonb)",
+          project,
+          String.format("row-%03d", i),
+          "{\"name\":\"中文活动 " + i + "\",\"status\":\"success\"}");
+    store.db.update(
+        "INSERT INTO objects(project_id,type,object_id,revision,started_at,data)"
+            + " VALUES(?,'trace','expired',1,now()-interval '40 days','{}')",
+        project);
+    String base = "/api/projects/" + project + "/activity";
+    mvc.perform(get(base).cookie(cookie))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.total").value(125))
+        .andExpect(jsonPath("$.items.length()").value(20));
+    mvc.perform(get(base + "?page=6").cookie(cookie))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.items.length()").value(5))
+        .andExpect(jsonPath("$.items[4].object_id").value("row-000"));
+    mvc.perform(get(base + "?page=-1").cookie(cookie)).andExpect(status().isBadRequest());
+    mvc.perform(get(base + "/export?format=csv").cookie(cookie)).andExpect(status().isBadRequest());
+    byte[] excel =
+        mvc.perform(get(base + "/export?format=xlsx&lang=zh-CN").cookie(cookie))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Cache-Control", "no-store"))
+            .andReturn()
+            .getResponse()
+            .getContentAsByteArray();
+    String sheet = "";
+    try (var zip = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(excel))) {
+      java.util.zip.ZipEntry entry;
+      while ((entry = zip.getNextEntry()) != null) {
+        if (entry.getName().equals("xl/worksheets/sheet1.xml"))
+          sheet = new String(zip.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+      }
+    }
+    assertEquals(126, sheet.split("<row r=").length - 1);
+    assertTrue(sheet.contains("中文活动 124"));
+    assertFalse(sheet.contains("expired"));
+    assertTrue(sheet.contains("成本 USD"));
+    byte[] pdf =
+        mvc.perform(get(base + "/export?format=pdf&lang=zh-CN").cookie(cookie))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsByteArray();
+    try (var doc = org.apache.pdfbox.Loader.loadPDF(pdf)) {
+      assertTrue(doc.getNumberOfPages() > 1);
+      String text = new org.apache.pdfbox.text.PDFTextStripper().getText(doc);
+      assertTrue(text.contains("中文活动 124"));
+      assertTrue(text.contains("成本 USD"));
+      assertFalse(text.contains("expired"));
+    }
+    java.nio.file.Files.write(java.nio.file.Path.of("target/activity-export.xlsx"), excel);
+    java.nio.file.Files.write(java.nio.file.Path.of("target/activity-export.pdf"), pdf);
+    UUID foreignUser = UUID.randomUUID(),
+        foreignWorkspace = UUID.randomUUID(),
+        foreignProject = UUID.randomUUID();
+    store.db.update(
+        "INSERT INTO users(id,email,verified) VALUES(?,?,true)",
+        foreignUser,
+        foreignUser + "@test.local");
+    store.db.update(
+        "INSERT INTO workspaces(id,owner_id,name) VALUES(?,?,'Foreign')",
+        foreignWorkspace,
+        foreignUser);
+    store.db.update(
+        "INSERT INTO projects(id,workspace_id,name) VALUES(?,?,'Foreign')",
+        foreignProject,
+        foreignWorkspace);
+    mvc.perform(get("/api/projects/" + foreignProject + "/activity").cookie(cookie))
+        .andExpect(status().isNotFound());
+    mvc.perform(
+            get("/api/projects/" + foreignProject + "/activity/export?format=xlsx").cookie(cookie))
+        .andExpect(status().isNotFound());
+  }
+
   ObjectNode event(String type, String object, int revision) {
     ObjectNode e = new ObjectMapper().createObjectNode();
     e.put("eventId", UUID.randomUUID().toString());

@@ -1755,6 +1755,18 @@ dd {
 .table-actions {
   white-space: nowrap;
 }
+.project-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 300px;
+}
+.console-shell .project-row-actions .btn {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
 .table-actions .btn + .btn {
   margin-left: 10px;
 }
