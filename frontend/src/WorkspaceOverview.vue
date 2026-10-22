@@ -68,7 +68,7 @@ const actions = [
       <tbody>
         <tr v-for="p in data.projects || []" :key="p.id">
           <td>
-            <button class="btn" @click="emit('select', p.id)">
+            <button class="text-button" @click="emit('select', p.id)">
               {{ p.name }}
             </button>
           </td>
