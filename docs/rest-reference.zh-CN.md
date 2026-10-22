@@ -1,12 +1,16 @@
 # REST 接入字段参考
 
-POST https://metertrail.com/v1/events/batch；请求体 JSON。长度默认 UTF-8 字节，1 KiB=1024 字节。无独立长度校验仍受整体限制；新事件使用当前 UTC 时间和新 ID，重试原事件保持身份与内容不变。data 路径属于 events[] 单项；Score 与 Trace/Observation 使用不同 data 表。
+POST https://metertrail.com/v1/events/batch；请求体 JSON。长度默认 UTF-8 字节，1 KiB=1024 字节。新事件使用当前 UTC 时间和新 ID，重试原事件保持身份与内容不变。data 路径属于 events[] 单项；data 是事件内容的 JSON 对象，请按事件类型选择需要的字段。
+
+## 从最小请求开始
+
+首次接入只需上报一条 Trace，记录名称、状态和耗时。模型 Token 用量与评分按需添加，无需一次填写全部参数。官网默认展示最小示例，完整字段参考折叠在下方。
 
 ## 请求头 Header
 
 | 字段名称 | 字段描述 | 字段类型 | 必填条件 | 长度 / 取值范围 | 示例 |
 | --- | --- | --- | --- | --- | --- |
-| Authorization | 项目 API 密钥认证 | string | 必填 | Bearer 前缀；服务端校验有效密钥，无独立长度校验 | Bearer lm_live_<YOUR_API_KEY> |
+| Authorization | 项目 API 密钥认证 | string | 必填 | Bearer 后填写项目 API 密钥 | Bearer lm_live_<YOUR_API_KEY> |
 | Content-Type | JSON 内容类型 | string | 必填 | 以 application/json 开头 | application/json |
 | Content-Encoding | 可选请求体压缩 | string | 可选 | gzip、identity 或省略；压缩与解压后均 ≤1 MiB | gzip |
 
@@ -46,7 +50,7 @@ POST https://metertrail.com/v1/events/batch；请求体 JSON。长度默认 UTF-
 
 | 字段名称 | 字段描述 | 字段类型 | 必填条件 | 长度 / 取值范围 | 示例 |
 | --- | --- | --- | --- | --- | --- |
-| data.name | Trace 名称或可选 Observation 名称 | string | Trace 必填；Observation 可选 | Trace 非空且≤256字节；Observation 无独立长度校验，受8KiB事件限制 | "Document analysis" |
+| data.name | Trace 名称或可选 Observation 名称 | string | Trace 必填；Observation 可选 | Trace 非空且≤256字节；Observation 受8KiB事件限制 | "Document analysis" |
 | data.status | 上报的业务执行状态 | string | 必填 | success / error / cancelled，原样展示 | "success" |
 | data.durationMs | 耗时，单位毫秒 | integer | 必填 | 0–9,000,000,000,000，不可为 null | 1850 |
 | data.error | 业务错误描述 | string \| null | 可选 | 非 null 时为非空字符串；≤1024 UTF-8字节 | "Upstream timeout" |
@@ -93,7 +97,7 @@ POST https://metertrail.com/v1/events/batch；请求体 JSON。长度默认 UTF-
 | received / accepted / duplicates / rejected (response) | 提交 / 接受 / 重复 / 拒绝的事件数量 | integer | 必填 | 各自为0–500；最终结果以批次处理完成后的响应为准 | 3 / 2 / 0 / 1 |
 | errors (response) | 逐条事件错误或提示列表 | array<object> | 必填 | 无错误为 []；每项含 index、code | [{"index":2,"code":"INVALID_USAGE"}] |
 | errors[].index | 提交 events 数组中的从0开始的下标 | integer | 必填 | 0–499 | 2 |
-| errors[].code | 固定协议错误码或结果码 | string | 必填 | 值与处理方式见“错误与重试”表；无统一独立长度限制 | "INVALID_USAGE" |
+| errors[].code | 固定协议错误码或结果码 | string | 必填 | 值与处理方式见“错误与重试”表 | "INVALID_USAGE" |
 
 ## 完整请求示例
 

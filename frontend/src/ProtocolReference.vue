@@ -12,8 +12,8 @@ const sections = [
         "string",
         "Required",
         "必填",
-        "Bearer prefix; valid project key required; no separate length check",
-        "Bearer 前缀；服务端校验有效密钥，无独立长度校验",
+        "Bearer followed by your project API key",
+        "Bearer 后填写项目 API 密钥",
         "Bearer lm_live_<YOUR_API_KEY>",
       ],
       [
@@ -239,8 +239,8 @@ const sections = [
         "object",
         "Required",
         "必填",
-        "See data tables below; unknown fields are rejected",
-        "见以下 data 表；未知字段会被拒绝",
+        "Use fields for the selected event type; unsupported fields are rejected",
+        "按事件类型填写；不支持的字段会被拒绝",
         '{"status":"success","durationMs":100}',
       ],
     ],
@@ -256,8 +256,8 @@ const sections = [
         "string",
         "Required for Trace; optional for Observation",
         "Trace 必填；Observation 可选",
-        "Trace: nonempty, ≤256 bytes; Observation: no separate length check, subject to 8 KiB event cap",
-        "Trace 非空且≤256字节；Observation 无独立长度校验，受8KiB事件限制",
+        "Trace: nonempty, ≤256 bytes; Observation: subject to 8 KiB event cap",
+        "Trace 非空且≤256字节；Observation 受8KiB事件限制",
         '"Document analysis"',
       ],
       [
@@ -577,8 +577,8 @@ const sections = [
         "string",
         "Required",
         "必填",
-        "See Errors & retries; no single separately enforced length limit",
-        "值与处理方式见“错误与重试”表；无统一独立长度限制",
+        "See Errors & retries",
+        "值与处理方式见“错误与重试”表",
         '"INVALID_USAGE"',
       ],
     ],
@@ -590,86 +590,135 @@ const receiptExample =
   '{"batchId":"550e8400-e29b-41d4-a716-446655440099","received":3,"status":"pending"}';
 const resultExample =
   '{"status":"completed","received":3,"accepted":3,"duplicates":0,"rejected":0,"errors":[]}';
+const minimal = JSON.parse(bodyExample);
+minimal.events = [minimal.events[0]];
+for (const name of ["userId", "customerId", "feature"])
+  delete minimal.events[0].data[name];
+const minimalBody = JSON.stringify(minimal, null, 2);
 </script>
 <template>
   <div class="protocol-reference">
     <p>
       {{
         t(
-          "REST endpoint: POST https://metertrail.com/v1/events/batch. The body is JSON. Lengths below are UTF-8 bytes unless stated otherwise. 1 KiB = 1,024 bytes. No endpoint-specific limit means the overall body/event cap still applies.",
-          "REST 接口：POST https://metertrail.com/v1/events/batch，Body 使用 JSON。下表长度默认按 UTF-8 字节计算，1 KiB=1024 字节。“无独立长度校验”仍受整体请求或事件大小限制。",
+          "Send one request to record an operation in your application. Start with the example below; add model usage and scores when you need them.",
+          "发送一次请求，即可记录应用中的一次操作。先按下面的最小示例接入，需要统计模型用量或评分时再补充。",
         )
       }}
     </p>
-    <p>
-      {{
-        t(
-          "Body paths starting with data refer to each events[] item. Trace and Observation share one data table; Score uses its own table. Omit fields not applicable to that type. Examples are illustrative: use a current UTC timestamp and fresh IDs for new events; preserve the original event unchanged during retries.",
-          "data 开头的路径均属于 events[] 中的单个事件。Trace 与 Observation 共用一张 data 表，Score 使用独立 data 表；不适用的字段应省略。示例仅作说明：新事件使用当前 UTC 时间和新 ID，重试时保留原事件不变。",
-        )
-      }}
-    </p>
-    <section v-for="section in sections" :key="section.en">
-      <h3>{{ t(section.en, section.zh) }}</h3>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>{{ t("Field name", "字段名称") }}</th>
-              <th>{{ t("Description", "字段描述") }}</th>
-              <th>{{ t("Type", "字段类型") }}</th>
-              <th>{{ t("Required", "必填条件") }}</th>
-              <th>{{ t("Length / constraints", "长度 / 取值范围") }}</th>
-              <th>{{ t("Example", "示例") }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in section.rows" :key="row[0]">
-              <td>
-                <code>{{ row[0] }}</code>
-              </td>
-              <td>{{ t(row[1], row[2]) }}</td>
-              <td>
-                <code>{{ row[3] }}</code>
-              </td>
-              <td>{{ t(row[4], row[5]) }}</td>
-              <td>{{ t(row[6], row[7]) }}</td>
-              <td>
-                <code>{{ row[8] }}</code>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-    <h3>{{ t("Complete request example", "完整请求示例") }}</h3>
+    <h3>{{ t("1. Set the request headers", "1. 设置请求头") }}</h3>
     <div class="code-box">
-      <div>Header</div>
+      <div>POST https://metertrail.com/v1/events/batch</div>
       <pre>
-POST /v1/events/batch HTTP/1.1
-Host: metertrail.com
 Authorization: Bearer lm_live_&lt;YOUR_API_KEY&gt;
 Content-Type: application/json</pre>
     </div>
+    <h3>{{ t("2. Send this JSON body", "2. 发送 JSON 内容") }}</h3>
     <p>
       {{
         t(
-          "The example body is uncompressed, so Content-Encoding is omitted. Include Content-Encoding: gzip only when sending an actual gzip body. Replace the API key placeholder locally; never share your key.",
-          "以下 Body 未压缩，故省略 Content-Encoding；只有实际发送 gzip 压缩内容时才设置 Content-Encoding: gzip。请在本地替换密钥占位符，不要公开密钥。",
+          "Replace serviceName with your application name and use the current UTC time for startedAt. Generate new IDs for new events; keep the original event unchanged when retrying. revision starts at 1.",
+          "将 serviceName 换成应用名称，startedAt 换成当前 UTC 时间。新事件生成新 ID；网络重试时原样重发，revision 首次填 1。",
         )
       }}
     </p>
     <div class="code-box">
       <div>Body · JSON</div>
-      <pre>{{ bodyExample }}</pre>
+      <pre>{{ minimalBody }}</pre>
     </div>
+    <h3>{{ t("3. Check the receipt", "3. 查看接收结果") }}</h3>
+    <p>
+      {{
+        t(
+          "HTTP 202 means the batch was received. Use batchId to query GET /v1/batches/{batchId} with the same project key. completed means processing finished; check rejected and errors for individual failures.",
+          "HTTP 202 表示已接收。使用返回的 batchId 和同一项目密钥查询 GET /v1/batches/{batchId}。completed 表示处理结束，再检查 rejected 和 errors 是否存在失败记录。",
+        )
+      }}
+    </p>
     <div class="code-box">
       <div>HTTP 202 · JSON</div>
-      <pre>{{ receiptExample }}</pre>
+      <pre>
+{"batchId":"550e8400-e29b-41d4-a716-446655440099","received":1,"status":"pending"}</pre>
     </div>
-    <div class="code-box">
-      <div>GET /v1/batches/{batchId} · JSON</div>
-      <pre>{{ resultExample }}</pre>
-    </div>
+    <details class="protocol-advanced">
+      <summary>
+        {{
+          t(
+            "Full Header and Body parameter reference",
+            "查看完整 Header、Body 参数表与进阶示例",
+          )
+        }}
+      </summary>
+      <p>
+        {{
+          t(
+            "The tables below describe API parameters. data is a nested JSON object inside each event. Choose fields for the event type you send; you do not need every field. String lengths are UTF-8 bytes unless stated otherwise.",
+            "以下是接口参数说明。data 是每条事件内的 JSON 对象，按事件类型选择需要的字段即可，不需要全部填写。字符串长度默认按 UTF-8 字节计算。",
+          )
+        }}
+      </p>
+      <section v-for="section in sections" :key="section.en">
+        <h3>{{ t(section.en, section.zh) }}</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>{{ t("Field name", "字段名称") }}</th>
+                <th>{{ t("Description", "字段描述") }}</th>
+                <th>{{ t("Type", "字段类型") }}</th>
+                <th>{{ t("Required", "必填条件") }}</th>
+                <th>{{ t("Length / constraints", "长度 / 取值范围") }}</th>
+                <th>{{ t("Example", "示例") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in section.rows" :key="row[0]">
+                <td>
+                  <code>{{ row[0] }}</code>
+                </td>
+                <td>{{ t(row[1], row[2]) }}</td>
+                <td>
+                  <code>{{ row[3] }}</code>
+                </td>
+                <td>{{ t(row[4], row[5]) }}</td>
+                <td>{{ t(row[6], row[7]) }}</td>
+                <td>
+                  <code>{{ row[8] }}</code>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <h3>{{ t("Complete request example", "完整请求示例") }}</h3>
+      <div class="code-box">
+        <div>Header</div>
+        <pre>
+POST /v1/events/batch HTTP/1.1
+Host: metertrail.com
+Authorization: Bearer lm_live_&lt;YOUR_API_KEY&gt;
+Content-Type: application/json</pre>
+      </div>
+      <p>
+        {{
+          t(
+            "The example body is uncompressed, so Content-Encoding is omitted. Include Content-Encoding: gzip only when sending an actual gzip body. Replace the API key placeholder locally; never share your key.",
+            "以下 Body 未压缩，故省略 Content-Encoding；只有实际发送 gzip 压缩内容时才设置 Content-Encoding: gzip。请在本地替换密钥占位符，不要公开密钥。",
+          )
+        }}
+      </p>
+      <div class="code-box">
+        <div>Body · JSON</div>
+        <pre>{{ bodyExample }}</pre>
+      </div>
+      <div class="code-box">
+        <div>HTTP 202 · JSON</div>
+        <pre>{{ receiptExample }}</pre>
+      </div>
+      <div class="code-box">
+        <div>GET /v1/batches/{batchId} · JSON</div>
+        <pre>{{ resultExample }}</pre>
+      </div>
+    </details>
   </div>
 </template>

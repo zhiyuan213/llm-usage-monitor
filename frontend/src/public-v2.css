@@ -703,3 +703,20 @@
 .public-v2 .protocol-reference .code-box pre {
   max-height: 420px;
 }
+
+.public-v2 .protocol-advanced {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.public-v2 .protocol-advanced > summary {
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 0;
+}
+.public-v2 .protocol-advanced > summary:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
+}

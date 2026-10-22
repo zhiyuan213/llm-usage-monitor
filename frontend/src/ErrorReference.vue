@@ -100,8 +100,8 @@ const requestErrors = [
   [
     "409",
     "CONFLICT",
-    "数据库约束冲突",
-    "Database constraint conflict",
+    "请求与现有记录冲突",
+    "Request conflicts with an existing record",
     "检查重复或冲突数据，不盲目重试",
     "Inspect conflicting data rather than retrying blindly",
   ],
