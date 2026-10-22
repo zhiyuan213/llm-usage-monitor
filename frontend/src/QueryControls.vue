@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { t, n, language } from "./lib";
-defineProps<{ page: number; total: number; loading: boolean; exportUrl: string }>();
+defineProps<{ page: number; total: number; loading: boolean; exportUrl?: string }>();
 defineEmits<{ change: [page: number] }>();
 </script>
 <template>
   <div class="query-controls">
-    <div class="query-export">
+    <div v-if="exportUrl" class="query-export">
       <a class="btn" :href="exportUrl + '&format=xlsx&lang=' + language">{{ t("Export Excel", "导出 Excel") }}</a>
       <a class="btn" :href="exportUrl + '&format=pdf&lang=' + language">{{ t("Export PDF", "导出 PDF") }}</a>
     </div>

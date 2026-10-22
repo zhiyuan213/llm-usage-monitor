@@ -702,7 +702,7 @@ const usagePercent = computed(() =>
           <section class="panel">
             <div class="panel-heading">
               <h2>{{ t("Recent activity", "最近活动") }}</h2>
-              <div class="project-row-actions">
+              <div class="activity-heading-actions">
                 <a
                   class="btn"
                   :href="
@@ -723,10 +723,10 @@ const usagePercent = computed(() =>
                   "
                   >{{ t("Export PDF", "导出 PDF") }}</a
                 >
+                <RouterLink class="btn" to="/app/traces"
+                  >{{ t("View traces", "查看调用") }}</RouterLink
+                >
               </div>
-              <RouterLink to="/app/traces"
-                >{{ t("View traces", "查看调用") }} →</RouterLink
-              >
             </div>
             <div class="table-wrap">
               <table>
@@ -835,9 +835,11 @@ const usagePercent = computed(() =>
                 <option>error</option>
                 <option>cancelled</option></select
               ><button class="btn primary">{{ t("Search", "搜索") }}</button
-              ><span class="muted"
-                >{{ n(data.total || 0) }} {{ t("traces", "条调用") }}</span
               >
+              <div class="query-export trace-export">
+                <a class="btn" :href="reportExportUrl + '&format=xlsx&lang=' + language">{{ t("Export Excel", "导出 Excel") }}</a>
+                <a class="btn" :href="reportExportUrl + '&format=pdf&lang=' + language">{{ t("Export PDF", "导出 PDF") }}</a>
+              </div>
             </form>
             <div class="table-wrap">
               <table>
@@ -895,7 +897,6 @@ const usagePercent = computed(() =>
               :page="tracePage"
               :total="data.total || 0"
               :loading="loading"
-              :export-url="reportExportUrl"
               @change="
                 tracePage = $event;
                 refresh(false);
@@ -1000,7 +1001,7 @@ const usagePercent = computed(() =>
           </section></template
         >
         <template v-if="page === 'analytics' && selected"
-          ><div class="tabs">
+          ><div class="analytics-toolbar"><div class="tabs">
             <button
               v-for="d in ['customerId', 'userId', 'feature']"
               :class="{ active: dimension === d }"
@@ -1019,6 +1020,10 @@ const usagePercent = computed(() =>
               }}
             </button>
           </div>
+          <div class="query-export trace-export">
+            <a class="btn" :href="reportExportUrl + '&format=xlsx&lang=' + language">{{ t("Export Excel", "导出 Excel") }}</a>
+            <a class="btn" :href="reportExportUrl + '&format=pdf&lang=' + language">{{ t("Export PDF", "导出 PDF") }}</a>
+          </div></div>
           <section class="panel table-wrap">
             <div class="table-wrap">
               <table>
@@ -1060,7 +1065,6 @@ const usagePercent = computed(() =>
               :page="reportPage"
               :total="data.total || 0"
               :loading="loading"
-              :export-url="reportExportUrl"
               @change="reportTurn"
             /></section
         ></template>
