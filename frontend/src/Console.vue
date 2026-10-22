@@ -745,6 +745,7 @@ const usagePercent = computed(() =>
                     <td>
                       <RouterLink
                         v-if="o.trace_id"
+                        class="btn"
                         :to="'/app/trace/' + o.trace_id"
                         >{{ o.data.name || o.object_id }}</RouterLink
                       ><span v-else>{{ o.data.name || o.object_id }}</span
@@ -778,7 +779,7 @@ const usagePercent = computed(() =>
                           "暂无事件，请接入应用开始采集。",
                         )
                       }}
-                      <RouterLink to="/app/keys">{{
+                      <RouterLink class="btn" to="/app/keys">{{
                         t("Connect →", "开始接入 →")
                       }}</RouterLink>
                     </td>
@@ -872,8 +873,8 @@ const usagePercent = computed(() =>
                     </td>
                     <td>{{ date(o.started_at) }}</td>
                     <td>
-                      <RouterLink :to="'/app/trace/' + o.trace_id"
-                        >{{ t("View", "查看") }} →</RouterLink
+                      <RouterLink class="btn" :to="'/app/trace/' + o.trace_id"
+                        >{{ t("View", "查看") }}</RouterLink
                       >
                     </td>
                   </tr>

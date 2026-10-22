@@ -1771,11 +1771,26 @@ dd {
 }
 .query-controls { padding: 16px 20px; justify-content: space-between; border-top: 1px solid var(--line); }
 .query-pages > span { color: var(--muted); font-size: 14px; }
-.console-shell .project-row-actions .btn {
+.console-shell table .btn,
+.console-shell .query-controls .btn,
+.console-shell .panel-foot.table-actions .btn {
   min-height: 34px;
   padding: 6px 10px;
   font-size: 13px;
   white-space: nowrap;
+  line-height: 1.4;
+}
+.console-shell table .btn.danger-text,
+.console-shell table .btn.danger-button {
+  color: #b84550;
+  background: #fff;
+  border-color: #edcdd1;
+}
+.console-shell table .btn.danger-text:hover,
+.console-shell table .btn.danger-button:hover {
+  color: #a53440;
+  background: #fff3f3;
+  border-color: #ca5b60;
 }
 .table-actions .btn + .btn {
   margin-left: 10px;

@@ -68,7 +68,7 @@ const actions = [
       <tbody>
         <tr v-for="p in data.projects || []" :key="p.id">
           <td>
-            <button class="text-button" @click="emit('select', p.id)">
+            <button class="btn" @click="emit('select', p.id)">
               {{ p.name }}
             </button>
           </td>
@@ -94,7 +94,7 @@ const actions = [
         </tr>
         <tr v-if="!data.projects?.length">
           <td colspan="8" class="empty-cell">
-            <button class="text-button" @click="emit('create')">
+            <button class="btn" @click="emit('create')">
               {{ t("Create your first project →", "创建第一个项目 →") }}
             </button>
           </td>

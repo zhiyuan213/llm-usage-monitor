@@ -102,7 +102,7 @@ watch(() => props.project, refresh, { immediate: true });
             </td>
             <td>
               <details v-if="b.errors.length">
-                <summary>
+                <summary class="btn">
                   {{ b.errors.length }} {{ t("results", "条结果") }}
                 </summary>
                 <pre>{{ JSON.stringify(b.errors, null, 2) }}</pre>
