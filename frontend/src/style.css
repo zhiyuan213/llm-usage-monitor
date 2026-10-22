@@ -1743,8 +1743,12 @@ dd {
   background: #fff3f3;
   border-color: #ca5b60;
 }
-.table-actions { white-space: nowrap; }
-.table-actions .btn + .btn { margin-left: 10px; }
+.table-actions {
+  white-space: nowrap;
+}
+.table-actions .btn + .btn {
+  margin-left: 10px;
+}
 .form-panel {
   padding: 26px;
 }

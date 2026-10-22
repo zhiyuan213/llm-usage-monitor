@@ -48,7 +48,7 @@ const nav = [
   ["workspace", "Project management", "项目管理", LayoutDashboard],
   ["overview", "Project overview", "项目概览", LayoutDashboard],
   ["traces", "Traces", "调用记录", GitBranch],
-  ["analytics", "Users & customers", "用户与客户", Users],
+  ["analytics", "Data analytics", "数据统计", Users],
   ["keys", "API key management", "密钥管理", KeyRound],
   ["alerts", "Alert configuration", "告警配置", Bell],
   ["billing", "Billing", "套餐与账单", CreditCard],
@@ -364,7 +364,9 @@ const usagePercent = computed(() =>
         ><span class="brand-icon"><Activity :size="20" /></span
         >MeterTrail</RouterLink
       >
-      <div class="workspace-label">{{ t("PROJECT MANAGEMENT", "项目管理") }}</div>
+      <div class="workspace-label">
+        {{ t("PROJECT MANAGEMENT", "项目管理") }}
+      </div>
       <div class="workspace-switch">
         <span class="avatar">M</span>
         <div>
@@ -420,9 +422,8 @@ const usagePercent = computed(() =>
     <div class="console-main">
       <header class="console-header">
         <div class="breadcrumb">
-          {{ t("Project management", "项目管理") }}<ChevronRight :size="13" /><span>{{
-            title
-          }}</span>
+          {{ t("Project management", "项目管理")
+          }}<ChevronRight :size="13" /><span>{{ title }}</span>
         </div>
         <div class="header-status">
           <span class="live-dot"></span
