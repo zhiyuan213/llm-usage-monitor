@@ -745,7 +745,6 @@ const usagePercent = computed(() =>
                     <td>
                       <RouterLink
                         v-if="o.trace_id"
-                        class="btn"
                         :to="'/app/trace/' + o.trace_id"
                         >{{ o.data.name || o.object_id }}</RouterLink
                       ><span v-else>{{ o.data.name || o.object_id }}</span
@@ -846,6 +845,7 @@ const usagePercent = computed(() =>
                 <thead>
                   <tr>
                     <th>{{ t("Name", "名称") }}</th>
+                    <th>{{ t("Object ID", "对象 ID") }}</th>
                     <th>{{ t("Duration", "耗时") }}</th>
                     <th>{{ t("User / Customer", "用户 / 客户") }}</th>
                     <th>{{ t("Status", "状态") }}</th>
@@ -856,9 +856,9 @@ const usagePercent = computed(() =>
                 <tbody>
                   <tr v-for="o in data.items || []" :key="o.object_id">
                     <td>
-                      <strong>{{ o.data.name }}</strong
-                      ><small class="mono">{{ o.object_id }}</small>
+                      <strong>{{ o.data.name || "—" }}</strong>
                     </td>
+                    <td class="mono">{{ o.object_id }}</td>
                     <td>{{ n(o.data.durationMs) }} ms</td>
                     <td>
                       {{ o.data.userId || "—" }} /
@@ -881,7 +881,7 @@ const usagePercent = computed(() =>
                     </td>
                   </tr>
                   <tr v-if="!data.items?.length">
-                    <td colspan="6" class="empty-cell">
+                    <td colspan="7" class="empty-cell">
                       {{
                         t(
                           "No traces match these filters.",
@@ -1649,7 +1649,10 @@ const usagePercent = computed(() =>
         <BatchHistory v-if="page === 'keys' && selected" :project="selected" />
         <AccountSecurity v-if="page === 'account'" />
         <template v-if="page === 'audit'"
-          ><section class="panel table-wrap">
+          ><div class="audit-toolbar query-export trace-export">
+            <a class="btn" :href="reportExportUrl + '&format=xlsx&lang=' + language">{{ t("Export Excel", "导出 Excel") }}</a>
+            <a class="btn" :href="reportExportUrl + '&format=pdf&lang=' + language">{{ t("Export PDF", "导出 PDF") }}</a>
+          </div><section class="panel table-wrap">
             <div class="table-wrap">
               <table>
                 <thead>
@@ -1690,7 +1693,6 @@ const usagePercent = computed(() =>
               :page="reportPage"
               :total="data.total || 0"
               :loading="loading"
-              :export-url="reportExportUrl"
               @change="reportTurn"
             /></section
         ></template>
