@@ -10,6 +10,7 @@ POST https://metertrail.com/v1/events/batch；请求体 JSON。长度默认 UTF-
 
 | 字段名称 | 字段描述 | 字段类型 | 必填条件 | 长度 / 取值范围 | 示例 |
 | --- | --- | --- | --- | --- | --- |
+| Host | URL 中的服务器主机，由 HTTP 客户端自动生成 | string | 自动生成（HTTP/1.1） | 与 URL 主机一致，无需手动填写 | metertrail.com |
 | Authorization | 项目 API 密钥认证 | string | 必填 | Bearer 后填写项目 API 密钥 | Bearer lm_live_<YOUR_API_KEY> |
 | Content-Type | JSON 内容类型 | string | 必填 | 以 application/json 开头 | application/json |
 | Content-Encoding | 可选请求体压缩 | string | 可选 | gzip、identity 或省略；压缩与解压后均 ≤1 MiB | gzip |

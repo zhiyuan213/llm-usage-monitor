@@ -1,33 +1,39 @@
 <script setup lang="ts">
 import { t } from "./lib";
-const bodyExample =
-  '{\n  "schemaVersion": "1.0",\n  "agent": {\n    "serviceName": "demo-api",\n    "environment": "test",\n    "instanceId": "demo-1"\n  },\n  "events": [\n    {\n      "eventId": "550e8400-e29b-41d4-a716-446655440000",\n      "type": "trace",\n      "objectId": "trace-demo-1",\n      "revision": 1,\n      "traceId": "0123456789abcdef0123456789abcdef",\n      "startedAt": "2026-10-23T00:00:00Z",\n      "data": {\n        "name": "Document analysis",\n        "status": "success",\n        "durationMs": 1850,\n        "userId": "demo-user",\n        "customerId": "demo-customer",\n        "feature": "document-analysis"\n      }\n    },\n    {\n      "eventId": "550e8400-e29b-41d4-a716-446655440001",\n      "type": "observation",\n      "objectId": "obs-demo-1",\n      "revision": 1,\n      "traceId": "0123456789abcdef0123456789abcdef",\n      "spanId": "0123456789abcdef",\n      "parentSpanId": null,\n      "startedAt": "2026-10-23T00:00:00Z",\n      "data": {\n        "observationType": "generation",\n        "status": "success",\n        "durationMs": 1850,\n        "provider": "example",\n        "model": "example-model",\n        "usage": {\n          "inputTokens": 1500,\n          "outputTokens": 400,\n          "cachedInputTokens": 500\n        }\n      }\n    },\n    {\n      "eventId": "550e8400-e29b-41d4-a716-446655440002",\n      "type": "score",\n      "objectId": "score-demo-1",\n      "revision": 1,\n      "startedAt": "2026-10-23T00:00:00Z",\n      "data": {\n        "name": "quality",\n        "targetType": "observation",\n        "targetId": "obs-demo-1",\n        "valueType": "numeric",\n        "value": 0.95\n      }\n    }\n  ]\n}';
-const receiptExample =
-  '{"batchId":"550e8400-e29b-41d4-a716-446655440099","received":3,"status":"pending"}';
-const resultExample =
-  '{"status":"completed","received":3,"accepted":3,"duplicates":0,"rejected":0,"errors":[]}';
-const minimal = JSON.parse(bodyExample);
-minimal.events = [minimal.events[0]];
-for (const name of ["userId", "customerId", "feature"])
-  delete minimal.events[0].data[name];
-const minimalBody = JSON.stringify(minimal, null, 2);
+import {
+  bodyExample,
+  receiptExample,
+  resultExample,
+  minimalBody,
+  requestUrl,
+  requestMethod,
+  requestHeaders,
+  minimalReceiptExample,
+} from "./protocol-reference";
 </script>
 <template>
   <div class="protocol-reference">
     <div class="api-endpoint">
       <p>
-        <strong>URL：</strong
-        ><code>https://metertrail.com/v1/events/batch</code>
+        <strong>URL：</strong><code>{{ requestUrl }}</code>
       </p>
-      <p><strong>Method：</strong><code>POST</code></p>
+      <p>
+        <strong>Method：</strong><code>{{ requestMethod }}</code>
+      </p>
     </div>
     <h3>Header</h3>
     <div class="code-box">
       <div>{{ t("Request headers", "请求头示例") }}</div>
-      <pre>
-Authorization: Bearer lm_live_&lt;YOUR_API_KEY&gt;
-Content-Type: application/json</pre>
+      <pre>{{ requestHeaders }}</pre>
     </div>
+    <p>
+      {{
+        t(
+          "Host is supplied automatically from the URL. Set Authorization and Content-Type as shown. Content-Encoding is optional and is omitted for this uncompressed example.",
+          "Host 由客户端根据 URL 自动生成；按示例设置 Authorization 和 Content-Type。Content-Encoding 为可选项，此示例未压缩，所以不设置。",
+        )
+      }}
+    </p>
     <h3>Body</h3>
     <p>
       {{
@@ -52,8 +58,7 @@ Content-Type: application/json</pre>
     </p>
     <div class="code-box">
       <div>HTTP 202 · JSON</div>
-      <pre>
-{"batchId":"550e8400-e29b-41d4-a716-446655440099","received":1,"status":"pending"}</pre>
+      <pre>{{ minimalReceiptExample }}</pre>
     </div>
     <p>
       <RouterLink :to="{ path: '/docs', hash: '#fields' }">{{
@@ -74,9 +79,7 @@ Content-Type: application/json</pre>
         <div>Header</div>
         <pre>
 POST /v1/events/batch HTTP/1.1
-Host: metertrail.com
-Authorization: Bearer lm_live_&lt;YOUR_API_KEY&gt;
-Content-Type: application/json</pre>
+{{ requestHeaders }}</pre>
       </div>
       <p>
         {{
