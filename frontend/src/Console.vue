@@ -507,7 +507,7 @@ const usagePercent = computed(() =>
           >{{ t("All times in UTC", "时间均为 UTC") }}
         </div>
       </header>
-      <main class="console-content" :class="{ 'overview-content': page === 'overview' }" :aria-busy="loading">
+      <main class="console-content" :class="{ 'overview-content': page === 'overview', 'billing-content': page === 'billing' }" :aria-busy="loading">
         <div class="page-heading">
           <div>
             <div class="eyebrow">
@@ -1347,7 +1347,7 @@ const usagePercent = computed(() =>
               </button>
             </article>
           </div>
-          <div class="billing-details-grid"><section class="panel form-panel">
+          <div class="billing-details-grid"><section class="panel form-panel billing-usage-panel">
             <h2>{{ t("Monthly usage", "当月用量") }}</h2>
             <div class="billing-usage">
               <strong
@@ -1371,7 +1371,7 @@ const usagePercent = computed(() =>
                 )
               }}
             </p>
-            <form @submit.prevent="saveOverage">
+            <form class="billing-policy-form" @submit.prevent="saveOverage">
               <label class="check-label"
                 ><input
                   v-model="billing.enabled"
@@ -1402,11 +1402,11 @@ const usagePercent = computed(() =>
               </button>
             </form>
           </section>
-          <section class="panel">
+          <section class="panel billing-history-panel">
             <div class="panel-heading">
               <h2>{{ t("Billing history", "账单记录") }}</h2>
             </div>
-            <div class="table-wrap">
+            <div v-if="data.payments?.length" class="table-wrap">
               <table>
                 <tbody>
                   <tr v-for="p in data.payments || []">
@@ -1422,6 +1422,10 @@ const usagePercent = computed(() =>
                   </tr>
                 </tbody>
               </table>
+            </div>
+            <div v-if="!data.payments?.length" class="billing-history-empty">
+              <ScrollText :size="32" />
+              <span>{{ t("No payments recorded.", "暂无支付记录。") }}</span>
             </div>
           </section></div></template
         >
