@@ -55,6 +55,7 @@ import {
         )
       }}
     </p>
+    <p><RouterLink :to="{ path: '/docs', hash: '#batch-status' }">{{ t("Query upload status documentation →", "查看查询上报状态接口 →") }}</RouterLink></p>
     <div class="code-box">
       <div>HTTP 200 · JSON</div>
       <pre>{{ minimalReceiptExample }}</pre>

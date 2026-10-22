@@ -67,11 +67,11 @@
 
 - REST 接口说明顺序统一为 URL → Method → Header 示例 → Body 示例 → Resp 示例 → 字段说明；Method 按真实接口填写，示例下方提供独立“接入字段”栏目链接。
 
-- 开发文档左侧菜单顺序：快速开始、Rest接入、SDK接入、接入字段、错误与重试、安全。接入字段为独立栏目（`/docs#fields`），仅提供上报 Header / Body 参数表；Rest接入保留 URL、Method 和请求/返回示例，并链接接入字段。
+- 开发文档左侧菜单顺序：快速开始、Rest接入、SDK接入、接入字段、查询状态接口、查询状态字段、错误与重试、安全。接入字段为独立栏目（`/docs#fields`），仅提供上报 Header / Body 参数表；Rest接入保留 URL、Method 和请求/返回示例，并链接接入字段。
 
-- 文档示例中出现的每个 Header / Body / Resp 字段均须能在接入字段中查到；明确区分客户端自动生成的 HTTP 通用字段与用户填写的参数。字段限制必须有实际实现依据，不推测新增必填字段、长度或枚举。
+- 文档示例中出现的每个 Header / Body / Resp 字段均须能在对应的接入字段或查询状态字段中查到；明确区分客户端自动生成的 HTTP 通用字段与用户填写的参数。字段限制必须有实际实现依据，不推测新增必填字段、长度或枚举。
 
-- Rest接入、接入字段明确标注 POST 接收成功返回 HTTP 200，status 固定 pending、不是实时处理状态；按用户后续要求提供可选查询地址 GET https://metertrail.com/v1/batches/{batchId}，不另展开查询页面。SDK 收到回执即结束，用户按需调用查询方法。
+- Rest接入、接入字段明确标注 POST 接收成功返回 HTTP 200，status 固定 pending、不是实时处理状态；按用户后续要求提供可选查询地址 GET https://metertrail.com/v1/batches/{batchId}，在独立“查询状态接口”栏目展示 URL、Method、Header、Body（GET 无请求体）、Resp；相邻“查询状态字段”栏目解释查询 Header、路径参数与响应字段。SDK 收到回执即结束，用户按需调用查询方法。
 
 - 开发文档代码块不设置内部高度上限或纵向滚动条，内容随代码长度展开，长行自动换行；统一使用正文外层滚动。
 

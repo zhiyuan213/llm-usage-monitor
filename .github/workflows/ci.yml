@@ -28,7 +28,7 @@ jobs:
         working-directory: frontend
       - name: Audit dependencies with bounded network retries
         run: node scripts/npm-audit.mjs
-      - run: node --test sdk/node/test.mjs scripts/monitor-gate.test.mjs scripts/npm-audit.test.mjs
+      - run: node --test sdk/node/test.mjs scripts/monitor-gate.test.mjs scripts/npm-audit.test.mjs scripts/sync-doc-examples.test.mjs
       - run: node scripts/sync-doc-examples.mjs --check
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}

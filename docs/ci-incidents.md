@@ -15,3 +15,10 @@
 
 - Invalid Trivy Action release reference: fixed by pinning a verified existing Action commit, not disabling the security job.
 - PostgreSQL JDBC vulnerability: upgraded driver to 42.7.14; do not suppress genuine vulnerability findings to make CI green.
+
+## 2026-10-23 generated REST examples line endings
+
+- Commit `0f158c0`, run `39822007791`: frontend-sdk failed generated-example synchronization; backend/security passed and images were skipped.
+- Root cause: Windows REST source files contained CRLF. Generation embedded those characters into JSON strings; Git normalized the source files to LF, so Linux generated different documentation.
+- Fix: normalize source and generated-file line endings to LF in the synchronization script, regenerate examples, and retain the mandatory CI check.
+- Prevention: regression test generates from CRLF fixtures, changes them to LF, and requires the same output and a passing check.

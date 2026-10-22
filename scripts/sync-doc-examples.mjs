@@ -1,4 +1,4 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 const files={'cURL':'examples/rest/curl.sh','Python':'examples/rest/python.py','Node.js':'examples/rest/node.mjs','Java':'examples/rest/Send.java','Go':'examples/rest/main.go','C#':'examples/rest/csharp/Program.cs','PHP':'examples/rest/send.php'};
-const output='// Generated from executable REST examples. Run node scripts/sync-doc-examples.mjs.\nexport const examples: Record<string,string> = '+JSON.stringify(Object.fromEntries(Object.entries(files).map(([name,path])=>[name,readFileSync(path,'utf8')])),null,2)+';\n';
-const path='frontend/src/examples.ts';if(process.argv.includes('--check')){if(readFileSync(path,'utf8')!==output)throw Error('Documentation examples are out of sync')}else writeFileSync(path,output);
+const output='// Generated from executable REST examples. Run node scripts/sync-doc-examples.mjs.\nexport const examples: Record<string,string> = '+JSON.stringify(Object.fromEntries(Object.entries(files).map(([name,path])=>[name,readFileSync(path,'utf8').replace(/\r\n/g,'\n')])),null,2)+';\n';
+const path='frontend/src/examples.ts';if(process.argv.includes('--check')){if(readFileSync(path,'utf8').replace(/\r\n/g,'\n')!==output)throw Error('Documentation examples are out of sync')}else writeFileSync(path,output);

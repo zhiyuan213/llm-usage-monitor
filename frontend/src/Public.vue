@@ -4,6 +4,8 @@ import DocsExamples from "./DocsExamples.vue";
 import ErrorReference from "./ErrorReference.vue";
 import ProtocolReference from "./ProtocolReference.vue";
 import ProtocolFields from "./ProtocolFields.vue";
+import BatchQueryReference from "./BatchQueryReference.vue";
+import BatchQueryFields from "./BatchQueryFields.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
@@ -26,6 +28,8 @@ const docSections = [
   { id: "protocol", en: "REST integration", zh: "Rest接入" },
   { id: "sdk", en: "SDK integration", zh: "SDK接入" },
   { id: "fields", en: "Ingestion fields", zh: "接入字段" },
+  { id: "batch-status", en: "Query status API", zh: "查询状态接口" },
+  { id: "batch-fields", en: "Query status fields", zh: "查询状态字段" },
   { id: "retries", en: "Errors & retries", zh: "错误与重试" },
   { id: "security", en: "Security", zh: "安全" },
 ] as const;
@@ -687,6 +691,14 @@ async function copy() {
         <section v-else-if="activeDoc === 'fields'" aria-labelledby="fields">
           <h2 id="fields">{{ t("Ingestion fields", "接入字段") }}</h2>
           <ProtocolFields />
+        </section>
+        <section v-else-if="activeDoc === 'batch-status'" aria-labelledby="batch-status">
+          <h2 id="batch-status">{{ t("Query status API", "查询状态接口") }}</h2>
+          <BatchQueryReference />
+        </section>
+        <section v-else-if="activeDoc === 'batch-fields'" aria-labelledby="batch-fields">
+          <h2 id="batch-fields">{{ t("Query status fields", "查询状态字段") }}</h2>
+          <BatchQueryFields />
         </section>
         <section v-else-if="activeDoc === 'retries'" aria-labelledby="retries">
           <h2 id="retries">
