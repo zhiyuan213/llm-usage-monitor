@@ -487,13 +487,13 @@ export const sections = [
     rows: [
       [
         "batchId",
-        "Persisted batch identifier",
-        "持久化批次标识",
+        "Batch receipt identifier",
+        "批次接收标识",
         "string (UUID)",
         "Required",
         "必填",
-        "36 characters; use to query results",
-        "36 字符；用于查询处理结果",
+        "36-character UUID; identifies this batch",
+        "36 字符 UUID；标识本次批次",
         '"550e8400-e29b-41d4-a716-446655440099"',
       ],
       [
@@ -520,86 +520,13 @@ export const sections = [
       ],
     ],
   },
-  {
-    en: "Result query: GET /v1/batches/{batchId}",
-    zh: "结果查询：GET /v1/batches/{batchId}",
-    rows: [
-      [
-        "batchId (path)",
-        "Batch ID from POST receipt",
-        "POST 接收响应中的批次 ID",
-        "string (UUID)",
-        "Required",
-        "必填",
-        "36 characters; requires Authorization for the same project",
-        "36 字符；Header 仍需同项目 Authorization",
-        "550e8400-e29b-41d4-a716-446655440099",
-      ],
-      [
-        "status (response)",
-        "Platform batch processing state",
-        "平台批次处理状态",
-        "string",
-        "Required",
-        "必填",
-        "pending / completed / quarantined / failed / deleted",
-        "pending / completed / quarantined / failed / deleted",
-        '"completed"',
-      ],
-      [
-        "received / accepted / duplicates / rejected (response)",
-        "Submitted / accepted / duplicate / rejected event counts",
-        "提交 / 接受 / 重复 / 拒绝的事件数量",
-        "integer",
-        "Required",
-        "必填",
-        "Each 0–500; inspect final results after processing",
-        "各自为0–500；最终结果以批次处理完成后的响应为准",
-        "3 / 2 / 0 / 1",
-      ],
-      [
-        "errors (response)",
-        "Per-event error/result list",
-        "逐条事件错误或提示列表",
-        "array<object>",
-        "Required",
-        "必填",
-        "[] when empty; each item contains index and code",
-        "无错误为 []；每项含 index、code",
-        '[{"index":2,"code":"INVALID_USAGE"}]',
-      ],
-      [
-        "errors[].index",
-        "Zero-based index in submitted events",
-        "提交 events 数组中的从0开始的下标",
-        "integer",
-        "Required",
-        "必填",
-        "0–499",
-        "0–499",
-        "2",
-      ],
-      [
-        "errors[].code",
-        "Stable protocol result/error code",
-        "固定协议错误码或结果码",
-        "string",
-        "Required",
-        "必填",
-        "See Errors & retries",
-        "值与处理方式见“错误与重试”表",
-        '"INVALID_USAGE"',
-      ],
-    ],
-  },
 ];
 
 export const bodyExample =
   '{\n  "schemaVersion": "1.0",\n  "agent": {\n    "serviceName": "demo-api",\n    "environment": "test",\n    "instanceId": "demo-1"\n  },\n  "events": [\n    {\n      "eventId": "550e8400-e29b-41d4-a716-446655440000",\n      "type": "trace",\n      "objectId": "trace-demo-1",\n      "revision": 1,\n      "traceId": "0123456789abcdef0123456789abcdef",\n      "startedAt": "2026-10-23T00:00:00Z",\n      "data": {\n        "name": "Document analysis",\n        "status": "success",\n        "durationMs": 1850,\n        "userId": "demo-user",\n        "customerId": "demo-customer",\n        "feature": "document-analysis"\n      }\n    },\n    {\n      "eventId": "550e8400-e29b-41d4-a716-446655440001",\n      "type": "observation",\n      "objectId": "obs-demo-1",\n      "revision": 1,\n      "traceId": "0123456789abcdef0123456789abcdef",\n      "spanId": "0123456789abcdef",\n      "parentSpanId": null,\n      "startedAt": "2026-10-23T00:00:00Z",\n      "data": {\n        "observationType": "generation",\n        "status": "success",\n        "durationMs": 1850,\n        "provider": "example",\n        "model": "example-model",\n        "usage": {\n          "inputTokens": 1500,\n          "outputTokens": 400,\n          "cachedInputTokens": 500\n        }\n      }\n    },\n    {\n      "eventId": "550e8400-e29b-41d4-a716-446655440002",\n      "type": "score",\n      "objectId": "score-demo-1",\n      "revision": 1,\n      "startedAt": "2026-10-23T00:00:00Z",\n      "data": {\n        "name": "quality",\n        "targetType": "observation",\n        "targetId": "obs-demo-1",\n        "valueType": "numeric",\n        "value": 0.95\n      }\n    }\n  ]\n}';
 export const receiptExample =
   '{"batchId":"550e8400-e29b-41d4-a716-446655440099","received":3,"status":"pending"}';
-export const resultExample =
-  '{"status":"completed","received":3,"accepted":3,"duplicates":0,"rejected":0,"errors":[]}';
+
 const minimal = JSON.parse(bodyExample);
 minimal.events = [minimal.events[0]];
 for (const name of ["userId", "customerId", "feature"])

@@ -3,7 +3,6 @@ import { t } from "./lib";
 import {
   bodyExample,
   receiptExample,
-  resultExample,
   minimalBody,
   requestUrl,
   requestMethod,
@@ -51,8 +50,8 @@ import {
     <p>
       {{
         t(
-          "HTTP 202 means the batch was received. Use batchId to query GET /v1/batches/{batchId} with the same project key. completed means processing finished; check rejected and errors for individual failures.",
-          "HTTP 202 表示已接收。使用返回的 batchId 和同一项目密钥查询 GET /v1/batches/{batchId}。completed 表示处理结束，再检查 rejected 和 errors 是否存在失败记录。",
+          "HTTP 202 means the batch was received, not that every event succeeded. Processing results are shown under Recent batches in the console.",
+          "HTTP 202 表示批次已接收，不代表每条数据都处理成功。处理情况可在后台“最近上报批次”中查看。",
         )
       }}
     </p>
@@ -96,10 +95,6 @@ POST /v1/events/batch HTTP/1.1
       <div class="code-box">
         <div>HTTP 202 · JSON</div>
         <pre>{{ receiptExample }}</pre>
-      </div>
-      <div class="code-box">
-        <div>GET /v1/batches/{batchId} · JSON</div>
-        <pre>{{ resultExample }}</pre>
       </div>
     </details>
   </div>

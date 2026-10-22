@@ -23,7 +23,7 @@
 
 ## 逐条事件结果
 
-202 不代表全部事件成功；查询 GET /v1/batches/{batchId}，检查 accepted / duplicates / rejected / errors。errors[].index 从 0 开始；STALE_REVISION 计为重复。
+202 不代表全部事件成功；在后台“最近上报批次”检查接受、重复、拒绝数量与错误。errors[].index 从 0 开始；STALE_REVISION 计为重复。
 
 | 错误码 | 含义 | 处理与重试 |
 | --- | --- | --- |

@@ -273,8 +273,8 @@ const eventErrors = [
     <p>
       {{
         t(
-          "202 means durably received, not that every event succeeded. Query GET /v1/batches/{batchId}. errors[].index is zero-based; inspect accepted, duplicates and rejected. These codes belong to individual results, not the HTTP status of that query.",
-          "202 仅表示批次已可靠接收，不表示每条事件成功。查询 GET /v1/batches/{batchId}，检查 accepted、duplicates、rejected 和 errors；errors[].index 从 0 开始。下表是事件结果码，不是查询接口的 HTTP 状态。",
+          "202 means the batch was received, not that every event succeeded. Inspect Recent batches in the console. errors[].index is zero-based; check accepted, duplicates and rejected. These are per-event result codes.",
+          "202 仅表示批次已接收，不表示每条事件成功。在后台“最近上报批次”查看接受、重复、拒绝数量及错误；errors[].index 从 0 开始。下表是逐条事件结果码。",
         )
       }}
     </p>

@@ -85,20 +85,9 @@ POST https://metertrail.com/v1/events/batch；请求体 JSON。长度默认 UTF-
 
 | 字段名称 | 字段描述 | 字段类型 | 必填条件 | 长度 / 取值范围 | 示例 |
 | --- | --- | --- | --- | --- | --- |
-| batchId | 持久化批次标识 | string (UUID) | 必填 | 36 字符；用于查询处理结果 | "550e8400-e29b-41d4-a716-446655440099" |
+| batchId | 批次接收标识 | string (UUID) | 必填 | 36 字符 UUID；标识本次批次 | "550e8400-e29b-41d4-a716-446655440099" |
 | received | 提交事件数 | integer | 必填 | 1–500 | 3 |
 | status | 初始平台批次状态 | string | 必填 | 固定为 pending；不代表全部处理成功 | "pending" |
-
-## 结果查询：GET /v1/batches/{batchId}
-
-| 字段名称 | 字段描述 | 字段类型 | 必填条件 | 长度 / 取值范围 | 示例 |
-| --- | --- | --- | --- | --- | --- |
-| batchId (path) | POST 接收响应中的批次 ID | string (UUID) | 必填 | 36 字符；Header 仍需同项目 Authorization | 550e8400-e29b-41d4-a716-446655440099 |
-| status (response) | 平台批次处理状态 | string | 必填 | pending / completed / quarantined / failed / deleted | "completed" |
-| received / accepted / duplicates / rejected (response) | 提交 / 接受 / 重复 / 拒绝的事件数量 | integer | 必填 | 各自为0–500；最终结果以批次处理完成后的响应为准 | 3 / 2 / 0 / 1 |
-| errors (response) | 逐条事件错误或提示列表 | array<object> | 必填 | 无错误为 []；每项含 index、code | [{"index":2,"code":"INVALID_USAGE"}] |
-| errors[].index | 提交 events 数组中的从0开始的下标 | integer | 必填 | 0–499 | 2 |
-| errors[].code | 固定协议错误码或结果码 | string | 必填 | 值与处理方式见“错误与重试”表 | "INVALID_USAGE" |
 
 ## 完整请求示例
 
@@ -182,10 +171,6 @@ Content-Type: application/json
 {"batchId":"550e8400-e29b-41d4-a716-446655440099","received":3,"status":"pending"}
 ```
 
-查询 GET /v1/batches/{batchId}，Header 使用同一项目的 Authorization：
-
-```json
-{"status":"completed","received":3,"accepted":3,"duplicates":0,"rejected":0,"errors":[]}
-```
+HTTP 202 表示批次已接收，不代表每条数据都处理成功。处理情况在后台“最近上报批次”查看。
 
 错误与逐条拒绝码参见 [错误编码表](error-codes.zh-CN.md)。

@@ -7,7 +7,6 @@ import {
   bodyExample,
   minimalBody,
   receiptExample,
-  resultExample,
   minimalReceiptExample,
 } from "./protocol-reference";
 function paths(value: unknown, prefix = ""): string[] {
@@ -55,27 +54,14 @@ it("documents response examples and keeps counts consistent with their request",
       .find((section) => section.en === "Response: POST 202 Accepted")!
       .rows.map((row) => row[0]),
   );
-  const resultFields = new Set(
-    sections
-      .find((section) => section.en.startsWith("Result query:"))!
-      .rows.flatMap((row) =>
-        row[0].replace(/ \((response|path)\)$/, "").split(" / "),
-      ),
-  );
   expect(JSON.parse(minimalReceiptExample).received).toBe(
     JSON.parse(minimalBody).events.length,
   );
-  const receipt = JSON.parse(receiptExample),
-    result = JSON.parse(resultExample);
-  for (const field of paths(receipt))
-    expect(receiptFields.has(field), field).toBe(true);
-  for (const field of paths({
-    ...result,
-    errors: [{ index: 2, code: "INVALID_USAGE" }],
-  }))
-    expect(resultFields.has(field), field).toBe(true);
-  expect(receipt.received).toBe(JSON.parse(bodyExample).events.length);
-  expect(result.accepted + result.duplicates + result.rejected).toBe(
-    result.received,
+  for (const example of [receiptExample, minimalReceiptExample]) {
+    for (const field of paths(JSON.parse(example)))
+      expect(receiptFields.has(field), field).toBe(true);
+  }
+  expect(JSON.parse(receiptExample).received).toBe(
+    JSON.parse(bodyExample).events.length,
   );
 });
