@@ -44,8 +44,8 @@ const requestErrors = [
   [
     "404",
     "BATCH_NOT_FOUND",
-    "该项目下找不到批次",
-    "Batch not found in this project",
+    "仅查询状态接口：该项目下找不到批次",
+    "Status query only: batch not found in this project",
     "检查 batchId 和密钥所属项目",
     "Check batchId and the key’s project",
   ],
@@ -98,21 +98,22 @@ const requestErrors = [
     "Preserve event identity; bounded exponential backoff; contact operator if persistent",
   ],
   [
+    "503",
+    "RATE_LIMIT_UNAVAILABLE",
+    "请求限流服务暂时不可用",
+    "Request rate limiting is temporarily unavailable",
+    "保留事件身份，有限次数退避重试",
+    "Preserve event identity and retry with bounded backoff",
+  ],
+  [
     "409",
     "CONFLICT",
-    "请求与现有记录冲突",
-    "Request conflicts with an existing record",
+    "通用异常处理：请求与现有记录冲突",
+    "Shared error handler: request conflicts with an existing record",
     "检查重复或冲突数据，不盲目重试",
     "Inspect conflicting data rather than retrying blindly",
   ],
-  [
-    "5xx / 网络",
-    "无固定 code / no fixed code",
-    "临时服务或网络错误",
-    "Temporary service or network failure",
-    "保留原 eventId、objectId、revision、时间和内容，指数退避并加抖动",
-    "Preserve IDs, revision, timestamp and content; bounded exponential backoff with jitter",
-  ],
+
 ];
 const eventErrors = [
   [
@@ -130,9 +131,9 @@ const eventErrors = [
     "Remove unsupported fields; do not send complete prompts or responses",
   ],
   [
-    "INVALID_EVENT_ID / INVALID_ID",
-    "事件 UUID 无效",
-    "Invalid event UUID",
+    "INVALID_EVENTID / INVALID_EVENT_ID",
+    "eventId 缺失、类型/长度错误或 UUID 格式无效",
+    "Missing eventId, invalid type/length or invalid UUID format",
     "使用有效 UUID；已有事件重试保留原 ID",
     "Use a valid UUID; preserve existing IDs during retries",
   ],
