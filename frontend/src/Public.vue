@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import PlanFeatures from "./PlanFeatures.vue";
 import DocsExamples from "./DocsExamples.vue";
+import ErrorReference from "./ErrorReference.vue";
+import ProtocolReference from "./ProtocolReference.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
@@ -20,8 +22,8 @@ const route = useRoute(),
   page = computed(() => String(route.params.page || "home"));
 const docSections = [
   { id: "quickstart", en: "Quickstart", zh: "快速开始" },
-  { id: "protocol", en: "Batch protocol", zh: "批次协议" },
-  { id: "sdk", en: "SDK packages", zh: "SDK 包" },
+  { id: "protocol", en: "REST integration", zh: "Rest接入" },
+  { id: "sdk", en: "SDK integration", zh: "SDK接入" },
   { id: "retries", en: "Errors & retries", zh: "错误与重试" },
   { id: "security", en: "Security", zh: "安全" },
 ] as const;
@@ -631,59 +633,11 @@ async function copy() {
           v-else-if="activeDoc === 'protocol'"
           aria-labelledby="protocol"
         >
-          <h2 id="protocol">POST /v1/events/batch</h2>
-          <p>
-            {{
-              t(
-                'Use schemaVersion "1.0", agent, and events. Each event needs eventId (UUID), type, objectId, revision, startedAt, and data. Trace and Observation also need traceId; Observation needs spanId.',
-                '请求包含 schemaVersion "1.0"、agent 和 events。每条事件包含 eventId（UUID）、type、objectId、revision、startedAt、data；Trace 和 Observation 还需 traceId，Observation 需 spanId。',
-              )
-            }}
-          </p>
-          <table>
-            <tbody>
-              <tr>
-                <td>{{ t("Batch size", "批次大小") }}</td>
-                <td>1–500 events · 1 MiB · 8 KiB / event</td>
-              </tr>
-              <tr>
-                <td>{{ t("Time window", "时间窗口") }}</td>
-                <td>
-                  {{
-                    t(
-                      "Last 7 days; 5 minutes future tolerance",
-                      "最近 7 天；允许未来 5 分钟偏差",
-                    )
-                  }}
-                </td>
-              </tr>
-              <tr>
-                <td>202 Accepted</td>
-                <td>
-                  {{
-                    t(
-                      "Durably stored. Poll GET /v1/batches/{batchId} for final results.",
-                      "已可靠写入，轮询 GET /v1/batches/{batchId} 获取最终结果。",
-                    )
-                  }}
-                </td>
-              </tr>
-              <tr>
-                <td>usage</td>
-                <td>
-                  {{
-                    t(
-                      "Nonnegative integers or null; cached input is part of total input.",
-                      "非负整数或 null；缓存输入是总输入的子集。",
-                    )
-                  }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <h2 id="protocol">{{ t("REST integration", "Rest接入") }}</h2>
+          <ProtocolReference />
         </section>
         <section v-else-if="activeDoc === 'sdk'" aria-labelledby="sdk">
-          <h2 id="sdk">{{ t("SDK packages", "SDK 包") }}</h2>
+          <h2 id="sdk">{{ t("SDK integration", "SDK接入") }}</h2>
           <p>
             {{
               t(
@@ -739,6 +693,7 @@ async function copy() {
               )
             }}
           </p>
+          <ErrorReference />
         </section>
         <section v-else aria-labelledby="security">
           <h2 id="security">

@@ -87,3 +87,9 @@ Tier rates are exact decimal values: 100k–1m $8/100k; 1m–10m $7/100k; 10m–
 ## Cost evidence
 
 Rates are USD per million tokens, versioned by project/provider/model/effective time. Cost = `(input-cached)*inputRate + cached*cachedRate + output*outputRate`, divided by 1,000,000. Any missing price or required usage component yields null/unknown, not zero. A corrected object revision replaces its current analytical value atomically. Unsupported provider pricing dimensions require a future schema version.
+
+## Error-code reference
+
+See the [Chinese request-level and per-event error tables](error-codes.zh-CN.md), or the bilingual tables at `/docs#retries`. Error codes are stable protocol values and are not translated.
+
+Full Header / Body / response field definitions and examples: [REST integration reference (Chinese)](rest-reference.zh-CN.md), also available bilingually at `/docs#protocol`.
