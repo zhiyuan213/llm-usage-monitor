@@ -1090,6 +1090,15 @@ footer nav a {
   display: grid;
   gap: 4px;
 }
+.nav-group-label {
+  padding: 16px 14px 8px;
+  color: #8d9fbd;
+  font-size: 12px;
+  font-weight: 600;
+}
+@media (max-width: 760px) {
+  .nav-group-label { padding: 14px 0 6px; text-align: center; font-size: 10px; }
+}
 .sidebar nav a {
   display: flex;
   align-items: center;

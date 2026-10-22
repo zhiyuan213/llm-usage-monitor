@@ -56,6 +56,10 @@ const nav = [
   ["account", "Account security", "账号安全", ShieldCheck],
   ["audit", "Audit logs", "审计日志", ScrollText],
 ] as const;
+const navGroups = [
+  { en: "Projects", zh: "项目", items: nav.filter(item => !["account", "billing", "audit"].includes(item[0])) },
+  { en: "Account", zh: "账号", items: ["account", "billing", "audit"].map(id => nav.find(item => item[0] === id)!) },
+];
 const title = computed(() => {
   const item = nav.find((v) => v[0] === page.value);
   return item ? t(item[1], item[2]) : t("Trace detail", "调用详情");
@@ -364,9 +368,6 @@ const usagePercent = computed(() =>
         ><span class="brand-icon"><Activity :size="20" /></span
         >MeterTrail</RouterLink
       >
-      <div class="workspace-label">
-        {{ t("PROJECT MANAGEMENT", "项目管理") }}
-      </div>
       <div class="workspace-switch">
         <span class="avatar">M</span>
         <div>
@@ -378,8 +379,10 @@ const usagePercent = computed(() =>
         </div>
       </div>
       <nav>
+        <template v-for="group in navGroups" :key="group.en">
+        <div class="nav-group-label">{{ t(group.en, group.zh) }}</div>
         <RouterLink
-          v-for="item in nav"
+          v-for="item in group.items"
           :key="item[0]"
           :to="'/app/' + item[0]"
           :aria-label="t(item[1], item[2])"
@@ -392,6 +395,7 @@ const usagePercent = computed(() =>
             t(item[1], item[2])
           }}</span></RouterLink
         >
+        </template>
       </nav>
       <div class="sidebar-bottom">
         <div class="usage-label">
