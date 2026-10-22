@@ -4,7 +4,7 @@ POST https://metertrail.com/v1/events/batch；请求体 JSON。长度默认 UTF-
 
 ## 从最小请求开始
 
-官网展示顺序为 URL → Method → Header → Body → Resp → 字段说明。上报 Method 为 POST。首次接入只需上报一条 Trace，记录名称、状态和耗时。模型 Token 用量与评分按需添加，无需一次填写全部参数。官网默认展示最小示例，完整字段参考折叠在下方。
+官网 Rest接入 展示 URL → Method → Header → Body → Resp，完整参数表集中在左侧“字段描述”（/docs#fields），位于“SDK接入”下一项。上报 Method 为 POST。首次接入只需上报一条 Trace，记录名称、状态和耗时。模型 Token 用量与评分按需添加，无需一次填写全部参数。官网默认展示最小示例，完整字段参考放在独立“字段描述”栏目。
 
 ## 请求头 Header
 

@@ -92,4 +92,4 @@ Rates are USD per million tokens, versioned by project/provider/model/effective 
 
 See the [Chinese request-level and per-event error tables](error-codes.zh-CN.md), or the bilingual tables at `/docs#retries`. Error codes are stable protocol values and are not translated.
 
-Full Header / Body / response field definitions and examples: [REST integration reference (Chinese)](rest-reference.zh-CN.md), also available bilingually at `/docs#protocol`.
+Full Header / Body / response field definitions and examples: [REST integration reference (Chinese)](rest-reference.zh-CN.md), also available bilingually at `/docs#fields`; request and response examples remain at `/docs#protocol`.

@@ -3,6 +3,7 @@ import PlanFeatures from "./PlanFeatures.vue";
 import DocsExamples from "./DocsExamples.vue";
 import ErrorReference from "./ErrorReference.vue";
 import ProtocolReference from "./ProtocolReference.vue";
+import ProtocolFields from "./ProtocolFields.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
@@ -24,6 +25,7 @@ const docSections = [
   { id: "quickstart", en: "Quickstart", zh: "快速开始" },
   { id: "protocol", en: "REST integration", zh: "Rest接入" },
   { id: "sdk", en: "SDK integration", zh: "SDK接入" },
+  { id: "fields", en: "Field descriptions", zh: "字段描述" },
   { id: "retries", en: "Errors & retries", zh: "错误与重试" },
   { id: "security", en: "Security", zh: "安全" },
 ] as const;
@@ -680,6 +682,10 @@ async function copy() {
               >Java</a
             >
           </div>
+        </section>
+        <section v-else-if="activeDoc === 'fields'" aria-labelledby="fields">
+          <h2 id="fields">{{ t("Field descriptions", "字段描述") }}</h2>
+          <ProtocolFields />
         </section>
         <section v-else-if="activeDoc === 'retries'" aria-labelledby="retries">
           <h2 id="retries">
