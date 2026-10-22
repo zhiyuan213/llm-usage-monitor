@@ -1,0 +1,1 @@
+Noto Sans SC Regular, derived losslessly as WOFF2 from backend/src/main/resources/fonts/NotoSansSC-Regular.ttf using fontTools. The same face is used across all console pages. Licensed under the SIL Open Font License; see OFL.txt.

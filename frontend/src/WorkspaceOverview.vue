@@ -9,7 +9,7 @@ const actions = [
   ["analytics", "Data analytics", "数据统计"],
   ["keys", "API keys", "密钥管理"],
   ["alerts", "Alert configuration", "告警配置"],
-  ["settings", "Project settings", "项目配置"],
+  ["settings", "Project settings", "项目设置"],
 ] as const;
 </script>
 <template>

@@ -1,0 +1,1020 @@
+/* MeterTrail UI V2 — scoped to the console; public pages retain their own design. */
+@font-face {
+  font-family: "MeterTrail Noto Sans SC";
+  src: url("/fonts/NotoSansSC-Regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+.ui-v2 {
+  --blue: #3156e8;
+  --navy: #12213d;
+  --line: #e1e7f1;
+  --muted: #8594ad;
+  font-family: "MeterTrail Noto Sans SC", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1d2c44;
+  background: #f5f7fb;
+}
+.ui-v2 .sidebar {
+  width: 224px;
+  padding: 24px 16px;
+  background: #12213d;
+  overflow-y: auto;
+}
+.ui-v2 .sidebar .brand {
+  font-size: 25px;
+  letter-spacing: 0.4px;
+  margin: 0 0 28px;
+  gap: 10px;
+}
+.ui-v2 .brand-icon {
+  background: #416bec;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+}
+.ui-v2 .workspace-switch {
+  padding: 12px;
+  margin: 0 0 14px;
+  min-height: 64px;
+  border: 1px solid #ffffff0b;
+  border-radius: 8px;
+  background: #ffffff04;
+  font-size: 14px;
+}
+.ui-v2 .avatar {
+  width: 32px;
+  height: 32px;
+  background: #355ba4;
+  font-size: 14px;
+}
+.ui-v2 .workspace-switch small {
+  margin-top: 0;
+  font-size: 12px;
+  color: #8c9fb9;
+}
+.ui-v2 .sidebar nav {
+  gap: 4px;
+}
+.ui-v2 .nav-group-label {
+  margin: 6px 8px 2px;
+  padding: 0;
+  font-size: 12px;
+  line-height: 22px;
+  color: #748aa9;
+  letter-spacing: 0;
+}
+.ui-v2 .nav-group-label:not(:first-child) {
+  margin-top: 18px;
+}
+.ui-v2 .nav-group-label::before,
+.ui-v2 .nav-group-label::after {
+  background: #ffffff12;
+}
+.ui-v2 .sidebar nav a {
+  min-height: 42px;
+  padding: 9px 14px;
+  font-size: 14px;
+  gap: 12px;
+  border-radius: 6px;
+  color: #aab9cf;
+}
+.ui-v2 .sidebar nav a.active {
+  background: #2e50b4;
+  box-shadow: inset 3px 0 #8da8ff;
+  color: #fff;
+}
+.ui-v2 .sidebar nav a svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.6;
+}
+.ui-v2 .sidebar-bottom {
+  padding-top: 24px;
+}
+.ui-v2 .usage-label {
+  font-size: 12px;
+  margin: 0 6px 8px;
+}
+.ui-v2 .progress {
+  margin: 0 6px 10px;
+  background: #2c3e60;
+}
+.ui-v2 .progress i {
+  background: #6084ff;
+}
+.ui-v2 .sidebar-bottom > small {
+  margin-left: 6px;
+  font-size: 12px;
+}
+.ui-v2 .sidebar-bottom > a {
+  margin: 26px 6px 14px;
+  font-size: 14px;
+}
+.ui-v2 .account-summary {
+  padding-top: 16px;
+  margin: 0 6px;
+  gap: 8px;
+}
+.ui-v2 .account-summary .avatar {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  border-radius: 50%;
+}
+.ui-v2 .account-summary > span:nth-child(2) {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.ui-v2 .console-main {
+  margin-left: 224px;
+}
+.ui-v2 .console-header {
+  height: 56px;
+  padding: 0 32px;
+}
+.ui-v2 .breadcrumb {
+  font-size: 14px;
+  color: #8594ad;
+}
+.ui-v2 .header-status {
+  font-size: 12px;
+  margin-right: 100px;
+  color: #8594ad;
+}
+.ui-v2 .live-dot {
+  width: 10px;
+  height: 10px;
+  background: #35b49a;
+}
+.ui-v2 .console-content {
+  max-width: none;
+  padding: 18px 32px 16px;
+  margin: 0;
+}
+.ui-v2 .page-heading {
+  margin-bottom: 18px;
+  gap: 20px;
+  align-items: center;
+}
+.ui-v2 .page-heading .eyebrow {
+  font-size: 11px;
+  line-height: 18px;
+  letter-spacing: 2px;
+  color: #7d97bc;
+  margin-bottom: 6px;
+}
+.ui-v2 .page-heading h1 {
+  font-size: 24px;
+  line-height: 32px;
+  margin: 0 0 4px;
+  letter-spacing: 0;
+}
+.ui-v2 .page-heading p {
+  font-size: 14px;
+  color: #8594ad;
+}
+.ui-v2 h2,
+.ui-v2 .panel-heading h2 {
+  font-size: 16px;
+  line-height: 24px;
+  margin-bottom: 16px;
+  letter-spacing: 0;
+}
+.ui-v2 h3 {
+  font-size: 16px;
+}
+.ui-v2 p {
+  color: #8594ad;
+  font-size: 14px;
+}
+.ui-v2 :where(.muted, small, code, .mono, .badge) {
+  font-size: 12px;
+}
+.ui-v2 .muted {
+  color: #8594ad;
+}
+.ui-v2 .panel {
+  border: 1px solid #e1e7f1;
+  border-radius: 8px;
+  box-shadow: none;
+  margin-bottom: 16px;
+}
+.ui-v2 .form-panel {
+  padding: 20px;
+}
+.ui-v2 .form-panel > p {
+  margin-bottom: 20px;
+}
+.ui-v2 .btn,
+.ui-v2 .toolbar > .btn,
+.ui-v2 .filters .btn,
+.ui-v2 .trace-export .btn,
+.ui-v2 .activity-heading-actions .btn,
+.ui-v2 .query-controls .btn,
+.ui-v2 table .btn {
+  height: 36px;
+  min-height: 36px;
+  min-width: 112px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  border: 1px solid #dce4f0;
+  border-radius: 6px;
+  color: #334c70;
+  background: #fff;
+  box-shadow: none;
+}
+.ui-v2 .btn:hover {
+  border-color: #9bb0ed;
+  background: #f6f8ff;
+}
+.ui-v2 .btn.primary {
+  color: #fff;
+  border-color: #3156e8;
+  background: #3156e8;
+}
+.ui-v2 .btn.primary:hover {
+  background: #2548d3;
+}
+.ui-v2 .btn.danger-button,
+.ui-v2 .btn.danger-text {
+  color: #ed5d69;
+  border-color: #f0b6bd;
+  background: #fff;
+}
+.ui-v2 .btn:disabled {
+  color: #a4b1c7;
+  border-color: #e1e7f1;
+  background: #f7f9fc;
+  opacity: 1;
+  cursor: not-allowed;
+}
+.ui-v2 input,
+.ui-v2 select,
+.ui-v2 .filters > select {
+  min-height: 36px;
+  height: 36px;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 22px;
+  border: 1px solid #dce4f0;
+  border-radius: 6px;
+}
+.ui-v2 input::placeholder {
+  color: #a4b1c7;
+}
+.ui-v2 input:focus,
+.ui-v2 select:focus {
+  border-color: #7997f7;
+  outline: 2px solid #3156e812;
+}
+.ui-v2 input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
+  min-height: 0;
+  padding: 0;
+  accent-color: #3156e8;
+}
+.ui-v2 label {
+  font-size: 14px;
+  color: #73849e;
+  gap: 8px;
+  margin: 14px 0;
+}
+.ui-v2 .check-label {
+  flex-direction: row;
+  align-items: center;
+}
+.ui-v2 .toolbar {
+  gap: 12px;
+}
+.ui-v2 .toolbar select {
+  min-width: 116px;
+}
+.ui-v2 .panel-heading {
+  padding: 16px 20px;
+}
+.ui-v2 .panel-heading h2 {
+  margin-bottom: 0;
+}
+.ui-v2 .section-heading {
+  margin: 20px 0 12px;
+}
+.ui-v2 .section-heading h2 {
+  margin: 0;
+}
+.ui-v2 .count {
+  border-radius: 0;
+  background: #eaf0fa;
+  font-size: 12px;
+}
+.ui-v2 .metrics {
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.ui-v2 .metric {
+  padding: 20px;
+}
+.ui-v2 .metric > div {
+  font-size: 14px;
+  color: #8594ad;
+}
+.ui-v2 .metric > div svg {
+  display: none;
+}
+.ui-v2 .metric strong {
+  font-size: 28px;
+  margin: 12px 0;
+  line-height: 36px;
+}
+.ui-v2 .metric small {
+  font-size: 12px;
+}
+.ui-v2 .project-caption {
+  margin: 0 0 16px;
+  font-size: 14px;
+  gap: 12px;
+}
+.ui-v2 .badge {
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 12px;
+  background: #eef3fb;
+  color: #8594ad;
+}
+.ui-v2 .badge.success {
+  background: #e7f6f0;
+  color: #36ae93;
+}
+.ui-v2 .badge.danger {
+  background: #fff0f1;
+  color: #ed5d69;
+}
+.ui-v2 .chart-grid {
+  grid-template-columns: 1.6fr 1fr;
+  gap: 16px;
+}
+.ui-v2 .chart-grid .panel {
+  margin-bottom: 16px;
+}
+.ui-v2 .real-chart {
+  height: 136px;
+  margin: 0 20px 16px;
+  padding-top: 8px;
+}
+.ui-v2 .chart-column i {
+  background: #7995f1;
+  border-radius: 3px 3px 0 0;
+}
+.ui-v2 .chart-empty {
+  min-height: 150px;
+  padding: 20px;
+}
+.ui-v2 .model-list {
+  max-height: 168px;
+  overflow: auto;
+  padding: 0 20px 12px;
+}
+.ui-v2 .model-list > div {
+  padding: 10px 0;
+  font-size: 14px;
+}
+.ui-v2 .model-list b {
+  font-size: 14px;
+}
+.ui-v2 .model-list small {
+  font-size: 12px;
+}
+.ui-v2 table {
+  min-width: 680px;
+  font-size: 14px;
+}
+.ui-v2 th {
+  background: #f8fafc;
+  color: #8594ad;
+  padding: 12px 16px;
+  font-weight: 400;
+  border-top: 0;
+  border-bottom: 1px solid #eaf0f7;
+}
+.ui-v2 td {
+  padding: 14px 16px;
+  color: #7386a3;
+  line-height: 24px;
+  border-bottom: 1px solid #eaf0f7;
+}
+.ui-v2 td strong {
+  font-weight: 500;
+}
+.ui-v2 td small {
+  font-size: 12px;
+  margin-top: 0;
+}
+.ui-v2 td .mono,
+.ui-v2 td.mono {
+  font-size: 12px;
+}
+.ui-v2 td .btn,
+.ui-v2 td .btn.danger-text,
+.ui-v2 td .btn.danger-button,
+.ui-v2 td .text-button {
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 12px;
+  line-height: 24px;
+  color: #4e6bff;
+}
+.ui-v2 td .text-button {
+  font-size: 14px;
+}
+.ui-v2 td .btn.danger-text,
+.ui-v2 td .btn.danger-button {
+  color: #ed5d69;
+}
+.ui-v2 td .btn:hover,
+.ui-v2 td .text-button:hover {
+  text-decoration: underline;
+  background: transparent;
+}
+.ui-v2 td a {
+  color: #4e6bff;
+}
+.ui-v2 .project-row-actions {
+  min-width: 300px;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+.ui-v2 .table-actions .btn + .btn {
+  margin-left: 12px;
+}
+.ui-v2 .empty-cell {
+  height: 220px;
+  padding: 32px;
+  color: #9eacc1;
+  text-align: center;
+  vertical-align: middle;
+}
+.ui-v2 .empty-cell::before {
+  content: "▤";
+  display: block;
+  font-size: 32px;
+  line-height: 40px;
+  margin-bottom: 12px;
+  color: #c4d1e6;
+}
+.ui-v2 .query-controls {
+  padding: 16px;
+  gap: 12px;
+  border-top: 1px solid #eaf0f7;
+}
+.ui-v2 .query-pages {
+  gap: 12px;
+  font-size: 12px;
+}
+.ui-v2 .query-pages > span {
+  font-size: 12px;
+  color: #9aa9bf;
+}
+.ui-v2 .query-controls .btn {
+  min-width: 72px;
+  height: 32px;
+  min-height: 32px;
+  padding: 4px 12px;
+  font-size: 12px;
+}
+.ui-v2 .page-size {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 12px;
+  color: #9aa9bf;
+  white-space: nowrap;
+}
+.ui-v2 .page-size select {
+  min-height: 32px;
+  height: 32px;
+  width: 64px;
+  font-size: 12px;
+}
+.ui-v2 .filters {
+  padding: 20px;
+  gap: 12px;
+}
+.ui-v2 .filters .search-field {
+  min-height: 36px;
+}
+.ui-v2 .search-field input {
+  border: 0;
+  height: 34px;
+  min-height: 34px;
+}
+.ui-v2 .trace-export {
+  gap: 12px;
+}
+.ui-v2 .analytics-toolbar {
+  margin-bottom: 12px;
+}
+.ui-v2 .tabs {
+  gap: 28px;
+}
+.ui-v2 .tabs button {
+  padding: 10px 0 16px;
+  font-size: 14px;
+}
+.ui-v2 .analytics-toolbar .query-export {
+  padding-bottom: 12px;
+}
+.ui-v2 .audit-toolbar {
+  margin-bottom: 12px;
+}
+.ui-v2 .audit-toolbar h2 {
+  margin: 0 auto 0 0;
+}
+.ui-v2 .report-section {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.ui-v2 .report-section > .panel-heading {
+  padding: 4px 0 12px;
+}
+.ui-v2 .report-section > .table-wrap {
+  border: 1px solid #e1e7f1;
+  border-radius: 8px;
+  background: white;
+}
+.ui-v2 .report-section:has(> .query-controls) > .table-wrap {
+  border-radius: 8px 8px 0 0;
+  border-bottom: 0;
+}
+.ui-v2 .report-section > .query-controls {
+  background: #fff;
+  border: 1px solid #e1e7f1;
+  border-top: 1px solid #eaf0f7;
+  border-radius: 0 0 8px 8px;
+}
+.ui-v2 .panel-foot {
+  padding: 12px 0;
+  font-size: 12px;
+  border: 0;
+  color: #8594ad;
+}
+.ui-v2 .integration-banner {
+  padding: 24px 22px;
+  gap: 16px;
+}
+.ui-v2 .integration-banner h2 {
+  margin-bottom: 4px;
+}
+.ui-v2 .integration-banner p {
+  margin: 0;
+  font-size: 14px;
+}
+.ui-v2 .integration-banner > svg {
+  width: 44px;
+  height: 44px;
+  background: #eef2ff;
+  padding: 10px;
+  color: #4e6bff;
+  border-radius: 8px;
+}
+.ui-v2 .inline-form {
+  gap: 12px;
+}
+.ui-v2 .keys-section .inline-form input {
+  width: 220px;
+}
+.ui-v2 .alert-create-form,
+.ui-v2 .price-version-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 16px;
+}
+.ui-v2 .alert-create-form > label,
+.ui-v2 .price-version-form > label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  margin: 0;
+  gap: 8px;
+}
+.ui-v2 .alert-create-form input,
+.ui-v2 .alert-create-form select {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+}
+.ui-v2 .alert-create-form > .btn,
+.ui-v2 .price-version-form > .btn {
+  grid-column: 1 / -1;
+  grid-row: auto;
+  justify-self: end;
+  align-self: end;
+}
+.ui-v2 .price-version-form > label:nth-child(4) {
+  grid-column: auto;
+}
+.ui-v2 .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.ui-v2 .form-grid > label {
+  margin: 0;
+}
+.ui-v2 .form-grid > .btn {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+.ui-v2 .danger-zone {
+  border-color: #f2d4d8;
+}
+.ui-v2 .danger-zone h2 {
+  color: #ed5d69;
+}
+.ui-v2 .account-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin: 18px 0 22px;
+}
+.ui-v2 .account-details-grid > div {
+  padding-right: 24px;
+  border-right: 1px solid #eaf0f7;
+}
+.ui-v2 .account-details-grid > div:last-child {
+  border: 0;
+}
+.ui-v2 .account-details-grid dt {
+  font-size: 12px;
+  color: #8594ad;
+  margin-bottom: 8px;
+}
+.ui-v2 .account-details-grid dd {
+  margin: 0;
+  color: #293b57;
+  font-size: 14px;
+}
+.ui-v2 .account-details-grid .badge {
+  margin-left: 10px;
+}
+.ui-v2 .account-security-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.ui-v2 .account-security-grid > .panel {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+.ui-v2 .account-security-grid form {
+  margin-top: auto;
+}
+.ui-v2 .account-security-grid .inline-form .btn,
+.ui-v2 .account-security-grid form > .btn {
+  min-width: 144px;
+}
+.ui-v2 .account-security-grid .form-grid {
+  margin-top: 16px;
+}
+.ui-v2 .account-security-grid .danger-zone .form-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ui-v2 .account-security-grid form .btn.primary,
+.ui-v2 .account-security-grid .danger-button {
+  margin-top: 16px;
+  justify-self: end;
+}
+.ui-v2 .billing-details-grid {
+  align-items: stretch;
+  gap: 16px;
+}
+.ui-v2 .billing-details-grid .form-panel {
+  padding: 20px;
+}
+.ui-v2 .billing-history-panel .panel-heading {
+  border-bottom: 0;
+  padding: 20px;
+}
+.ui-v2 .billing-history-empty {
+  color: #9eacc1;
+  min-height: 260px;
+}
+.ui-v2 .billing-usage {
+  margin-top: 0;
+  padding: 12px 14px;
+  background: #f5f7fc;
+  border-radius: 6px;
+}
+.ui-v2 .billing-usage strong {
+  font-size: 24px;
+}
+.ui-v2 .billing-usage span,
+.ui-v2 .billing-usage small {
+  font-size: 12px;
+}
+.ui-v2 .billing-policy-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+.ui-v2 .billing-policy-form .check-label {
+  font-size: 12px;
+  margin: 0;
+}
+.ui-v2 .billing-policy-form .narrow {
+  flex-direction: row;
+  align-items: center;
+  max-width: none;
+  margin: 0;
+  font-size: 12px;
+}
+.ui-v2 .billing-policy-form .narrow input {
+  width: 120px;
+  margin-left: 12px;
+}
+.ui-v2 .billing-policy-form > .btn {
+  align-self: flex-end;
+}
+.ui-v2 .plans {
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.ui-v2 .plans article {
+  padding: 22px;
+  margin: 0;
+}
+.ui-v2 .plans h3 {
+  margin-bottom: 16px;
+}
+.ui-v2 .plans .price {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+.ui-v2 .plans p {
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+.ui-v2 .plans ul {
+  gap: 10px;
+  margin: 18px 0 22px;
+  font-size: 12px;
+}
+.ui-v2 .plans .featured {
+  border-color: #7e96ff;
+  box-shadow: none;
+}
+.ui-v2 .plans .btn {
+  margin-top: 0;
+}
+.ui-v2 .console-footer {
+  text-align: center;
+  color: #94a3bb;
+  font-size: 12px;
+  padding: 2px 0;
+  margin-top: 18px;
+}
+.console-language {
+  top: 10px;
+  right: 24px;
+}
+.console-language select {
+  height: 36px;
+  min-height: 36px;
+  font-family: "MeterTrail Noto Sans SC", sans-serif;
+  font-size: 12px;
+}
+@media (max-height: 850px) and (min-width: 1101px) {
+  .ui-v2 .sidebar {
+    padding-top: 18px;
+    padding-bottom: 16px;
+  }
+  .ui-v2 .sidebar .brand {
+    margin-bottom: 18px;
+  }
+  .ui-v2 .sidebar nav a {
+    min-height: 38px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+  .ui-v2 .sidebar-bottom {
+    padding-top: 16px;
+  }
+  .ui-v2 .sidebar-bottom > a {
+    margin-top: 16px;
+  }
+}
+@media (max-width: 1100px) {
+  .ui-v2 .console-content {
+    padding: 20px;
+  }
+  .ui-v2 .alert-create-form,
+  .ui-v2 .price-version-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ui-v2 .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ui-v2 .account-security-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .ui-v2 .sidebar {
+    width: 72px;
+    padding: 14px 8px;
+  }
+  .ui-v2 .sidebar .brand {
+    justify-content: center;
+    font-size: 0;
+    margin: 0 0 20px;
+  }
+  .ui-v2 .sidebar .brand-icon {
+    flex-shrink: 0;
+  }
+  .ui-v2 .sidebar nav a {
+    justify-content: center;
+    padding: 10px;
+  }
+  .ui-v2 .nav-group-label {
+    font-size: 10px;
+    margin: 8px 0;
+  }
+  .ui-v2 .console-main {
+    margin-left: 72px;
+  }
+  .ui-v2 .console-header {
+    padding: 0 16px;
+  }
+  .ui-v2 .console-content {
+    padding: 18px 14px;
+  }
+  .ui-v2 .page-heading {
+    flex-wrap: wrap;
+  }
+  .ui-v2 .page-heading .toolbar {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .ui-v2 .toolbar > .btn {
+    font-size: 14px;
+  }
+  .ui-v2 .account-details-grid,
+  .ui-v2 .chart-grid,
+  .ui-v2 .billing-details-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ui-v2 .account-details-grid > div {
+    border-right: 0;
+    border-bottom: 1px solid #eaf0f7;
+    padding-bottom: 14px;
+  }
+  .ui-v2 .alert-create-form,
+  .ui-v2 .price-version-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ui-v2 .form-panel {
+    padding: 18px;
+  }
+  .ui-v2 .filters {
+    flex-wrap: wrap;
+  }
+  .ui-v2 .filters .search-field {
+    flex-basis: 100%;
+  }
+  .ui-v2 .trace-export {
+    margin-left: auto;
+  }
+  .ui-v2 .account-security-grid .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ui-v2 .console-header .header-status {
+    display: none;
+  }
+}
+
+.ui-v2 .sidebar .brand {
+  font-weight: 700;
+}
+.ui-v2 .page-heading h1 {
+  font-weight: 700;
+}
+.ui-v2 h2,
+.ui-v2 h3 {
+  font-weight: 600;
+}
+.ui-v2 .account-details-grid {
+  padding: 0;
+  border: 0;
+}
+.ui-v2 .account-details-grid > div {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.ui-v2[data-page="account"] > .console-main > main > .form-panel > .muted {
+  margin: 16px 0 0;
+  font-size: 12px;
+}
+.ui-v2 .activity-section td:first-child a {
+  display: inline-block;
+  max-width: 300px;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ui-v2 .real-chart {
+  position: relative;
+  padding-left: 28px;
+}
+.ui-v2 .chart-axis {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #9aacc9;
+  font-size: 12px;
+}
+
+.ui-v2 {
+  font-synthesis: weight;
+}
+/* Fit the reference's default five-row layouts without clipping longer reports. */
+.ui-v2 .metrics > .metric {
+  margin-bottom: 0;
+}
+.ui-v2 td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.ui-v2 .badge {
+  line-height: 18px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  vertical-align: middle;
+}
+@media (min-width: 1200px) {
+  .ui-v2[data-page="overview"] .page-heading {
+    margin-bottom: 14px;
+  }
+  .ui-v2[data-page="overview"] .metric {
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+  .ui-v2[data-page="overview"] .real-chart {
+    height: 124px;
+    margin-bottom: 12px;
+  }
+  .ui-v2[data-page="overview"] .console-footer {
+    margin-top: 12px;
+  }
+  .ui-v2[data-page="billing"] .plans article {
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+  .ui-v2[data-page="billing"] .plans h3 {
+    margin-bottom: 12px;
+  }
+  .ui-v2[data-page="billing"] .plans .price {
+    line-height: 1.25;
+    margin-bottom: 8px;
+  }
+  .ui-v2[data-page="billing"] .plans ul {
+    margin: 14px 0 16px;
+    gap: 8px;
+  }
+  .ui-v2[data-page="billing"] .billing-details-grid .form-panel > p {
+    margin-bottom: 12px;
+  }
+  .ui-v2[data-page="billing"] .billing-policy-form {
+    gap: 10px;
+  }
+  .ui-v2[data-page="billing"] .console-footer {
+    margin-top: 12px;
+  }
+  .ui-v2[data-page="settings"] .form-panel {
+    padding: 18px 20px;
+  }
+  .ui-v2[data-page="settings"] .panel {
+    margin-bottom: 14px;
+  }
+}

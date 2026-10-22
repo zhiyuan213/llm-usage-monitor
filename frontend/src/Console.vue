@@ -19,7 +19,6 @@ import {
   LayoutDashboard,
   FolderKanban,
   GitBranch,
-  Users,
   KeyRound,
   Bell,
   CreditCard,
@@ -57,9 +56,9 @@ const route = useRoute(),
   page = computed(() => String(route.params.page || "overview"));
 const nav = [
   ["workspace", "Project management", "项目管理", LayoutDashboard],
-  ["overview", "Overview", "概览", LayoutDashboard],
+  ["overview", "Overview", "概览", Activity],
   ["traces", "Traces", "调用记录", GitBranch],
-  ["analytics", "Data analytics", "数据统计", Users],
+  ["analytics", "Data analytics", "数据统计", BarChart3],
   ["keys", "API key management", "密钥管理", KeyRound],
   ["alerts", "Alert configuration", "告警配置", Bell],
   ["billing", "Billing", "套餐与账单", CreditCard],
@@ -238,7 +237,9 @@ async function refresh(force = true) {
     } else if (page.value === "workspace")
       data.value = await request("/workspace");
     else if (page.value === "audit")
-      data.value = await request("/reports/audit?page=" + reportPage.value + "&size=" + reportSize.value);
+      data.value = await request(
+        "/reports/audit?page=" + reportPage.value + "&size=" + reportSize.value,
+      );
     else if (page.value === "account") {
       /* Account is included in context. */
     } else if (selected.value) {
@@ -278,7 +279,9 @@ async function refresh(force = true) {
             "&dimension=" +
             dimension.value +
             "&page=" +
-            reportPage.value + "&size=" + reportSize.value,
+            reportPage.value +
+            "&size=" +
+            reportSize.value,
         );
       else if (page.value === "keys") data.value = await request(path("/keys"));
       else if (page.value === "alerts")
@@ -435,7 +438,7 @@ const usagePercent = computed(() =>
 );
 </script>
 <template>
-  <div class="console-shell">
+  <div class="console-shell ui-v2" :data-page="page">
     <aside class="sidebar">
       <RouterLink to="/" class="brand"
         ><span class="brand-icon"><Activity :size="20" /></span
@@ -464,7 +467,7 @@ const usagePercent = computed(() =>
               active:
                 page === item[0] || (page === 'trace' && item[0] === 'traces'),
             }"
-            ><component :is="item[3]" :size="17" /><span>{{
+            ><component :is="item[3]" :size="18" /><span>{{
               t(item[1], item[2])
             }}</span></RouterLink
           >
@@ -507,16 +510,17 @@ const usagePercent = computed(() =>
           >{{ t("All times in UTC", "时间均为 UTC") }}
         </div>
       </header>
-      <main class="console-content" :class="{ 'overview-content': page === 'overview', 'billing-content': page === 'billing' }" :aria-busy="loading">
+      <main
+        class="console-content"
+        :class="{
+          'overview-content': page === 'overview',
+          'billing-content': page === 'billing',
+        }"
+        :aria-busy="loading"
+      >
         <div class="page-heading">
           <div>
-            <div class="eyebrow">
-              {{
-                page === "overview"
-                  ? t("YOUR AI, AT A GLANCE", "AI 应用，一目了然")
-                  : "METERTRAIL CONSOLE"
-              }}
-            </div>
+            <div class="eyebrow">METERTRAIL CONSOLE</div>
             <h1>{{ title }}</h1>
             <p>
               {{
@@ -589,9 +593,8 @@ const usagePercent = computed(() =>
         </div>
         <template v-if="page === 'overview' && selected"
           ><div class="project-caption">
-            <span class="project-symbol"><Activity :size="17" /></span
+            <span class="badge success">{{ project?.environment }}</span
             ><strong>{{ project?.name }}</strong
-            ><span class="badge success">{{ project?.environment }}</span
             ><span class="muted">{{
               t("Retained data · UTC", "保留期内数据 · UTC")
             }}</span>
@@ -645,6 +648,11 @@ const usagePercent = computed(() =>
                 >
               </div>
               <div v-if="daily.length" class="real-chart">
+                <div class="chart-axis" aria-hidden="true">
+                  <span v-for="tick in [1, 2 / 3, 1 / 3, 0]" :key="tick">{{
+                    n(Math.round(maxCalls * tick))
+                  }}</span>
+                </div>
                 <div v-for="d in daily" :key="d.day" class="chart-column">
                   <span>{{ n(d.calls) }}</span
                   ><i
@@ -701,7 +709,7 @@ const usagePercent = computed(() =>
               </div>
             </section>
           </div>
-          <section class="panel">
+          <section class="panel report-section activity-section">
             <div class="panel-heading">
               <h2>{{ t("Recent activity", "最近活动") }}</h2>
               <div class="activity-heading-actions">
@@ -725,9 +733,9 @@ const usagePercent = computed(() =>
                   "
                   >{{ t("Export PDF", "导出 PDF") }}</a
                 >
-                <RouterLink class="btn" to="/app/traces"
-                  >{{ t("View traces", "查看调用") }}</RouterLink
-                >
+                <RouterLink class="btn" to="/app/traces">{{
+                  t("View traces", "查看调用")
+                }}</RouterLink>
               </div>
             </div>
             <div class="table-wrap">
@@ -739,7 +747,7 @@ const usagePercent = computed(() =>
                     <th>{{ t("Model", "模型") }}</th>
                     <th>{{ t("Cost", "成本") }}</th>
                     <th>{{ t("Status", "状态") }}</th>
-                    <th>{{ t("Time", "时间") }}</th>
+                    <th>{{ t("Time (UTC)", "时间 (UTC)") }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -747,6 +755,7 @@ const usagePercent = computed(() =>
                     <td>
                       <RouterLink
                         v-if="o.trace_id"
+                        :title="o.data.name || o.object_id"
                         :to="'/app/trace/' + o.trace_id"
                         >{{ o.data.name || o.object_id }}</RouterLink
                       ><span v-else>{{ o.data.name || o.object_id }}</span
@@ -788,10 +797,18 @@ const usagePercent = computed(() =>
                 </tbody>
               </table>
             </div>
-            <QueryControls :page="activityPage" :size="activitySize" :total="activityTotal" :loading="loading"
-              @change="activityTurn" @resize="activitySize = $event; activityTurn(0)" />
-          </section></template
-        >
+            <QueryControls
+              :page="activityPage"
+              :size="activitySize"
+              :total="activityTotal"
+              :loading="loading"
+              @change="activityTurn"
+              @resize="
+                activitySize = $event;
+                activityTurn(0);
+              "
+            /></section
+        ></template>
         <template v-if="page === 'traces' && selected"
           ><section class="panel">
             <form
@@ -814,11 +831,18 @@ const usagePercent = computed(() =>
                 <option>success</option>
                 <option>error</option>
                 <option>cancelled</option></select
-              ><button class="btn primary">{{ t("Search", "搜索") }}</button
-              >
+              ><button class="btn primary">{{ t("Search", "搜索") }}</button>
               <div class="query-export trace-export">
-                <a class="btn" :href="reportExportUrl + '&format=xlsx&lang=' + language">{{ t("Export Excel", "导出 Excel") }}</a>
-                <a class="btn" :href="reportExportUrl + '&format=pdf&lang=' + language">{{ t("Export PDF", "导出 PDF") }}</a>
+                <a
+                  class="btn"
+                  :href="reportExportUrl + '&format=xlsx&lang=' + language"
+                  >{{ t("Export Excel", "导出 Excel") }}</a
+                >
+                <a
+                  class="btn"
+                  :href="reportExportUrl + '&format=pdf&lang=' + language"
+                  >{{ t("Export PDF", "导出 PDF") }}</a
+                >
               </div>
             </form>
             <div class="table-wrap">
@@ -830,7 +854,7 @@ const usagePercent = computed(() =>
                     <th>{{ t("Duration", "耗时") }}</th>
                     <th>{{ t("User / Customer", "用户 / 客户") }}</th>
                     <th>{{ t("Status", "状态") }}</th>
-                    <th>{{ t("Started at", "开始时间") }}</th>
+                    <th>{{ t("Started at (UTC)", "开始时间 (UTC)") }}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -856,7 +880,9 @@ const usagePercent = computed(() =>
                     </td>
                     <td>{{ date(o.started_at) }}</td>
                     <td>
-                      <RouterLink class="btn" :to="'/app/trace/' + o.trace_id"
+                      <RouterLink
+                        class="btn"
+                        :to="'/app/trace/' + o.trace_id"
                         >{{ t("View", "查看") }}</RouterLink
                       >
                     </td>
@@ -877,7 +903,11 @@ const usagePercent = computed(() =>
             <QueryControls
               :page="tracePage"
               :size="reportSize"
-              @resize="reportSize = $event; tracePage = 0; refresh(false)"
+              @resize="
+                reportSize = $event;
+                tracePage = 0;
+                refresh(false);
+              "
               :total="data.total || 0"
               :loading="loading"
               @change="
@@ -984,29 +1014,39 @@ const usagePercent = computed(() =>
           </section></template
         >
         <template v-if="page === 'analytics' && selected"
-          ><div class="analytics-toolbar"><div class="tabs">
-            <button
-              v-for="d in ['customerId', 'userId', 'feature']"
-              :class="{ active: dimension === d }"
-              @click="
-                dimension = d;
-                reportPage = 0;
-                refresh();
-              "
-            >
-              {{
-                d === "customerId"
-                  ? t("Customers", "客户")
-                  : d === "userId"
-                    ? t("Users", "用户")
-                    : t("Features", "功能")
-              }}
-            </button>
+          ><div class="analytics-toolbar">
+            <div class="tabs">
+              <button
+                v-for="d in ['customerId', 'userId', 'feature']"
+                :class="{ active: dimension === d }"
+                @click="
+                  dimension = d;
+                  reportPage = 0;
+                  refresh();
+                "
+              >
+                {{
+                  d === "customerId"
+                    ? t("Customers", "客户")
+                    : d === "userId"
+                      ? t("Users", "用户")
+                      : t("Features", "功能")
+                }}
+              </button>
+            </div>
+            <div class="query-export trace-export">
+              <a
+                class="btn"
+                :href="reportExportUrl + '&format=xlsx&lang=' + language"
+                >{{ t("Export Excel", "导出 Excel") }}</a
+              >
+              <a
+                class="btn"
+                :href="reportExportUrl + '&format=pdf&lang=' + language"
+                >{{ t("Export PDF", "导出 PDF") }}</a
+              >
+            </div>
           </div>
-          <div class="query-export trace-export">
-            <a class="btn" :href="reportExportUrl + '&format=xlsx&lang=' + language">{{ t("Export Excel", "导出 Excel") }}</a>
-            <a class="btn" :href="reportExportUrl + '&format=pdf&lang=' + language">{{ t("Export PDF", "导出 PDF") }}</a>
-          </div></div>
           <section class="panel table-wrap">
             <div class="table-wrap">
               <table>
@@ -1047,7 +1087,11 @@ const usagePercent = computed(() =>
             <QueryControls
               :page="reportPage"
               :size="reportSize"
-              @resize="reportSize = $event; reportPage = 0; refresh(false)"
+              @resize="
+                reportSize = $event;
+                reportPage = 0;
+                refresh(false);
+              "
               :total="data.total || 0"
               :loading="loading"
               @change="reportTurn"
@@ -1087,7 +1131,7 @@ const usagePercent = computed(() =>
               </button>
             </div>
           </section>
-          <section class="panel">
+          <section class="panel report-section keys-section">
             <div class="panel-heading">
               <h2>{{ t("API keys", "API 密钥") }}</h2>
               <form class="inline-form" @submit.prevent="createKey">
@@ -1189,7 +1233,11 @@ const usagePercent = computed(() =>
             >
               <label
                 >{{ t("Rule name", "规则名称")
-                }}<input v-model="alert.name" required maxlength="128" /></label
+                }}<input
+                  v-model="alert.name"
+                  :placeholder="t('Enter rule name', '请输入规则名称')"
+                  required
+                  maxlength="128" /></label
               ><label
                 >{{ t("Metric", "指标")
                 }}<select v-model="alert.metric">
@@ -1265,7 +1313,7 @@ const usagePercent = computed(() =>
               {{ t("No rules configured.", "尚未配置规则。") }}
             </p>
           </section>
-          <section class="panel">
+          <section class="panel report-section notifications-section">
             <div class="panel-heading">
               <h2>{{ t("Recent notifications", "最近告警") }}</h2>
             </div>
@@ -1347,87 +1395,91 @@ const usagePercent = computed(() =>
               </button>
             </article>
           </div>
-          <div class="billing-details-grid"><section class="panel form-panel billing-usage-panel">
-            <h2>{{ t("Monthly usage", "当月用量") }}</h2>
-            <div class="billing-usage">
-              <strong
-                >{{ n(data.workspace?.used_units) }}
-                <small>/ {{ n(data.included) }} units</small></strong
-              ><span
-                >{{ t("Overage accrued", "已产生超额费") }}:
-                {{ money(data.overage) }}</span
-              >
-            </div>
-            <p class="muted">
-              {{ date(data.workspace?.period_start) }} →
-              {{ date(data.workspace?.period_end) }}
-            </p>
-            <h2>{{ t("Overage policy", "超额策略") }}</h2>
-            <p>
-              {{
-                t(
-                  "New objects stop by default. Core and Pro may opt into progressive overage starting at $8 per 100,000 units. Existing object updates do not add units.",
-                  "默认停止接收新增对象。Core 和 Pro 可开启分段超额计费，起价 $8 / 100,000 units。更新已有对象不增加 units。",
-                )
-              }}
-            </p>
-            <form class="billing-policy-form" @submit.prevent="saveOverage">
-              <label class="check-label"
-                ><input
-                  v-model="billing.enabled"
-                  type="checkbox"
-                  :disabled="data.workspace?.plan === 'Free'"
-                />{{ t("Enable automatic overage", "开启自动超额计费") }}</label
-              ><label class="narrow"
-                >{{ t("Monthly overage cap (USD)", "月度超额费用上限 (USD)")
-                }}<input
-                  v-model="billing.cap"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  required /></label
-              ><label class="check-label"
-                ><input
-                  v-model="billing.consent"
-                  type="checkbox"
-                  :required="billing.enabled"
-                />{{
+          <div class="billing-details-grid">
+            <section class="panel form-panel billing-usage-panel">
+              <h2>{{ t("Monthly usage", "当月用量") }}</h2>
+              <div class="billing-usage">
+                <strong
+                  >{{ n(data.workspace?.used_units) }}
+                  <small>/ {{ n(data.included) }} units</small></strong
+                ><span
+                  >{{ t("Overage accrued", "已产生超额费") }}:
+                  {{ money(data.overage) }}</span
+                >
+              </div>
+              <p class="muted">
+                {{ date(data.workspace?.period_start) }} →
+                {{ date(data.workspace?.period_end) }}
+              </p>
+              <h2>{{ t("Overage policy", "超额策略") }}</h2>
+              <p>
+                {{
                   t(
-                    "I authorize usage-based charges within this cap.",
-                    "我授权在此上限内按实际使用量收费。",
+                    "New objects stop by default. Core and Pro may opt into progressive overage starting at $8 per 100,000 units. Existing object updates do not add units.",
+                    "默认停止接收新增对象。Core 和 Pro 可开启分段超额计费，起价 $8 / 100,000 units。更新已有对象不增加 units。",
                   )
-                }}</label
-              ><button class="btn primary">
-                {{ t("Verify & save", "验证并保存") }}
-              </button>
-            </form>
-          </section>
-          <section class="panel billing-history-panel">
-            <div class="panel-heading">
-              <h2>{{ t("Billing history", "账单记录") }}</h2>
-            </div>
-            <div v-if="data.payments?.length" class="table-wrap">
-              <table>
-                <tbody>
-                  <tr v-for="p in data.payments || []">
-                    <td>{{ p.id }}</td>
-                    <td>{{ p.status }}</td>
-                    <td>{{ p.amount }} {{ p.currency }}</td>
-                    <td>{{ date(p.created_at) }}</td>
-                  </tr>
-                  <tr v-if="!data.payments?.length">
-                    <td class="empty-cell">
-                      {{ t("No payments recorded.", "暂无支付记录。") }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div v-if="!data.payments?.length" class="billing-history-empty">
-              <ScrollText :size="32" />
-              <span>{{ t("No payments recorded.", "暂无支付记录。") }}</span>
-            </div>
-          </section></div></template
+                }}
+              </p>
+              <form class="billing-policy-form" @submit.prevent="saveOverage">
+                <label class="check-label"
+                  ><input
+                    v-model="billing.enabled"
+                    type="checkbox"
+                    :disabled="data.workspace?.plan === 'Free'"
+                  />{{
+                    t("Enable automatic overage", "开启自动超额计费")
+                  }}</label
+                ><label class="narrow"
+                  >{{ t("Monthly overage cap (USD)", "月度超额费用上限 (USD)")
+                  }}<input
+                    v-model="billing.cap"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required /></label
+                ><label class="check-label"
+                  ><input
+                    v-model="billing.consent"
+                    type="checkbox"
+                    :required="billing.enabled"
+                  />{{
+                    t(
+                      "I authorize usage-based charges within this cap.",
+                      "我授权在此上限内按实际使用量收费。",
+                    )
+                  }}</label
+                ><button class="btn primary">
+                  {{ t("Verify & save", "验证并保存") }}
+                </button>
+              </form>
+            </section>
+            <section class="panel billing-history-panel">
+              <div class="panel-heading">
+                <h2>{{ t("Billing history", "账单记录") }}</h2>
+              </div>
+              <div v-if="data.payments?.length" class="table-wrap">
+                <table>
+                  <tbody>
+                    <tr v-for="p in data.payments || []">
+                      <td>{{ p.id }}</td>
+                      <td>{{ p.status }}</td>
+                      <td>{{ p.amount }} {{ p.currency }}</td>
+                      <td>{{ date(p.created_at) }}</td>
+                    </tr>
+                    <tr v-if="!data.payments?.length">
+                      <td class="empty-cell">
+                        {{ t("No payments recorded.", "暂无支付记录。") }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div v-if="!data.payments?.length" class="billing-history-empty">
+                <ScrollText :size="32" />
+                <span>{{ t("No payments recorded.", "暂无支付记录。") }}</span>
+              </div>
+            </section>
+          </div></template
         >
         <template v-if="page === 'settings' && selected"
           ><section class="panel form-panel">
@@ -1455,13 +1507,15 @@ const usagePercent = computed(() =>
               "
             >
               <label
-                >provider<input
+                >Provider<input
                   v-model="price.provider"
+                  :placeholder="t('Enter Provider', '请输入Provider')"
                   required
                   maxlength="64" /></label
               ><label
-                >model<input
+                >Model<input
                   v-model="price.model"
+                  :placeholder="t('Enter Model', '请输入Model')"
                   required
                   maxlength="256" /></label
               ><label
@@ -1533,6 +1587,11 @@ const usagePercent = computed(() =>
               </table>
             </div>
           </section>
+          <ProjectInfoEditor
+            v-if="page === 'settings' && project"
+            :project="project"
+            @saved="refresh()"
+          />
           <section class="panel form-panel danger-zone">
             <h2>{{ t("Delete project", "删除项目") }}</h2>
             <p>
@@ -1560,29 +1619,37 @@ const usagePercent = computed(() =>
         <template v-if="page === 'account'"
           ><section class="panel form-panel">
             <h2>{{ t("Account details", "账号信息") }}</h2>
-            <dl>
-              <dt>{{ t("Email", "邮箱") }}</dt>
-              <dd>
-                {{ session?.email }}
-                <span class="badge success">{{ t("Verified", "已验证") }}</span>
-              </dd>
-              <dt>GitHub</dt>
-              <dd>
-                {{
-                  session?.githubConnected
-                    ? t("Connected", "已绑定")
-                    : t("Not connected", "未绑定")
-                }}
-              </dd>
-              <dt>{{ t("Session", "会话") }}</dt>
-              <dd>
-                {{
-                  t("Valid until ", "有效期至 ") +
-                  date(session?.expiresAt) +
-                  " · " +
-                  t("Revocable", "可撤销")
-                }}
-              </dd>
+            <dl class="account-details-grid">
+              <div>
+                <dt>{{ t("Email", "邮箱") }}</dt>
+                <dd>
+                  {{ session?.email }}
+                  <span class="badge success">{{
+                    t("Verified", "已验证")
+                  }}</span>
+                </dd>
+              </div>
+              <div>
+                <dt>GitHub</dt>
+                <dd>
+                  {{
+                    session?.githubConnected
+                      ? t("Connected", "已绑定")
+                      : t("Not connected", "未绑定")
+                  }}
+                </dd>
+              </div>
+              <div>
+                <dt>{{ t("Session", "会话") }}</dt>
+                <dd>
+                  {{
+                    t("Valid until ", "有效期至 ") +
+                    date(session?.expiresAt) +
+                    " · " +
+                    t("Revocable", "可撤销")
+                  }}
+                </dd>
+              </div>
             </dl>
             <div class="inline-form">
               <RouterLink class="btn" to="/forgot-password">{{
@@ -1630,18 +1697,24 @@ const usagePercent = computed(() =>
           @create="showCreate = true"
           @select="openProject"
         />
-        <ProjectInfoEditor
-          v-if="page === 'settings' && project"
-          :project="project"
-          @saved="refresh()"
-        />
+
         <BatchHistory v-if="page === 'keys' && selected" :project="selected" />
         <AccountSecurity v-if="page === 'account'" />
         <template v-if="page === 'audit'"
           ><div class="audit-toolbar query-export trace-export">
-            <a class="btn" :href="reportExportUrl + '&format=xlsx&lang=' + language">{{ t("Export Excel", "导出 Excel") }}</a>
-            <a class="btn" :href="reportExportUrl + '&format=pdf&lang=' + language">{{ t("Export PDF", "导出 PDF") }}</a>
-          </div><section class="panel table-wrap">
+            <h2>{{ t("Activity log", "操作记录") }}</h2>
+            <a
+              class="btn"
+              :href="reportExportUrl + '&format=xlsx&lang=' + language"
+              >{{ t("Export Excel", "导出 Excel") }}</a
+            >
+            <a
+              class="btn"
+              :href="reportExportUrl + '&format=pdf&lang=' + language"
+              >{{ t("Export PDF", "导出 PDF") }}</a
+            >
+          </div>
+          <section class="panel table-wrap">
             <div class="table-wrap">
               <table>
                 <thead>
@@ -1681,7 +1754,11 @@ const usagePercent = computed(() =>
             <QueryControls
               :page="reportPage"
               :size="reportSize"
-              @resize="reportSize = $event; reportPage = 0; refresh(false)"
+              @resize="
+                reportSize = $event;
+                reportPage = 0;
+                refresh(false);
+              "
               :total="data.total || 0"
               :loading="loading"
               @change="reportTurn"

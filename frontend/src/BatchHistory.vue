@@ -63,7 +63,7 @@ async function compensate() {
 watch(() => props.project, refresh, { immediate: true });
 </script>
 <template>
-  <section class="panel">
+  <section class="panel report-section batch-section">
     <div class="panel-heading">
       <h2>{{ t("Recent batches", "最近上报批次") }}</h2>
       <button class="btn" @click="refresh">{{ t("Refresh", "刷新") }}</button>
@@ -101,6 +101,9 @@ watch(() => props.project, refresh, { immediate: true });
               {{ date(b.created_at) }}<small class="mono">{{ b.id }}</small>
             </td>
             <td>
+              <span v-if="!b.errors.length && b.status !== 'quarantined'"
+                >—</span
+              >
               <details v-if="b.errors.length">
                 <summary class="btn">
                   {{ b.errors.length }} {{ t("results", "条结果") }}
