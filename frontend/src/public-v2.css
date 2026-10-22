@@ -720,3 +720,17 @@
   outline: 2px solid var(--blue);
   outline-offset: 4px;
 }
+
+.public-v2 .api-endpoint p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+.public-v2 .api-endpoint strong {
+  min-width: 72px;
+  color: #1b2b44;
+}
+.public-v2 .api-endpoint code {
+  overflow-wrap: anywhere;
+}

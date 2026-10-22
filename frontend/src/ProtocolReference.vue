@@ -598,22 +598,21 @@ const minimalBody = JSON.stringify(minimal, null, 2);
 </script>
 <template>
   <div class="protocol-reference">
-    <p>
-      {{
-        t(
-          "Send one request to record an operation in your application. Start with the example below; add model usage and scores when you need them.",
-          "发送一次请求，即可记录应用中的一次操作。先按下面的最小示例接入，需要统计模型用量或评分时再补充。",
-        )
-      }}
-    </p>
-    <h3>{{ t("1. Set the request headers", "1. 设置请求头") }}</h3>
+    <div class="api-endpoint">
+      <p>
+        <strong>URL：</strong
+        ><code>https://metertrail.com/v1/events/batch</code>
+      </p>
+      <p><strong>Method：</strong><code>POST</code></p>
+    </div>
+    <h3>Header</h3>
     <div class="code-box">
-      <div>POST https://metertrail.com/v1/events/batch</div>
+      <div>{{ t("Request headers", "请求头示例") }}</div>
       <pre>
 Authorization: Bearer lm_live_&lt;YOUR_API_KEY&gt;
 Content-Type: application/json</pre>
     </div>
-    <h3>{{ t("2. Send this JSON body", "2. 发送 JSON 内容") }}</h3>
+    <h3>Body</h3>
     <p>
       {{
         t(
@@ -626,7 +625,7 @@ Content-Type: application/json</pre>
       <div>Body · JSON</div>
       <pre>{{ minimalBody }}</pre>
     </div>
-    <h3>{{ t("3. Check the receipt", "3. 查看接收结果") }}</h3>
+    <h3>Resp</h3>
     <p>
       {{
         t(
@@ -644,8 +643,8 @@ Content-Type: application/json</pre>
       <summary>
         {{
           t(
-            "Full Header and Body parameter reference",
-            "查看完整 Header、Body 参数表与进阶示例",
+            "Field descriptions: Header / Body / Resp",
+            "字段说明：Header / Body / Resp",
           )
         }}
       </summary>
