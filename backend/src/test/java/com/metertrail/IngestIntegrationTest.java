@@ -605,6 +605,94 @@ class IngestIntegrationTest {
     assertEquals(end,((java.sql.Timestamp)store.workspace(user).get("period_start")).toInstant());
   }
 
+  ObjectNode renewalEvent(Instant start, Instant end) {
+    var event=new ObjectMapper().createObjectNode();
+    event.put("event_id","evt_"+UUID.randomUUID()).put("event_type","subscription.updated").put("occurred_at",Instant.now().toString());
+    var data=event.putObject("data");data.put("id","sub_"+workspace).put("status","active");
+    data.putArray("items").addObject().putObject("price").put("id","pri_core_test");
+    data.putObject("current_billing_period").put("starts_at",start.toString()).put("ends_at",end.toString());
+    return event;
+  }
+
+  @Test void renewalExpiresPacksPreservesHistoryAndLateRefundCannotRemoveNewPack() {
+    UUID oldPack=pack();packEvent(oldPack,"completed","800");
+    var old=store.workspace(user);
+    Instant next=((java.sql.Timestamp)old.get("period_end")).toInstant();
+    store.db.update("UPDATE workspaces SET used_units=100007,addon_consumed=7 WHERE id=?",workspace);
+    store.db.update("UPDATE usage_charges SET consumed_units=7 WHERE id=?",oldPack);
+    var renewal=renewalEvent(next,next.plusSeconds(2592000));
+    tx.executeWithoutResult(x->payments.applyEvent(renewal));
+    assertEquals(0,units());
+    assertEquals(0L,((Number)store.workspace(user).get("addon_units")).longValue());
+    assertEquals(7L,store.db.queryForObject("SELECT consumed_units FROM usage_charges WHERE id=?",Long.class,oldPack));
+    assertEquals(100007L,store.db.queryForObject("SELECT units FROM usage_charges WHERE workspace_id=? AND kind='overage'",Long.class,workspace));
+    UUID newPack=pack();packEvent(newPack,"completed","800");
+    tx.executeWithoutResult(x->ChargeLedger.refund(store,store.workspace(user),Support.parse("{\"action\":\"refund\",\"status\":\"approved\",\"transaction_id\":\"txn_"+oldPack+"\"}")));
+    assertEquals(100000L,((Number)store.workspace(user).get("addon_units")).longValue());
+    assertEquals("duplicate",tx.execute(x->payments.applyEvent(renewal)).get("status"));
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM usage_charges WHERE workspace_id=? AND kind='overage'",Integer.class,workspace));
+  }
+
+  @RepeatedTest(3) void concurrentRenewalsAndIngestConserveUsageAndFreezeOneOldInvoice() throws Exception {
+    pack();
+    store.db.update("UPDATE workspaces SET used_units=112500,overage_units=12500,auto_overage=true,overage_cap=10 WHERE id=?",workspace);
+    Instant next=((java.sql.Timestamp)store.workspace(user).get("period_end")).toInstant();
+    var renewal=renewalEvent(next,next.plusSeconds(2592000));
+    var pool=Executors.newFixedThreadPool(28);var start=new CountDownLatch(1);
+    var futures=new ArrayList<Future<?>>();
+    try {
+      for(int i=0;i<24;i++) { final int n=i; futures.add(pool.submit(()->{start.await();ingest.accept(project,batch(event("trace","boundary-"+n,1)));return null;})); }
+      for(int i=0;i<4;i++) futures.add(pool.submit(()->{start.await();tx.executeWithoutResult(x->payments.applyEvent(renewal));return null;}));
+      start.countDown();for(var future:futures)future.get(30,TimeUnit.SECONDS);
+    } finally {pool.shutdownNow();}
+    var closed=store.db.queryForMap("SELECT * FROM usage_charges WHERE workspace_id=? AND kind='overage'",workspace);
+    long oldUsage=((Number)closed.get("units")).longValue();
+    assertEquals(112524L,oldUsage+units());
+    assertEquals(oldUsage-112500,store.db.queryForObject("SELECT count(*) FROM usage_ledger WHERE workspace_id=? AND period_start=?",Long.class,workspace,closed.get("period_start")));
+    assertEquals((long)units(),store.db.queryForObject("SELECT count(*) FROM usage_ledger WHERE workspace_id=? AND period_start=?",Long.class,workspace,store.workspace(user).get("period_start")));
+    assertEquals(0L,((Number)store.workspace(user).get("overage_units")).longValue());
+    assertEquals(0,new java.math.BigDecimal("1.00").compareTo((java.math.BigDecimal)closed.get("amount")));
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM usage_charges WHERE workspace_id=? AND kind='overage'",Integer.class,workspace));
+    assertEquals(24,store.db.queryForObject("SELECT count(*) FROM usage_ledger WHERE workspace_id=?",Integer.class,workspace));
+  }
+
+  @Test void completedPackIsMonotonicAgainstOlderOrLaterFailureAndConflictingTransaction() {
+    UUID id=pack();packEvent(id,"completed","800");
+    packEvent(id,"canceled","800");
+    assertEquals("paid",store.db.queryForObject("SELECT status FROM usage_charges WHERE id=?",String.class,id));
+    var conflicting=(ObjectNode)packTransaction(id,"completed","800");conflicting.put("id","txn_conflict");
+    assertThrows(ApiError.class,()->tx.executeWithoutResult(x->ChargeLedger.transaction(store,store.workspace(user),conflicting,Instant.now())));
+    assertEquals(100000L,((Number)store.workspace(user).get("addon_units")).longValue());
+    assertEquals("txn_"+id,store.db.queryForObject("SELECT transaction_id FROM usage_charges WHERE id=?",String.class,id));
+  }
+
+  @Test void unknownPaymentReconcilesWithoutAnotherPostAndGrantsOnlyOnce() {
+    UUID id=pack();
+    store.db.update("UPDATE usage_charges SET status='unknown',transaction_id=? WHERE id=?","txn_"+id,id);
+    var provider=org.mockito.Mockito.mock(PaymentsController.class);
+    var data=(ObjectNode)packTransaction(id,"completed","800");data.put("updated_at",Instant.now().toString());
+    org.mockito.Mockito.when(provider.readUsageTransaction("txn_"+id)).thenReturn(new ObjectMapper().createObjectNode().set("data",data));
+    org.mockito.Mockito.when(provider.applyEvent(org.mockito.ArgumentMatchers.any())).thenAnswer(call->payments.applyEvent(call.getArgument(0)));
+    var service=new UsageCharges(store,provider,tx,true,false,"https://example.test");
+    var charge=store.db.queryForMap("SELECT * FROM usage_charges WHERE id=?",id);
+    service.reconcile(charge);service.reconcile(charge);
+    assertEquals("paid",store.db.queryForObject("SELECT status FROM usage_charges WHERE id=?",String.class,id));
+    assertEquals(100000L,((Number)store.workspace(user).get("addon_units")).longValue());
+    org.mockito.Mockito.verify(provider,org.mockito.Mockito.never()).postUsage(org.mockito.ArgumentMatchers.anyString(),org.mockito.ArgumentMatchers.anyMap());
+  }
+
+  @Test void unavailableReconciliationEvidenceKeepsUnknownAndNoCredit() {
+    UUID id=pack();
+    store.db.update("UPDATE usage_charges SET status='unknown',transaction_id=? WHERE id=?","txn_"+id,id);
+    var provider=org.mockito.Mockito.mock(PaymentsController.class);
+    org.mockito.Mockito.when(provider.readUsageTransaction("txn_"+id)).thenThrow(new RuntimeException("simulated provider outage"));
+    var service=new UsageCharges(store,provider,tx,true,false,"https://example.test");
+    assertThrows(RuntimeException.class,()->service.reconcile(store.db.queryForMap("SELECT * FROM usage_charges WHERE id=?",id)));
+    assertEquals("unknown",store.db.queryForObject("SELECT status FROM usage_charges WHERE id=?",String.class,id));
+    assertEquals(0L,((Number)store.workspace(user).get("addon_units")).longValue());
+    org.mockito.Mockito.verify(provider,org.mockito.Mockito.never()).postUsage(org.mockito.ArgumentMatchers.anyString(),org.mockito.ArgumentMatchers.anyMap());
+  }
+
   @Test
   void gzipExpansionLimit() throws Exception {
     var bytes = new java.io.ByteArrayOutputStream();
