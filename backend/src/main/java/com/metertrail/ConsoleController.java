@@ -471,6 +471,7 @@ class ConsoleController {
   @GetMapping("/api/billing")
   Map<String, Object> billing(HttpServletRequest req) {
     var w = store.workspace(uid(req));
+    if (w.get("scheduled_change") != null) w.put("scheduled_change", Support.parse(w.get("scheduled_change").toString()));
     return Map.of(
         "workspace",
         w,
@@ -482,6 +483,8 @@ class ConsoleController {
         store.db.queryForList(
             "SELECT * FROM payments WHERE workspace_id=? ORDER BY created_at DESC LIMIT 100",
             w.get("id")),
+        "adjustments",
+        store.db.queryForList("SELECT id,transaction_id,action,status,amount,currency,updated_at FROM payment_adjustments WHERE workspace_id=? ORDER BY updated_at DESC LIMIT 100", w.get("id")),
         "ledger",
         store.db.queryForList(
             "SELECT project_id,sum(units) AS units FROM usage_ledger WHERE workspace_id=? AND"

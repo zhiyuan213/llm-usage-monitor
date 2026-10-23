@@ -18,12 +18,12 @@ PUBLIC_URL=https://metertrail.com
 
 只有客户端 Token 会经 `/v1/checkout/config` 返回给浏览器；API 密钥和回调签名密钥仅用于后端。API 地址与客户端 Token 环境不匹配时拒绝打开收银台。配置更新必须重新创建 API 和 Worker 容器，单独 restart 不会读取新环境变量。
 
-沙箱 API 密钥权限：Transactions Write、Subscriptions Read、Customer portal sessions Write。商品和通知配置手工在后台操作，不需要赋予后端相关写权限。
+沙箱 API 密钥权限：Transactions Write、Subscriptions Read/Write、Customer portal sessions Write。商品和通知配置手工在后台操作，不需要赋予后端相关写权限。
 
 ## Paddle 后台
 
 - 沙箱 Core 29 USD/月、Pro 199 USD/月，数量范围 1–1，关闭试用。
-- My account > Settings > Checkout configuration（部分界面显示 Hosted checkouts）设置默认付款链接 `https://metertrail.com/pay`。必须在创建交易之前配置。正式环境需要对应域名审核。
+- 主导航 Checkout > Checkout configuration > Default payment link（不是 Settings > Hosted checkouts）设置默认付款链接 `https://metertrail.com/pay`。必须在创建交易之前配置。正式环境需要对应域名审核。
 - Events > Notifications：Webhook 地址 `https://metertrail.com/webhooks/paddle`，API version 1，Usage type Both，订阅 Transaction、Subscription、Adjustment 分组。保存该地址的 Secret key 为服务器 `PADDLE_WEBHOOK_SECRET`。
 - 配置完成前不运行模拟通知。模拟数据如不能关联测试工作空间，会返回 ignored；通知 HTTP 200 只证明接收，不代表实际套餐更新。
 
@@ -36,7 +36,7 @@ sudo docker compose build api-blue web &&
 sudo docker compose up -d --no-deps api-blue worker web
 ```
 
-## 验收（待实际执行）
+## 验收步骤
 
 使用专门的测试账号，避免将沙箱交易混入真实业务账单。
 
@@ -48,10 +48,16 @@ sudo docker compose up -d --no-deps api-blue worker web
 6. 账单门户：查看发票、付款方式和取消流程，核对服务器订阅状态更新。
 7. 测试付款失败、退款调整记录，以及 Pro 购买。续费和取消生效按 Paddle 实际事件时间验证。
 
-尚未完成真实 Paddle 沙箱验收；本地模拟和自动化检查不能代替上述操作。自动收取超额费用仍不在本次固定套餐收银台接入范围内。
+既有沙箱验收及截图见工程根目录操作手册；本次新增修复仍需部署后复验。本地模拟和自动化检查不能代替真实沙箱操作。自动收取超额费用仍不在本次固定套餐收银台接入范围内。
 
 ## 官方参考
 
 - https://developer.paddle.com/get-started/quickstart/
 - https://developer.paddle.com/build/transactions/default-payment-link/
 - https://developer.paddle.com/webhooks/about/signature-verification/
+
+## 已有订阅切换
+
+Core/Pro 切换先调用 Paddle 预览，再由用户确认五分钟内的报价；服务端更新原订阅，使用 `prorated_immediately` 和 `prevent_change`。同账期用量不清零。后端密钥需要 Subscriptions Write；原先只有 Read 的配置不足以执行变更。计划取消、非 active 或复杂多商品订阅需先在客户门户处理。
+
+网络超时可能意味着服务商已接受变更，系统保留处理中状态，等待回调确认，避免盲目重试重复扣款；长期未确认时应先在 Paddle 核对原订阅和通知日志，再处理。

@@ -1018,3 +1018,13 @@
     margin-bottom: 14px;
   }
 }
+
+.ui-v2 .billing-subscription { padding: 20px; margin-bottom: 16px; }
+.ui-v2 .billing-subscription .btn { margin: 4px 8px 4px 0; }
+.ui-v2 .billing-subscription td { overflow-wrap: anywhere; }
+
+@media (max-width: 700px) {
+  .ui-v2 .console-header { padding-right: 120px; }
+  .ui-v2 .breadcrumb { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .ui-v2 .breadcrumb > svg { display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin: 0 6px; }
+}

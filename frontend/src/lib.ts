@@ -61,6 +61,15 @@ export const money = (v: any) =>
 export const date = (v: string) =>
   v ? new Date(v).toISOString().replace("T", " ").slice(0, 19) + " UTC" : "—";
 const errors: Record<string, [string, string]> = {
+  SUBSCRIPTION_REQUIRED: ["Choose a paid plan first.", "请先订阅付费套餐。"],
+  SUBSCRIPTION_CHANGE_UNAVAILABLE: ["The subscription cannot be changed now. Check its status or scheduled cancellation in Manage subscription.", "当前无法切换，请在管理订阅核对订阅状态或计划取消。"],
+  PLAN_ALREADY_SELECTED: ["This is already your current plan. Refresh Billing.", "当前已是此套餐，请刷新账单。"],
+  PLAN_PREVIEW_UNAVAILABLE: ["Could not obtain a billing preview. No change was submitted.", "无法获取账单预览，未提交套餐变更。"],
+  PLAN_QUOTE_NOT_FOUND: ["The preview no longer exists. Choose the plan again.", "预览不存在，请重新选择套餐。"],
+  PLAN_QUOTE_EXPIRED: ["The preview expired or was already submitted. Refresh and preview again.", "预览已过期或已提交，请刷新并重新预览。"],
+  PLAN_QUOTE_CHANGED: ["The subscription or amount changed. Review a new preview before confirming.", "订阅或金额已变化，请重新预览并确认。"],
+  PLAN_CHANGE_PENDING: ["A plan change is pending confirmation. Do not submit again; check Manage subscription or contact support.", "已有套餐变更等待确认，请勿重复提交，请在管理订阅核对或联系支持。"],
+  PLAN_CHANGE_REJECTED: ["Paddle rejected the change. Check the payment method and API permissions, then obtain a new preview.", "Paddle 未接受变更，请检查付款方式及服务端权限后重新预览。"],
   KEY_MUST_BE_REVOKED: [
     "Revoke this key before deleting it.",
     "请先撤销密钥，再删除。",

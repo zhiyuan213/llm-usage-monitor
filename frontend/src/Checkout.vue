@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from "vue";
+import { useRouter } from "vue-router";
 import { language, t } from "./lib";
 import {
   checkoutTransaction,
   startCheckout,
   type CheckoutConfig,
 } from "./paddle-checkout";
+const router = useRouter();
 const state = ref("loading");
 const sandbox = ref(false);
 let active = true;
@@ -38,7 +40,10 @@ onMounted(async () => {
       language.value === "zh-CN" ? "zh-Hans" : "en",
       (event) => {
         if (!active) return;
-        if (event.name === "checkout.completed") state.value = "completed";
+        if (event.name === "checkout.completed") {
+          state.value = "completed";
+          router.replace({path: "/app/billing", query: {checkout: transaction}});
+        }
         else if (
           event.name === "checkout.closed" &&
           state.value !== "completed"

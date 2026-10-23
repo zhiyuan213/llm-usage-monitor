@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BillingSubscription from "./BillingSubscription.vue";
 import PlanFeatures from "./PlanFeatures.vue";
 import QueryControls from "./QueryControls.vue";
 import WorkspaceOverview from "./WorkspaceOverview.vue";
@@ -127,6 +128,7 @@ const search = ref(""),
   createdKey = ref(""),
   keyName = ref("Production key"),
   copied = ref(false);
+const changeTargetPlan = ref("");
 const newProject = reactive({ name: "", environment: "production" }),
   alert = reactive({ name: "", metric: "error_count", threshold: "10" }),
   price = reactive({
@@ -1339,11 +1341,12 @@ const usagePercent = computed(() =>
           ><div class="notice">
             {{
               t(
-                "Platform units and model provider costs are separate. Payments require an operator-configured hosted checkout.",
-                "平台 units 与模型供应商费用独立核算，支付需运营方配置托管收银台。",
+                "Platform units and model provider costs are separate. Plan changes and payment amounts are confirmed by Paddle.",
+                "平台 units 与模型供应商费用独立核算，套餐变更与付款金额以 Paddle 确认为准。",
               )
             }}
           </div>
+          <BillingSubscription v-model:target-plan="changeTargetPlan" :data="data" :checkout-id="String(route.query.checkout || '')" @refresh="refresh(false)" />
           <div class="plans">
             <article
               v-for="(plan, i) in ['Free', 'Core', 'Pro']"
@@ -1359,8 +1362,8 @@ const usagePercent = computed(() =>
                 :disabled="data.workspace?.plan === plan || plan === 'Free'"
                 @click="
                   run(async () => {
-                    const r = await api('/billing/checkout', { plan });
-                    navigate(r.url);
+                    if (data.workspace?.subscription_id) changeTargetPlan = plan;
+                    else { const r = await api('/billing/checkout', { plan }); navigate(r.url); }
                   })
                 "
               >

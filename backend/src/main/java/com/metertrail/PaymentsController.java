@@ -41,9 +41,9 @@ class PaymentsController {
       @Value("${metertrail.paddle-core-price}") String core,
       @Value("${metertrail.paddle-pro-price}") String pro,
       @Value("${metertrail.paddle-url}") String url) {
-    var requestFactory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
-    requestFactory.setConnectTimeout(10000);
-    requestFactory.setReadTimeout(15000);
+    var requestFactory = new org.springframework.http.client.JdkClientHttpRequestFactory(
+        java.net.http.HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build());
+    requestFactory.setReadTimeout(Duration.ofSeconds(15));
     this.paddleClient = RestClient.builder().requestFactory(requestFactory).build();
     this.store = store;
     this.checkoutConfiguration = checkoutConfiguration;
@@ -253,7 +253,10 @@ class PaymentsController {
           && period.hasNonNull("ends_at")) {
         Instant start = Instant.parse(period.path("starts_at").asText()),
             end = Instant.parse(period.path("ends_at").asText());
-        boolean newPeriod = !start.equals(((Timestamp) w.get("period_start")).toInstant());
+        if (!end.isAfter(start)) throw new ApiError(400, "INVALID_BILLING_PERIOD");
+        Instant previousStart = ((Timestamp) w.get("period_start")).toInstant();
+        if (start.isBefore(previousStart)) return Map.of("status", "stale");
+        boolean newPeriod = start.isAfter(previousStart);
         store.db.update(
             "UPDATE workspaces SET"
                 + " plan=?,subscription_id=?,subscription_status=?,period_start=?,period_end=?,used_units=CASE"
@@ -273,6 +276,8 @@ class PaymentsController {
             status,
             Timestamp.from(occurred),
             workspace);
+      store.db.update("UPDATE workspaces SET scheduled_change=?::jsonb WHERE id=?", d.path("scheduled_change").isMissingNode() ? "null" : d.path("scheduled_change").toString(), workspace);
+      if (status.equals("active")) store.db.update("UPDATE subscription_change_quotes SET status='confirmed' WHERE workspace_id=? AND subscription_id=? AND plan=? AND status IN ('processing','submitted') AND created_at<=?", workspace, sub, plan, Timestamp.from(occurred));
       store.audit(null, workspace, "payment." + type, id, true, null);
     }
     metrics.counter("metertrail_webhooks_processed").increment();

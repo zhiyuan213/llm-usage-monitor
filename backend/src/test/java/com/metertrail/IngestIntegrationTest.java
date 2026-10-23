@@ -475,6 +475,53 @@ class IngestIntegrationTest {
   }
 
   @Test
+  void billingShowsOwnRefundAdjustmentsAndScheduledCancellationOnly() throws Exception {
+    UUID otherUser=UUID.randomUUID(), otherWorkspace=UUID.randomUUID();
+    store.db.update("INSERT INTO users(id,email,verified) VALUES(?,?,true)",otherUser,otherUser+"@test.local");
+    store.db.update("INSERT INTO workspaces(id,owner_id,name) VALUES(?,?,'Other')",otherWorkspace,otherUser);
+    for(UUID id:List.of(workspace,otherWorkspace))
+      store.db.update("INSERT INTO payment_adjustments(id,workspace_id,transaction_id,action,status,amount,currency,updated_at) VALUES(?,?,?,'refund','approved',1,'USD',now())","adj_"+id,id,"txn_"+id);
+    store.db.update("UPDATE workspaces SET scheduled_change=?::jsonb WHERE id=?","{\"action\":\"cancel\",\"effective_at\":\"2026-11-23T00:00:00Z\"}",workspace);
+    String token=Support.token();
+    store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(token),user,"csrf-test");
+    mvc.perform(get("/api/billing").cookie(new jakarta.servlet.http.Cookie("mt_session",token)))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.adjustments.length()").value(1))
+        .andExpect(jsonPath("$.adjustments[0].transaction_id").value("txn_"+workspace))
+        .andExpect(jsonPath("$.workspace.scheduled_change.action").value("cancel"));
+  }
+
+  @Test
+  void renewalResetsOnceAndSamePeriodPlanChangePreservesUsage() throws Exception {
+    Instant start=Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS).minusSeconds(86400), end=start.plusSeconds(2592000);
+    store.db.update("UPDATE workspaces SET plan='Core',subscription_id=?,subscription_status='active',period_start=?,period_end=?,used_units=37 WHERE id=?",
+        "sub_"+workspace, java.sql.Timestamp.from(start), java.sql.Timestamp.from(end), workspace);
+    var data=new ObjectMapper().createObjectNode();
+    data.put("id","sub_"+workspace).put("status","active");
+    data.putArray("items").addObject().putObject("price").put("id","pri_pro_test");
+    data.putObject("current_billing_period").put("starts_at",start.toString()).put("ends_at",end.toString());
+    var event=new ObjectMapper().createObjectNode();
+    event.put("event_type","subscription.updated").set("data",data);
+    Instant occurred=Instant.now();
+    for(int step=0;step<5;step++) {
+      if(step==1) {
+        ((ObjectNode)data.path("current_billing_period")).put("starts_at",end.toString()).put("ends_at",end.plusSeconds(2592000).toString());
+      }
+      if(step==2) store.db.update("UPDATE workspaces SET used_units=9 WHERE id=?",workspace);
+      if(step==3) { // A newly delivered old period must not roll billing back, even with a newer event timestamp.
+        ((ObjectNode)data.path("current_billing_period")).put("starts_at",start.toString()).put("ends_at",end.toString());
+      }
+      if(step==4) data.put("status","past_due");
+      event.put("event_id","evt_"+UUID.randomUUID()).put("occurred_at",occurred.plusSeconds(step).toString());
+      String body=event.toString(), ts=String.valueOf(Instant.now().getEpochSecond());
+      mvc.perform(post("/webhooks/paddle").header("Paddle-Signature","ts="+ts+";h1="+Support.hmac("local-webhook-test-secret",ts+":"+body)).contentType("application/json").content(body)).andExpect(status().isOk());
+      assertEquals(step==0 ? 37 : step==1 ? 0 : 9,((Number)store.workspace(user).get("used_units")).intValue());
+      assertEquals("Pro",store.workspace(user).get("plan"));
+    }
+    assertEquals("past_due",store.workspace(user).get("subscription_status"));
+    assertEquals(end,((java.sql.Timestamp)store.workspace(user).get("period_start")).toInstant());
+  }
+
+  @Test
   void gzipExpansionLimit() throws Exception {
     var bytes = new java.io.ByteArrayOutputStream();
     try (var gzip = new java.util.zip.GZIPOutputStream(bytes)) {
