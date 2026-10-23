@@ -737,3 +737,17 @@
 .public-v2 .api-endpoint code {
   overflow-wrap: anywhere;
 }
+
+.public-v2 .checkout-page { min-height: 60vh; padding-top: 48px; padding-bottom: 48px; }
+.public-v2 .checkout-card { max-width: 640px; margin: 0 auto; padding: 24px; overflow-wrap: anywhere; }
+.public-v2 .checkout-card h1 { font-size: 28px; }
+.public-v2 .checkout-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+@media (max-width: 600px) {
+  .public-v2 .checkout-page { padding-top: 24px; }
+  .public-v2 .checkout-card { padding: 20px; }
+  .public-v2 .checkout-actions .btn { flex: 1; }
+}
+
+@media (max-width: 480px) {
+  .public-v2.checkout-public .header-actions { width: 100%; justify-content: flex-start; }
+}

@@ -1372,6 +1372,10 @@ const usagePercent = computed(() =>
               </button>
             </article>
           </div>
+          <div v-if="data.workspace?.subscription_id" class="section-heading">
+            <p class="muted">{{ t("Manage payment methods, invoices, and subscription cancellation in the billing portal.", "在账单门户中管理付款方式、发票和取消订阅。") }}</p>
+            <button class="btn" @click="run(async () => { const r = await api('/billing/portal', {}); navigate(r.url); })">{{ t("Manage subscription", "管理订阅") }}</button>
+          </div>
           <div class="billing-details-grid">
             <section class="panel form-panel billing-usage-panel">
               <h2>{{ t("Monthly usage", "当月用量") }}</h2>

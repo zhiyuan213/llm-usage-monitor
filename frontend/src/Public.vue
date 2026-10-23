@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Checkout from "./Checkout.vue";
 import PlanFeatures from "./PlanFeatures.vue";
 import DocsExamples from "./DocsExamples.vue";
 import ErrorReference from "./ErrorReference.vue";
@@ -147,6 +148,7 @@ async function copy() {
       'docs-page': page === 'docs',
       'home-page': page === 'home',
       'pricing-page': page === 'pricing',
+      'checkout-public': page === 'pay',
     }"
   >
     <header class="public-header">
@@ -435,6 +437,7 @@ async function copy() {
         </p>
       </section>
     </main>
+    <main v-else-if="page === 'pay'" class="public-content checkout-page"><Checkout /></main>
     <main v-else-if="authPage" class="auth-layout">
       <div class="auth-aside">
         <Activity :size="40" />

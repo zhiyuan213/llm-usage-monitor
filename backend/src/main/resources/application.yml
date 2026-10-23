@@ -48,6 +48,7 @@ metertrail:
   worker-enabled: ${WORKER_ENABLED:true}
   github-client-id: ${GITHUB_CLIENT_ID:}
   github-client-secret: ${GITHUB_CLIENT_SECRET:}
+  paddle-client-token: ${PADDLE_CLIENT_TOKEN:}
   paddle-secret: ${PADDLE_WEBHOOK_SECRET:}
   paddle-api-key: ${PADDLE_API_KEY:}
   paddle-core-price: ${PADDLE_CORE_PRICE:}

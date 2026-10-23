@@ -32,6 +32,16 @@ import org.testcontainers.junit.jupiter.*;
 @AutoConfigureMockMvc
 @Testcontainers
 class IngestIntegrationTest {
+  @Test
+  void checkoutConfigIsPublicAndDoesNotExposeServerCredentials() throws Exception {
+    mvc.perform(get("/v1/checkout/config"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.enabled").value(false))
+        .andExpect(jsonPath("$.token").value(""))
+        .andExpect(jsonPath("$.apiKey").doesNotExist())
+        .andExpect(jsonPath("$.secret").doesNotExist());
+  }
+
   @Autowired PaymentsController payments;
   @Autowired PaymentReconciliation reconciliation;
 

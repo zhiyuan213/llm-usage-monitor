@@ -27,16 +27,27 @@ class PaymentsController {
   final Store store;
   final String secret, apiKey, core, pro, url;
   final MeterRegistry metrics;
+  final CheckoutConfiguration checkoutConfiguration;
+  final String publicUrl;
+  final RestClient paddleClient;
 
   PaymentsController(
       Store store,
       MeterRegistry metrics,
+      CheckoutConfiguration checkoutConfiguration,
+      @Value("${metertrail.public-url}") String publicUrl,
       @Value("${metertrail.paddle-secret}") String secret,
       @Value("${metertrail.paddle-api-key}") String apiKey,
       @Value("${metertrail.paddle-core-price}") String core,
       @Value("${metertrail.paddle-pro-price}") String pro,
       @Value("${metertrail.paddle-url}") String url) {
+    var requestFactory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+    requestFactory.setConnectTimeout(10000);
+    requestFactory.setReadTimeout(15000);
+    this.paddleClient = RestClient.builder().requestFactory(requestFactory).build();
     this.store = store;
+    this.checkoutConfiguration = checkoutConfiguration;
+    this.publicUrl = publicUrl.replaceAll("/+$", "");
     this.metrics = metrics;
     this.secret = secret;
     this.apiKey = apiKey;
@@ -52,7 +63,7 @@ class PaymentsController {
 
   JsonNode readSubscription(String subscriptionId) {
     if (!reconciliationEnabled()) throw new ApiError(503, "PAYMENTS_NOT_CONFIGURED");
-    return RestClient.create()
+    return paddleClient
         .get()
         .uri(url + "/subscriptions/" + subscriptionId)
         .header("Authorization", "Bearer " + apiKey)
@@ -65,7 +76,7 @@ class PaymentsController {
     String plan = b.path("plan").asText();
     Support.require(Set.of("Core", "Pro").contains(plan), "INVALID_PLAN");
     String price = plan.equals("Core") ? core : pro;
-    if (apiKey.isBlank() || price.isBlank()) throw new ApiError(503, "PAYMENTS_NOT_CONFIGURED");
+    if (apiKey.isBlank() || price.isBlank() || !checkoutConfiguration.enabled) throw new ApiError(503, "PAYMENTS_NOT_CONFIGURED");
     var w = store.workspace(SessionFilter.uid(req));
     if (w.get("subscription_id") != null) throw new ApiError(409, "USE_BILLING_PORTAL");
     UUID intent = UUID.randomUUID();
@@ -75,7 +86,7 @@ class PaymentsController {
         w.get("id"),
         plan);
     JsonNode result =
-        RestClient.create()
+        paddleClient
             .post()
             .uri(url + "/transactions")
             .header("Authorization", "Bearer " + apiKey)
@@ -83,6 +94,8 @@ class PaymentsController {
                 Map.of(
                     "items",
                     List.of(Map.of("price_id", price, "quantity", 1)),
+                    "checkout",
+                    Map.of("url", publicUrl + "/pay"),
                     "collection_mode",
                     "automatic",
                     "custom_data",
@@ -124,7 +137,7 @@ class PaymentsController {
     if (apiKey.isBlank() || w.get("customer_id") == null)
       throw new ApiError(503, "PAYMENTS_NOT_CONFIGURED");
     JsonNode result =
-        RestClient.create()
+        paddleClient
             .post()
             .uri(url + "/customers/" + w.get("customer_id") + "/portal-sessions")
             .header("Authorization", "Bearer " + apiKey)
