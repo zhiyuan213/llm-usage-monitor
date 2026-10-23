@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus } from "lucide-vue-next";
+import { Plus, Gem, Database, FolderKanban, CalendarDays } from "lucide-vue-next";
 import { t, n, money, date } from "./lib";
 defineProps<{ data: any }>();
 const emit = defineEmits<{ select: [id: string, page?: string]; create: [] }>();
@@ -13,8 +13,17 @@ const actions = [
 ] as const;
 </script>
 <template>
-  <section class="panel form-panel">
-    <h2>{{ data.workspace?.name }}</h2>
+  <section class="panel form-panel workspace-summary">
+    <div class="workspace-summary-heading">
+      <span class="workspace-avatar" aria-hidden="true">{{ (data.workspace?.name || 'M').slice(0, 1).toUpperCase() }}</span>
+      <div class="workspace-heading-copy">
+        <div class="workspace-title-row">
+          <h2>{{ data.workspace?.name }}</h2>
+          <span class="workspace-plan-badge">{{ data.workspace?.plan }}</span>
+        </div>
+        <p>{{ t("Workspace overview", "工作空间概览") }}</p>
+      </div>
+    </div>
     <p>
       {{
         t(
@@ -23,22 +32,35 @@ const actions = [
         )
       }}
     </p>
-    <div class="metrics">
-      <div>
+    <div class="workspace-summary-metrics">
+      <div class="workspace-stat workspace-stat-plan">
+        <span class="workspace-stat-icon" aria-hidden="true"><Gem :size="24" /></span>
+        <div class="workspace-stat-copy">
         <small>{{ t("Current plan", "当前套餐") }}</small>
         <h2>{{ data.workspace?.plan }}</h2>
+        </div>
       </div>
-      <div>
+      <div class="workspace-stat workspace-stat-usage">
+        <span class="workspace-stat-icon" aria-hidden="true"><Database :size="24" /></span>
+        <div class="workspace-stat-copy">
         <small>{{ t("Current-period units", "本账期 units") }}</small>
         <h2>{{ n(data.workspace?.used_units) }}</h2>
+        </div>
       </div>
-      <div>
+      <div class="workspace-stat workspace-stat-projects">
+        <span class="workspace-stat-icon" aria-hidden="true"><FolderKanban :size="24" /></span>
+        <div class="workspace-stat-copy">
         <small>{{ t("Projects", "项目") }}</small>
         <h2>{{ data.projects?.length || 0 }}</h2>
+        </div>
       </div>
-      <div>
+      <div class="workspace-stat workspace-stat-period">
+        <span class="workspace-stat-icon" aria-hidden="true"><CalendarDays :size="24" /></span>
+        <div class="workspace-stat-copy">
         <small>{{ t("Period ends", "账期结束") }}</small>
-        <p>{{ date(data.workspace?.period_end) }}</p>
+        <h2 class="workspace-period-date">{{ date(data.workspace?.period_end).split(' ')[0] }}</h2>
+        <span class="workspace-period-time" v-if="data.workspace?.period_end">{{ date(data.workspace.period_end).split(' ').slice(1).join(' ') }}</span>
+        </div>
       </div>
     </div>
   </section>

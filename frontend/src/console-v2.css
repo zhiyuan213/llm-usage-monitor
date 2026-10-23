@@ -1030,5 +1030,35 @@
 }
 
 .ui-v2 .usage-charges-panel { margin-top: 24px; }
+.ui-v2 .workspace-summary { padding: 24px; }
+.ui-v2 .workspace-summary-heading { display: flex; align-items: center; gap: 16px; }
+.ui-v2 .workspace-avatar { display: grid; place-items: center; flex: 0 0 52px; height: 52px; border-radius: 10px; background: #3156e8; color: #fff; font-size: 26px; font-weight: 600; }
+.ui-v2 .workspace-heading-copy { min-width: 0; }
+.ui-v2 .workspace-title-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ui-v2 .workspace-title-row h2 { margin: 0; font-size: 20px; overflow-wrap: anywhere; }
+.ui-v2 .workspace-plan-badge { padding: 3px 12px; border-radius: 6px; background: #edf1ff; color: #3156e8; font-size: 12px; font-weight: 600; }
+.ui-v2 .workspace-heading-copy p { margin: 4px 0 0; font-size: 12px; }
+.ui-v2 .workspace-summary > p { margin: 16px 0 20px; }
+.ui-v2 .workspace-summary-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.ui-v2 .workspace-stat { display: flex; align-items: flex-start; gap: 16px; padding: 20px; border-radius: 8px; background: #f0f5ff; min-width: 0; }
+.ui-v2 .workspace-stat-icon { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border-radius: 50%; background: #e1eaff; color: #3156e8; }
+.ui-v2 .workspace-stat-copy { min-width: 0; }
+.ui-v2 .workspace-stat-copy small { color: #73849e; font-size: 12px; }
+.ui-v2 .workspace-stat-copy h2 { margin: 8px 0 0; font-size: 30px; line-height: 1.2; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.ui-v2 .workspace-stat-usage { background: #effaf7; }
+.ui-v2 .workspace-stat-usage .workspace-stat-icon { background: #dff5ed; color: #209f87; }
+.ui-v2 .workspace-stat-projects { background: #f3f4ff; }
+.ui-v2 .workspace-stat-period { background: #fff8ee; }
+.ui-v2 .workspace-stat-period .workspace-stat-icon { background: #ffefd5; color: #c77912; }
+.ui-v2 .workspace-stat-copy .workspace-period-date { font-size: 24px; white-space: nowrap; }
+.ui-v2 .workspace-period-time { display: block; margin-top: 6px; color: #73849e; font-size: 12px; }
+@media (max-width: 1250px) { .ui-v2 .workspace-summary-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .ui-v2 .workspace-summary { padding: 16px; }
+  .ui-v2 .workspace-summary-metrics { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .ui-v2 .workspace-stat { padding: 16px; }
+  .ui-v2 .workspace-title-row h2 { font-size: 18px; }
+  .ui-v2 .workspace-stat-copy .workspace-period-date { font-size: 20px; }
+}
 .ui-v2 .usage-pack-form { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
 .ui-v2 .usage-pack-form .check-label { flex:1; min-width:220px; }
