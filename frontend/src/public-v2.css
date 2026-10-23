@@ -757,3 +757,21 @@
   .public-v2 .docs-layout article { padding-right: 16px; }
   .public-v2 .protocol-reference table { min-width: 720px; }
 }
+
+.public-v2 .auth-card .auth-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  font-size: 14px !important;
+}
+.public-v2 .auth-card .auth-links a {
+  font-size: inherit;
+  font-weight: 400;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .public-v2 .auth-card .auth-links { gap: 8px; font-size: 12px !important; }
+}

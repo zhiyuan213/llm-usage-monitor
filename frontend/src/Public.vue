@@ -595,10 +595,10 @@ async function copy() {
             ><RouterLink to="/forgot-password">{{
               t("Forgot password?", "忘记密码？")
             }}</RouterLink>
-          </p>
-          <RouterLink v-if="page === 'login'" to="/verify">{{
-            t("Verify email", "验证邮箱")
-          }}</RouterLink></template
+            <RouterLink v-if="page === 'login'" to="/verify">{{
+              t("Verify email", "验证邮箱")
+            }}</RouterLink>
+          </p></template
         >
       </section>
     </main>
