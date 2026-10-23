@@ -70,4 +70,41 @@ class MeterTrailTest {
       assertEquals(java.util.List.of("INVALID_EVENT", "EVENT_TOO_LARGE"), errors);
     }
   }
+  @Test
+  void realHttpRetryAndAuthResumeDrainOnCloseWithoutChangingIdentity() throws Exception {
+    for (int initial : new int[] {503, 401}) {
+      var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+      var bodies = new CopyOnWriteArrayList<String>();
+      var results = new CopyOnWriteArrayList<String>();
+      var errors = new CopyOnWriteArrayList<String>();
+      var phase = new java.util.concurrent.atomic.AtomicInteger(initial);
+      server.createContext("/v1/events/batch", exchange -> {
+        assertEquals("Bearer synthetic", exchange.getRequestHeaders().getFirst("Authorization"));
+        bodies.add(new String(exchange.getRequestBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
+        int status = phase.getAndSet(200);
+        byte[] response = (status == 200 ? "{\"batchId\":\"receipt\",\"status\":\"pending\"}" : "{\"code\":\"" + (status == 401 ? "INVALID_API_KEY" : "TEMPORARY_FAILURE") + "\"}").getBytes();
+        exchange.sendResponseHeaders(status, response.length);
+        exchange.getResponseBody().write(response); exchange.close();
+      });
+      server.start();
+      var sdk = new MeterTrail("http://127.0.0.1:" + server.getAddress().getPort(), "synthetic", "http-test", r -> results.add(r.toString()), errors::add);
+      try {
+        var event = new ObjectMapper().createObjectNode().put("type", "trace").put("objectId", "one");
+        assertTrue(sdk.record(event));
+        if (initial == 401) {
+          assertFalse(sdk.flush(Duration.ofSeconds(3)));
+          assertEquals("INVALID_API_KEY", sdk.pausedReason());
+          assertFalse(sdk.flush(Duration.ofSeconds(3)));
+          assertEquals(1, bodies.size());
+          sdk.resume();
+        }
+        sdk.close();
+        assertEquals(2, bodies.size());
+        assertEquals(bodies.get(0), bodies.get(1));
+        assertEquals(1, results.size());
+        assertFalse(sdk.record(event));
+        assertEquals("CLOSED", errors.get(errors.size()-1));
+      } finally {sdk.close(); server.stop(0);}
+    }
+  }
 }

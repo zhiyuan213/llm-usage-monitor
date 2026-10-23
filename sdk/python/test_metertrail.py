@@ -67,4 +67,49 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(len(c.queue),1)
         c.close()
 
+    def test_real_http_retry_close_and_auth_resume(self):
+        import json
+        import threading
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        for initial in (503, 401):
+            with self.subTest(initial=initial):
+                bodies, auth, results, errors = [], [], [], []
+                statuses = [initial, 200]
+                class Handler(BaseHTTPRequestHandler):
+                    def log_message(self, *_): pass
+                    def do_POST(self):
+                        bodies.append(json.loads(self.rfile.read(int(self.headers['Content-Length']))))
+                        auth.append(self.headers['Authorization'])
+                        status = statuses.pop(0)
+                        data = {'batchId':'receipt','status':'pending'} if status == 200 else {'code':'INVALID_API_KEY' if status == 401 else 'TEMPORARY_FAILURE'}
+                        raw = json.dumps(data).encode()
+                        self.send_response(status)
+                        self.send_header('Content-Length', str(len(raw)))
+                        self.end_headers()
+                        self.wfile.write(raw)
+                server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+                thread = threading.Thread(target=server.serve_forever, daemon=True)
+                thread.start()
+                c = MeterTrail('http-test',api_key='synthetic',endpoint='http://127.0.0.1:'+str(server.server_port),on_result=results.append,on_error=errors.append)
+                try:
+                    c.record({'type':'trace','objectId':'one','data':{}})
+                    if initial == 401:
+                        self.assertFalse(c.flush())
+                        self.assertEqual(c.paused,'INVALID_API_KEY')
+                        self.assertEqual(len(c.queue),1)
+                        self.assertFalse(c.flush())
+                        self.assertEqual(len(bodies),1)
+                        c.resume()
+                    self.assertTrue(c.close())
+                    self.assertEqual(c.queue,[])
+                    self.assertEqual(len(bodies),2)
+                    self.assertEqual(bodies[0],bodies[1])
+                    self.assertEqual(auth,['Bearer synthetic']*2)
+                    self.assertEqual(len(results),1)
+                    self.assertFalse(c.record({'type':'trace','objectId':'late','data':{}}))
+                    self.assertEqual(errors[-1]['code'],'CLOSED')
+                finally:
+                    c.stop.set(); c.wake.set(); c.thread.join(2)
+                    server.shutdown(); server.server_close(); thread.join(2)
+
 if __name__=='__main__':unittest.main()
