@@ -1165,6 +1165,61 @@ class IngestIntegrationTest {
         .andExpect(jsonPath("$.total").value(0));
   }
 
+  @Test
+  void retentionFiltersQueriesExportsAndPurgesOnlyExpiredDataForEveryPlan() throws Exception {
+    String token = Support.token();
+    store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')", Support.hash(token), user, "retention-test");
+    var cookie = new jakarta.servlet.http.Cookie("mt_session", token);
+    for (String plan : List.of("Free", "Core", "Pro")) {
+      store.db.update("UPDATE workspaces SET plan=? WHERE id=?", plan, workspace);
+      int days = Billing.retention(plan);
+      for (String name : List.of("retained", "expired")) {
+        int age = name.equals("retained") ? days - 1 : days + 1;
+        store.db.update("INSERT INTO objects(project_id,type,object_id,revision,started_at,data) VALUES(?,'trace',?,1,now()-make_interval(days=>?),'{}')", project, name, age);
+        store.db.update("INSERT INTO cost_entries(project_id,object_id,revision,started_at,estimated_cost) VALUES(?,?,1,now()-make_interval(days=>?),0.01)", project, name, age);
+      }
+      String base = "/api/projects/" + project;
+      mvc.perform(get(base + "/activity").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].object_id").value("retained"));
+      mvc.perform(get(base + "/overview").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.summary.objects").value(1));
+      byte[] pdf = mvc.perform(get(base + "/activity/export?format=pdf").cookie(cookie)).andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+      try (var document = org.apache.pdfbox.Loader.loadPDF(pdf)) {
+        String text = new org.apache.pdfbox.text.PDFTextStripper().getText(document);
+        assertTrue(text.contains("retained"), plan);
+        assertFalse(text.contains("expired"), plan);
+      }
+      new Worker(store, tx, mail, true, "test@test.local").retention();
+      assertEquals(List.of("retained"), store.db.queryForList("SELECT object_id FROM objects WHERE project_id=?", String.class, project), plan);
+      assertEquals(List.of("retained"), store.db.queryForList("SELECT object_id FROM cost_entries WHERE project_id=?", String.class, project), plan);
+      store.db.update("DELETE FROM objects WHERE project_id=?", project);
+      store.db.update("DELETE FROM cost_entries WHERE project_id=?", project);
+    }
+  }
+
+  @Test
+  void expiredIdentityCannotBeResurrectedAndCleanupPreservesBillingEvidence() {
+    for (String plan : List.of("Free", "Core", "Pro")) {
+      store.db.update("UPDATE workspaces SET plan=? WHERE id=?", plan, workspace);
+      String name = "expired-" + plan;
+      ingest.accept(project, batch(event("trace", name, 1)));
+      new Worker(store, tx, mail, true, "test@test.local").process();
+      int age = Billing.retention(plan) + 1;
+      store.db.update("UPDATE billable_objects SET first_accepted_at=now()-make_interval(days=>?) WHERE project_id=? AND object_id=?", age, project, name);
+      store.db.update("UPDATE objects SET started_at=now()-make_interval(days=>?) WHERE project_id=? AND object_id=?", age, project, name);
+      long before = units();
+      int ledger = store.db.queryForObject("SELECT count(*) FROM usage_ledger WHERE project_id=?", Integer.class, project);
+      var rejected = result(ingest.accept(project, batch(event("trace", name, 2))));
+      assertEquals(1, ((Number) rejected.get("rejected")).intValue());
+      assertTrue(rejected.get("errors").toString().contains("OUTSIDE_RETENTION"));
+      new Worker(store, tx, mail, true, "test@test.local").retention();
+      assertEquals(0, store.db.queryForObject("SELECT count(*) FROM objects WHERE project_id=? AND object_id=?", Integer.class, project, name));
+      assertEquals(1, store.db.queryForObject("SELECT count(*) FROM billable_objects WHERE project_id=? AND object_id=?", Integer.class, project, name));
+      assertEquals(ledger, store.db.queryForObject("SELECT count(*) FROM usage_ledger WHERE project_id=?", Integer.class, project));
+      assertEquals(before, units());
+      assertTrue(result(ingest.accept(project, batch(event("trace", name, 2)))).get("errors").toString().contains("OUTSIDE_RETENTION"));
+      assertEquals(before, units());
+    }
+  }
+
   ObjectNode event(String type, String object, int revision) {
     ObjectNode e = new ObjectMapper().createObjectNode();
     e.put("eventId", UUID.randomUUID().toString());
