@@ -51,3 +51,34 @@ The harness counts events/sec separately from HTTP/sec. Add representative simul
 - Mail failures: inspect SMTP configuration and `outbox.attempts`; bodies are encrypted. Requeue after fixing delivery, respecting code expiry. Never expose secrets in logs.
 - Payment failure: verify signature secret and clock. Use reconciliation and provider sandbox logs; do not trust frontend redirect status.
 - Deleted account: active subscription must first be canceled through the provider portal. Email recovery when the old mailbox is inaccessible is a manual operator identity-verification process, not a bypass endpoint.
+
+
+## Isolated verification and recovery limits
+
+`IngestIntegrationTest` runs a real PostgreSQL custom-format dump/restore into a separate
+`metertrail_restore_*` database, compares every public table, checks key hashes, billing
+identities and encrypted mail, and confirms restored sequences accept writes. It also
+queues 1,200 unique events plus transport replays before starting three concurrent
+Workers. These checks do not certify off-host encryption, a recovery time objective,
+or sustained production throughput.
+
+`node --test scripts/release-rollback.test.mjs` executes the release shell script against
+controlled Docker, smoke and monitoring command doubles. Candidate smoke, Nginx
+validation, worker startup, live smoke and observation failures must preserve or restore
+routing and monitoring; post-routing failures must restore the previous worker image.
+This validates script control flow, not an actual production blue/green cutover.
+
+For a notification that exhausted ten attempts, first repair the transport and identify
+one unsent non-verification message by ID. Review its relevance before the following
+operator action, then confirm `sent_at` is populated and the body cleared. Never reset
+all attempts or resend expired authentication codes:
+
+```sql
+UPDATE outbox SET attempts = 0
+WHERE id = :reviewed_notification_id AND sent_at IS NULL AND attempts >= 10
+  AND subject <> 'MeterTrail verification / 验证码';
+```
+
+`MailOutboxIntegrationTest` verifies the targeted retry and that sent messages remain
+ineligible. Exhausted-mail alert routing still needs operational configuration and an
+actual receiver drill; a database recovery test does not prove notification delivery.

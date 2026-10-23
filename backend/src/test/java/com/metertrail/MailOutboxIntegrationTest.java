@@ -87,4 +87,20 @@ class MailOutboxIntegrationTest {
     assertEquals(2,accepted.get());
     assertNotNull(store.db.queryForMap("SELECT sent_at FROM outbox").get("sent_at"));
   }
+  @Test void operatorCanRecoverExhaustedNotificationWithoutResendingSuccessfulMail() throws Exception {
+    store.mail("recovery@example.test","recoverable notification","retained recovery body");
+    var failed=mock(MailDelivery.class);
+    doThrow(new RuntimeException("synthetic outage")).when(failed).send(any(SimpleMailMessage.class));
+    for(int i=0;i<10;i++)worker(failed).notifications();
+    var id=store.db.queryForObject("SELECT id FROM outbox",Long.class);
+    var healthy=mock(MailDelivery.class);
+    worker(healthy).notifications();verifyNoInteractions(healthy);
+    // Operator recovery is explicit and scoped to the unsent row; no automatic global reset.
+    assertEquals(1,store.db.update("UPDATE outbox SET attempts=0 WHERE id=? AND sent_at IS NULL AND attempts>=10",id));
+    worker(healthy).notifications();worker(healthy).notifications();
+    verify(healthy,times(1)).send(argThat(message->"retained recovery body".equals(message.getText())));
+    assertNotNull(store.db.queryForMap("SELECT sent_at FROM outbox WHERE id=?",id).get("sent_at"));
+    assertEquals("",store.db.queryForObject("SELECT body FROM outbox WHERE id=?",String.class,id));
+    assertEquals(0,store.db.update("UPDATE outbox SET attempts=0 WHERE id=? AND sent_at IS NULL AND attempts>=10",id));
+  }
 }

@@ -19,3 +19,13 @@ for (const mode of ['retry-close','auth-resume']) test(`real HTTP ${mode} preser
     const closed=await sdk.close();assert.equal(closed.remaining,0);assert.equal(bodies.length,2);assert.deepEqual(bodies[0],bodies[1]);assert.deepEqual(auth,['Bearer synthetic','Bearer synthetic']);assert.equal(results.length,1);assert.equal(sdk.record(event),false);assert.equal(errors.at(-1).code,'CLOSED');
   } finally {clearInterval(sdk.timer);await new Promise(resolve=>server.close(resolve))}
 });
+
+test('retry exhaustion retains queue and later recovery sends identical event',async()=>{
+ let attempts=0,healthy=false;const bodies=[],errors=[];
+ const sdk=new MeterTrail({apiKey:'synthetic',endpoint:'http://localhost',serviceName:'exhaustion',maxRetries:2,onError:e=>errors.push(e),fetch:async(_url,init)=>{attempts++;bodies.push(JSON.parse(init.body));return new Response(JSON.stringify(healthy?{batchId:'recovered',status:'pending'}:{code:'SERVICE_UNAVAILABLE'}),{status:healthy?200:503})}});sdk.sleep=async()=>{};
+ try {sdk.record(event);await sdk.flush();assert.equal(attempts,3);assert.equal(sdk.queue.length,1);assert.equal(errors[0].code,'SERVICE_UNAVAILABLE');healthy=true;await sdk.close();assert.equal(attempts,4);assert.equal(sdk.queue.length,0);for(const body of bodies)assert.deepEqual(body,bodies[0])}finally{clearInterval(sdk.timer)}
+});
+test('close timeout reports failure without dropping the unconfirmed event',async()=>{
+ let release;const blocked=new Promise(r=>release=r);const sdk=new MeterTrail({apiKey:'synthetic',endpoint:'http://localhost',serviceName:'timeout',maxRetries:0,fetch:async()=>{await blocked;return new Response(JSON.stringify({batchId:'late-receipt',status:'pending'}))}});
+ sdk.record(event);await assert.rejects(sdk.close(20),/FLUSH_TIMEOUT/);assert.equal(sdk.queue.length,1);release();await sdk.running;assert.equal(sdk.queue.length,0);
+});

@@ -107,4 +107,23 @@ class MeterTrailTest {
       } finally {sdk.close(); server.stop(0);}
     }
   }
+  @Test void timeoutRetainsUnconfirmedEventAndHealthyRetryRecoversIt() throws Exception {
+    var server=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
+    var healthy=new java.util.concurrent.atomic.AtomicBoolean(false);
+    var bodies=new CopyOnWriteArrayList<String>();var results=new CopyOnWriteArrayList<String>();var errors=new CopyOnWriteArrayList<String>();
+    server.createContext("/v1/events/batch",exchange->{
+      bodies.add(new String(exchange.getRequestBody().readAllBytes(),java.nio.charset.StandardCharsets.UTF_8));
+      boolean ok=healthy.get();byte[] body=(ok?"{\"batchId\":\"recovered\",\"status\":\"pending\"}":"{\"code\":\"SERVICE_UNAVAILABLE\"}").getBytes();
+      exchange.sendResponseHeaders(ok?200:503,body.length);exchange.getResponseBody().write(body);exchange.close();
+    });server.start();
+    var sdk=new MeterTrail("http://127.0.0.1:"+server.getAddress().getPort(),"synthetic","deadline",r->results.add(r.toString()),errors::add);
+    try {
+      sdk.record(new ObjectMapper().createObjectNode().put("type","trace").put("objectId","deadline"));
+      assertFalse(sdk.flush(Duration.ofMillis(60)));
+      assertTrue(results.isEmpty());assertTrue(errors.contains("FLUSH_TIMEOUT"));
+      healthy.set(true);assertTrue(sdk.flush(Duration.ofSeconds(4)));
+      assertEquals(1,results.size());assertTrue(bodies.size()>=1);
+      for(String body:bodies)assertEquals(bodies.get(0),body);
+    } finally {sdk.close();server.stop(0);}
+  }
 }

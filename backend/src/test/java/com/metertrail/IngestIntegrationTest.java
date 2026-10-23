@@ -1220,6 +1220,204 @@ class IngestIntegrationTest {
     }
   }
 
+  @Test
+  void fullDatabaseDumpRestoresEveryTableAndEncryptedMailWithoutChangingSource() throws Exception {
+    ingest.accept(project, batch(event("trace", "backup-trace", 1)));
+    new Worker(store, tx, mail, true, "test@test.local").process();
+    store.mail("backup@example.test", "restore-drill", "encrypted restore evidence");
+    var before = databaseFingerprints(store.db);
+    String restored = "metertrail_restore_" + UUID.randomUUID().toString().replace("-", "");
+    String dump = "/tmp/" + restored + ".dump";
+    assertEquals(0, pg.execInContainer("pg_dump", "-U", pg.getUsername(), "-d", pg.getDatabaseName(), "-Fc", "-f", dump).getExitCode());
+    assertEquals(0, pg.execInContainer("createdb", "-U", pg.getUsername(), restored).getExitCode());
+    var restore = pg.execInContainer("pg_restore", "-U", pg.getUsername(), "-d", restored, "--exit-on-error", "--no-owner", dump);
+    assertEquals(0, restore.getExitCode(), restore.getStderr());
+    var source = new org.springframework.jdbc.datasource.DriverManagerDataSource(
+        "jdbc:postgresql://" + pg.getHost() + ":" + pg.getMappedPort(5432) + "/" + restored,
+        pg.getUsername(), pg.getPassword());
+    var db = new org.springframework.jdbc.core.JdbcTemplate(source);
+    assertEquals(before, databaseFingerprints(db));
+    assertEquals(before, databaseFingerprints(store.db));
+    assertEquals(Support.hash(key), db.queryForObject("SELECT key_hash FROM api_keys WHERE project_id=?", String.class, project));
+    String body = db.queryForObject("SELECT body FROM outbox WHERE subject='restore-drill'", String.class);
+    assertEquals("encrypted restore evidence", store.secrets.open(body));
+    assertEquals(1L, db.queryForObject("SELECT used_units FROM workspaces WHERE id=?", Long.class, workspace));
+    assertEquals(1, db.queryForObject("SELECT count(*) FROM billable_objects WHERE project_id=?", Integer.class, project));
+    // Restored sequences must permit writes, rather than colliding with existing outbox rows.
+    db.update("INSERT INTO outbox(recipient,subject,body) VALUES('sequence@example.test','sequence','')");
+    assertEquals(1, db.queryForObject("SELECT count(*) FROM outbox WHERE subject='sequence'", Integer.class));
+    assertEquals(0, pg.execInContainer("dropdb", "-U", pg.getUsername(), restored).getExitCode());
+    assertEquals(0, pg.execInContainer("rm", dump).getExitCode());
+  }
+
+  Map<String,String> databaseFingerprints(org.springframework.jdbc.core.JdbcTemplate db) {
+    var hashes = new TreeMap<String,String>();
+    for (String table : db.queryForList("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename", String.class)) {
+      assertTrue(table.matches("[a-z_]+"));
+      hashes.put(table, db.queryForObject("SELECT md5(coalesce(string_agg(row_to_json(t)::text, E'\\n' ORDER BY row_to_json(t)::text),'')) FROM " + table + " t", String.class));
+    }
+    return hashes;
+  }
+
+  @Test
+  void accumulatedBatchesDrainWithConcurrentWorkersWithoutLossOrDoubleBilling() throws Exception {
+    var submitted = new ArrayList<Map<String,Object>>();
+    long start = System.nanoTime();
+    for (int batchIndex=0; batchIndex<12; batchIndex++) {
+      JsonNode[] events = new JsonNode[100];
+      for (int index=0; index<100; index++) events[index]=event("trace", "backlog-"+batchIndex+"-"+index, 1);
+      var payload = batch(events);
+      var receipt = ingest.accept(project, payload);
+      submitted.add(receipt);
+      assertEquals(100, result(receipt).get("accepted"));
+      assertEquals(100, result(ingest.accept(project,payload)).get("duplicates"));
+    }
+    assertEquals(1200, units());
+    assertEquals(0, store.db.queryForObject("SELECT count(*) FROM objects WHERE project_id=?", Integer.class, project));
+    for (int round=0; round<4; round++) {
+      var workers = new ArrayList<CompletableFuture<Void>>();
+      for (int n=0; n<3; n++) workers.add(CompletableFuture.runAsync(()->new Worker(store,tx,mail,true,"test@test.local").process()));
+      CompletableFuture.allOf(workers.toArray(CompletableFuture[]::new)).get(30,TimeUnit.SECONDS);
+    }
+    for (var receipt : submitted) assertEquals("completed", result(receipt).get("status"));
+    assertEquals(1200, store.db.queryForObject("SELECT count(*) FROM objects WHERE project_id=?", Integer.class, project));
+    assertEquals(1200, store.db.queryForObject("SELECT count(*) FROM billable_objects WHERE project_id=?", Integer.class, project));
+    assertEquals(1200L, store.db.queryForObject("SELECT sum(units) FROM usage_ledger WHERE project_id=?", Long.class, project));
+    assertEquals(1200, units());
+    assertEquals(0,store.db.queryForObject("SELECT count(*) FROM ingest_events WHERE project_id=? AND NOT processed",Integer.class,project));
+    System.out.println("ISOLATED_BACKLOG_1200_ELAPSED_MS="+TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-start));
+  }
+
+  @Test void emailChangeRevokesAllOldSessionsAndOnlyNewEmailCanLogIn() throws Exception {
+    String oldEmail=user+"@test.local",newEmail=user+"@new.test",password="synthetic-password-12345";
+    store.db.update("UPDATE users SET password_hash=? WHERE id=?",new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(4).encode(password),user);
+    var cookies=new ArrayList<jakarta.servlet.http.Cookie>();
+    for(int i=0;i<2;i++){String token=Support.token();store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(token),user,"csrf-email");cookies.add(new jakarta.servlet.http.Cookie("mt_session",token));}
+    UUID oldChallenge=challenges.issue(user,"email.old",newEmail,null);
+    String oldCode=syntheticMailCode(oldEmail);
+    store.db.update("UPDATE verification_challenges SET created_at=now()-interval '61 seconds' WHERE id=?",oldChallenge);
+    UUID newChallenge=challenges.issue(user,"email.new",newEmail,null);
+    String newCode=syntheticMailCode(newEmail);
+    var body=new ObjectMapper().valueToTree(Map.of("email",newEmail,"oldChallengeId",oldChallenge,"oldCode",oldCode,"newChallengeId",newChallenge,"newCode",newCode));
+    mvc.perform(post("/api/account/email").cookie(cookies.get(0)).header("X-CSRF-Token","csrf-email").contentType("application/json").content(body.toString())).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("sign_in_required"));
+    assertEquals(0,store.db.queryForObject("SELECT count(*) FROM sessions WHERE user_id=?",Integer.class,user));
+    for(var cookie:cookies)mvc.perform(get("/api/me").cookie(cookie)).andExpect(status().isUnauthorized());
+    mvc.perform(post("/api/auth/login").contentType("application/json").content(new ObjectMapper().writeValueAsString(Map.of("email",oldEmail,"password",password)))).andExpect(status().isUnauthorized());
+    mvc.perform(post("/api/auth/login").contentType("application/json").content(new ObjectMapper().writeValueAsString(Map.of("email",newEmail,"password",password)))).andExpect(status().isOk());
+    assertEquals(workspace,store.workspace(user).get("id"));assertEquals(1,store.db.queryForObject("SELECT count(*) FROM projects WHERE workspace_id=?",Integer.class,workspace));
+  }
+
+  String syntheticMailCode(String recipient) {
+    String body=store.secrets.open(store.db.queryForObject("SELECT body FROM outbox WHERE recipient=? ORDER BY id DESC LIMIT 1",String.class,recipient));
+    return body.substring(body.indexOf(": ")+2,body.indexOf(": ")+8);
+  }
+
+  @Test void passwordResetRevokesEverySessionAndOldPasswordStopsWorking() throws Exception {
+    String email=user+"@test.local",oldPassword="old-synthetic-password-12345",newPassword="new-synthetic-password-67890";
+    store.db.update("UPDATE users SET password_hash=? WHERE id=?",new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(4).encode(oldPassword),user);
+    var cookies=new ArrayList<jakarta.servlet.http.Cookie>();
+    for(int i=0;i<2;i++){String token=Support.token();store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(token),user,"csrf-reset");cookies.add(new jakarta.servlet.http.Cookie("mt_session",token));}
+    UUID challenge=challenges.issue(user,"reset-password",email,null);
+    var body=new ObjectMapper().writeValueAsString(Map.of("email",email,"password",newPassword,"challengeId",challenge,"code",syntheticMailCode(email)));
+    mvc.perform(post("/api/auth/reset").contentType("application/json").content(body)).andExpect(status().isOk());
+    for(var cookie:cookies)mvc.perform(get("/api/me").cookie(cookie)).andExpect(status().isUnauthorized());
+    mvc.perform(post("/api/auth/login").contentType("application/json").content(new ObjectMapper().writeValueAsString(Map.of("email",email,"password",oldPassword)))).andExpect(status().isUnauthorized());
+    mvc.perform(post("/api/auth/login").contentType("application/json").content(new ObjectMapper().writeValueAsString(Map.of("email",email,"password",newPassword)))).andExpect(status().isOk());
+    mvc.perform(post("/api/auth/reset").contentType("application/json").content(body)).andExpect(status().isBadRequest());
+  }
+
+  @Test void githubIdentityConflictsAndFirstRegistrationAreHandledWithoutAccountMerging() throws Exception {
+    for(String mode:List.of("already-linked","existing-email","unverified-email","new-account")) {
+      String github="synthetic-"+UUID.randomUUID(),email="oauth-"+UUID.randomUUID()+"@test.local";
+      UUID other=UUID.randomUUID();
+      if(mode.equals("already-linked"))store.db.update("INSERT INTO users(id,email,verified,github_id) VALUES(?,?,true,?)",other,email,github);
+      if(mode.equals("existing-email"))email=user+"@test.local";
+      var builder=org.springframework.web.client.RestClient.builder();
+      var provider=org.springframework.test.web.client.MockRestServiceServer.bindTo(builder).build();
+      provider.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://github.com/login/oauth/access_token")).andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess("{\"access_token\":\"synthetic-token\"}",org.springframework.http.MediaType.APPLICATION_JSON));
+      provider.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://api.github.com/user")).andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess("{\"id\":\""+github+"\"}",org.springframework.http.MediaType.APPLICATION_JSON));
+      provider.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://api.github.com/user/emails")).andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(new ObjectMapper().writeValueAsString(List.of(Map.of("email",email,"primary",true,"verified",!mode.equals("unverified-email")))),org.springframework.http.MediaType.APPLICATION_JSON));
+      var client=builder.build();
+      var redis=org.mockito.Mockito.mock(org.springframework.data.redis.core.StringRedisTemplate.class);
+      @SuppressWarnings("unchecked") org.springframework.data.redis.core.ValueOperations<String,String> values=org.mockito.Mockito.mock(org.springframework.data.redis.core.ValueOperations.class);
+      org.mockito.Mockito.when(redis.opsForValue()).thenReturn(values);
+      org.mockito.Mockito.when(values.getAndDelete("oauth:synthetic-state")).thenReturn(mode.equals("already-linked")?user.toString():"login",(String)null);
+      var auth=new AuthController(store,challenges,new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(4),rates,false);
+      var controller=new GithubController(store,auth,challenges,redis,tx,"synthetic-client","synthetic-secret","https://example.test");
+      var request=new org.springframework.mock.web.MockHttpServletRequest();request.setCookies(new jakarta.servlet.http.Cookie("mt_oauth","synthetic-state"));
+      var response=new org.springframework.mock.web.MockHttpServletResponse();
+      int before=store.db.queryForObject("SELECT count(*) FROM users",Integer.class);
+      try(var factory=org.mockito.Mockito.mockStatic(org.springframework.web.client.RestClient.class)) {
+        factory.when(org.springframework.web.client.RestClient::create).thenReturn(client);
+        if(mode.equals("new-account")) {
+          controller.callback("synthetic-code","synthetic-state","",request,response);
+          assertEquals(before+1,store.db.queryForObject("SELECT count(*) FROM users",Integer.class));
+          UUID registered=store.db.queryForObject("SELECT id FROM users WHERE github_id=?",UUID.class,github);
+          assertEquals(1,store.db.queryForObject("SELECT count(*) FROM workspaces WHERE owner_id=?",Integer.class,registered));
+          assertEquals("https://example.test/app/workspace",response.getRedirectedUrl());
+          assertTrue(response.getHeaders("Set-Cookie").stream().anyMatch(c->c.startsWith("mt_session=")));
+        } else {
+          ApiError error=assertThrows(ApiError.class,()->controller.callback("synthetic-code","synthetic-state","",request,response));
+          assertEquals(mode.equals("already-linked")?"GITHUB_ALREADY_LINKED":mode.equals("existing-email")?"LOGIN_AND_LINK_EXISTING_ACCOUNT":"GITHUB_VERIFIED_EMAIL_REQUIRED",error.code);
+          assertEquals(before,store.db.queryForObject("SELECT count(*) FROM users",Integer.class));
+          assertFalse(response.getHeaders("Set-Cookie").stream().anyMatch(c->c.startsWith("mt_session=")));
+          assertNull(store.db.queryForObject("SELECT github_id FROM users WHERE id=?",String.class,user));
+        }
+        assertThrows(ApiError.class,()->controller.callback("synthetic-code","synthetic-state","",request,new org.springframework.mock.web.MockHttpServletResponse()));
+      }
+      provider.verify();
+    }
+  }
+
+  @Test void forciblyKilledWorkerJvmRollsBackAndFreshJvmCompletesReservedBatchOnce() throws Exception {
+    String suffix=UUID.randomUUID().toString().replace("-", ""),function="jvm_fault_"+suffix,application="worker-drill-"+suffix;
+    var receipt=ingest.accept(project,batch(event("observation","jvm-first",1),event("trace","jvm-second",1)));
+    store.db.execute("CREATE FUNCTION "+function+"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.project_id='"+project+"' AND NEW.object_id='jvm-second' THEN PERFORM pg_sleep(3); END IF; RETURN NEW; END $$");
+    store.db.execute("CREATE TRIGGER "+function+" BEFORE INSERT ON objects FOR EACH ROW EXECUTE FUNCTION "+function+"()");
+    Process killed=null;
+    try {
+      killed=startWorkerJvm(application);
+      boolean entered=false;
+      for(int attempt=0;attempt<150;attempt++) {
+        entered=store.db.queryForObject("SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=? AND wait_event='PgSleep')",Boolean.class,application);
+        if(entered)break;
+        if(!killed.isAlive())fail("Worker exited before reaching the injected delay");
+        Thread.sleep(100);
+      }
+      assertTrue(entered,"Worker must reach the second object inside the real transaction");
+      killed.destroyForcibly();assertTrue(killed.waitFor(10,TimeUnit.SECONDS));
+      boolean disconnected=false;
+      for(int attempt=0;attempt<100;attempt++) {
+        disconnected=!store.db.queryForObject("SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=?)",Boolean.class,application);
+        if(disconnected)break;Thread.sleep(100);
+      }
+      assertTrue(disconnected);
+      assertEquals(0,store.db.queryForObject("SELECT count(*) FROM objects WHERE project_id=?",Integer.class,project));
+      assertEquals(0,store.db.queryForObject("SELECT count(*) FROM cost_entries WHERE project_id=?",Integer.class,project));
+      assertEquals("pending",result(receipt).get("status"));assertEquals(2,units());
+      assertEquals(2,store.db.queryForObject("SELECT count(*) FROM ingest_events WHERE batch_id=? AND NOT processed",Integer.class,receipt.get("batchId")));
+    } finally {
+      if(killed!=null&&killed.isAlive())killed.destroyForcibly();
+      store.db.execute("DROP TRIGGER "+function+" ON objects");store.db.execute("DROP FUNCTION "+function+"()");
+    }
+    var recovered=startWorkerJvm(application+"-restart");
+    assertTrue(recovered.waitFor(20,TimeUnit.SECONDS));assertEquals(0,recovered.exitValue());
+    assertEquals("completed",result(receipt).get("status"));
+    assertEquals(2,store.db.queryForObject("SELECT count(*) FROM objects WHERE project_id=?",Integer.class,project));
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM cost_entries WHERE project_id=?",Integer.class,project));
+    assertEquals(2,units());
+    var repeated=startWorkerJvm(application+"-again");assertTrue(repeated.waitFor(20,TimeUnit.SECONDS));assertEquals(0,repeated.exitValue());assertEquals(2,units());
+    assertEquals(2L,store.db.queryForObject("SELECT sum(units) FROM usage_ledger WHERE project_id=?",Long.class,project));
+  }
+
+  Process startWorkerJvm(String application) throws Exception {
+    var process=new ProcessBuilder(System.getProperty("java.home")+"/bin/java","-cp",System.getProperty("java.class.path"),WorkerProcessDrill.class.getName());
+    process.environment().put("DRILL_JDBC_URL",pg.getJdbcUrl()+(pg.getJdbcUrl().contains("?")?"&":"?")+"ApplicationName="+application);
+    process.environment().put("DRILL_DB_USER",pg.getUsername());process.environment().put("DRILL_DB_PASSWORD",pg.getPassword());
+    process.redirectErrorStream(true);process.redirectOutput(java.nio.file.Path.of("target",application+".log").toFile());
+    return process.start();
+  }
+
   ObjectNode event(String type, String object, int revision) {
     ObjectNode e = new ObjectMapper().createObjectNode();
     e.put("eventId", UUID.randomUUID().toString());

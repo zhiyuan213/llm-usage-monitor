@@ -112,4 +112,31 @@ class ClientTests(unittest.TestCase):
                     c.stop.set(); c.wake.set(); c.thread.join(2)
                     server.shutdown(); server.server_close(); thread.join(2)
 
+    def test_retry_exhaustion_and_deadline_preserve_queue_until_recovery(self):
+        import json
+        from unittest.mock import patch
+        class Response:
+            status=503
+            headers={}
+            def __enter__(self): return self
+            def __exit__(self,*_): pass
+            def read(self): return b'{"code":"SERVICE_UNAVAILABLE"}'
+        errors=[]
+        c=self.client(on_error=errors.append)
+        c.record({'type':'trace','objectId':'exhaustion','data':{}})
+        original=c.queue[0][0].copy()
+        c.paused=None
+        with patch('metertrail.urlopen',return_value=Response()) as transport, patch('metertrail.time.sleep'):
+            self.assertFalse(c.flush())
+            self.assertEqual(transport.call_count,6)
+        self.assertEqual(c.queue[0][0],original)
+        self.assertEqual(errors[-1]['code'],'SERVICE_UNAVAILABLE')
+        with patch('metertrail.urlopen',return_value=Response()):
+            with self.assertRaises(TimeoutError): c.flush(timeout=.03)
+        self.assertEqual(c.queue[0][0],original)
+        c._request=lambda *args,**kwargs:(200,{'batchId':'recovered','status':'pending'})
+        self.assertTrue(c.close())
+        self.assertEqual(c.queue,[])
+        c.thread.join(2)
+
 if __name__=='__main__':unittest.main()

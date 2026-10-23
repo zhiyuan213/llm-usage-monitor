@@ -40,9 +40,10 @@ export METRICS_API_INSTANCE="$target:9090"
 # Produce traffic between scrapes; a missing/NaN latency series never passes a gate.
 for _ in 1 2 3; do sleep 15; METERTRAIL_ENDPOINT="$CANDIDATE_ENDPOINT" METERTRAIL_API_KEY="$SMOKE_API_KEY" node scripts/release-smoke.mjs >> "$evidence/candidate-smoke.json"; done
 node scripts/monitor-gate.mjs > "$evidence/baseline.json"
+# Restore the routing file even when nginx validation fails before reload.
+switched=true
 printf 'upstream metertrail_api { server %s:8080; }\n' "$target" > ops/nginx/upstream.conf
 docker compose exec -T web nginx -t
-switched=true
 docker compose exec -T web nginx -s reload
 METERTRAIL_IMAGE="$CANDIDATE_IMAGE" docker compose up -d --no-deps --wait worker
 METERTRAIL_ENDPOINT="$SMOKE_ENDPOINT" METERTRAIL_API_KEY="$SMOKE_API_KEY" node scripts/release-smoke.mjs > "$evidence/live-smoke.json"
