@@ -56,7 +56,7 @@ import { contextLoader } from "./context-loader";
 import { verificationFlow } from "./verification";
 const route = useRoute(),
   router = useRouter(),
-  page = computed(() => String(route.params.page || "overview"));
+  page = computed(() => String(route.params.page || "workspace"));
 const nav = [
   ["workspace", "Project management", "项目管理", LayoutDashboard],
   ["overview", "Overview", "概览", Activity],

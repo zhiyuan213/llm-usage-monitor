@@ -1,6 +1,7 @@
 import { createApp } from "vue";
 import { createRouter, createWebHistory } from "vue-router";
 import App from "./App.vue";
+import { consoleRoutes } from "./console-routes";
 import Public from "./Public.vue";
 import Console from "./Console.vue";
 import "./style.css";
@@ -9,9 +10,7 @@ import "./public-v2.css";
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: "/app", redirect: "/app/workspace" },
-    { path: "/app/projects", redirect: "/app/workspace" },
-    { path: "/app/:page?/:detail?", component: Console },
+    ...consoleRoutes(Console),
     { path: "/:page?", component: Public },
   ],
 });
