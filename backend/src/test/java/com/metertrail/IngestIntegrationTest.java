@@ -1292,6 +1292,20 @@ class IngestIntegrationTest {
   }
 
   @Test
+  void immediatePasswordCodeResendCannotQueueAnotherEmailOrInvalidateFirstCode() {
+    String email=user+"@test.local";
+    UUID first=challenges.issue(user,"reset-password",email,null);
+    var before=store.db.queryForList("SELECT * FROM outbox WHERE recipient=?",email);
+    assertEquals(1,before.size());
+    assertThrows(ApiError.class,()->challenges.issue(user,"reset-password",email,null));
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM outbox WHERE recipient=?",Integer.class,email));
+    assertEquals(false,store.db.queryForObject("SELECT consumed FROM verification_challenges WHERE id=?",Boolean.class,first));
+    String body=store.secrets.open((String)before.get(0).get("body"));
+    String code=body.substring(body.indexOf(": ")+2,body.indexOf(": ")+8);
+    challenges.consume(user,"reset-password",email,first.toString(),code,null);
+  }
+
+  @Test
   void fiveWrongCodesLockChallenge() {
     UUID c = challenges.issue(user, "key.create", "target", null);
     for (int i = 0; i < 6; i++)

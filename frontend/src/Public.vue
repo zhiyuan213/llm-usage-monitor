@@ -7,7 +7,8 @@ import ProtocolReference from "./ProtocolReference.vue";
 import ProtocolFields from "./ProtocolFields.vue";
 import BatchQueryReference from "./BatchQueryReference.vue";
 import BatchQueryFields from "./BatchQueryFields.vue";
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { verificationCooldown } from "./verification-cooldown";
 import { useRoute, useRouter } from "vue-router";
 import {
   Activity,
@@ -43,7 +44,7 @@ watch(activeDoc, () => docsContent.value?.scrollTo({ top: 0 }), {
   flush: "post",
 });
 const form = reactive({
-    email: "",
+    email: ["forgot-password", "reset-password"].includes(page.value) ? session.value?.email || "" : "",
     password: "",
     code: "",
     challengeId: "",
@@ -54,6 +55,14 @@ const form = reactive({
   error = ref(""),
   message = ref(""),
   copied = ref(false);
+const resendBusy = ref(false);
+const cooldown = verificationCooldown(sessionStorage);
+const clock = ref(Date.now());
+const resendSeconds = computed(() => cooldown.remaining(clock.value));
+let cooldownTimer: ReturnType<typeof setInterval>;
+onMounted(() => { cooldownTimer = setInterval(() => { clock.value = Date.now(); }, 1000); });
+onBeforeUnmount(() => clearInterval(cooldownTimer));
+function codeSent() { cooldown.start(); clock.value = Date.now(); }
 const sessionChecked = ref(!!session.value);
 watch(page, () => {
   error.value = "";
@@ -70,6 +79,7 @@ watch(
       const user = await api("/me");
       if (active && !busy.value) {
         session.value = user;
+        if (["forgot-password", "reset-password"].includes(value) && !form.email) form.email = user.email;
         if (value === "login") router.replace("/app/workspace");
       }
     } catch (e) {
@@ -87,6 +97,11 @@ const authPage = computed(() =>
   ),
 );
 async function submit() {
+  if (busy.value || resendBusy.value) return;
+  if (page.value === "forgot-password" && resendSeconds.value > 0) {
+    message.value = t("A code was already sent. Please wait before requesting another.", "验证码已发送，请稍候再重新获取。");
+    return;
+  }
   busy.value = true;
   error.value = "";
   try {
@@ -94,6 +109,7 @@ async function submit() {
       if (!form.terms) throw new Error("terms");
       const r = await api("/auth/register", form);
       form.challengeId = r.challengeId;
+      codeSent();
       router.push("/verify");
     } else if (page.value === "login") {
       await api("/auth/login", form);
@@ -108,30 +124,41 @@ async function submit() {
         action: "reset-password",
       });
       form.challengeId = r.challengeId;
+      form.code = "";
+      codeSent();
       router.push("/reset-password");
     } else {
       await api("/auth/reset", form);
       router.push("/login");
     }
   } catch (e) {
+    if (page.value === "forgot-password" && e instanceof ApiError && e.status === 429) codeSent();
     error.value = errorText(e);
   } finally {
     busy.value = false;
   }
 }
 async function resend() {
+  if (busy.value || resendBusy.value || resendSeconds.value > 0) return;
+  resendBusy.value = true;
+  error.value = "";
   try {
     const r = await api("/auth/challenge", {
       email: form.email,
       action: page.value === "verify" ? "verify-email" : "reset-password",
     });
     form.challengeId = r.challengeId;
+    form.code = "";
+    codeSent();
     message.value = t(
       "Check your inbox. Codes expire in 5 minutes.",
       "请查收邮件，验证码 5 分钟内有效。",
     );
   } catch (e) {
+    if (e instanceof ApiError && e.status === 429) codeSent();
     error.value = errorText(e);
+  } finally {
+    resendBusy.value = false;
   }
 }
 const example = `curl "$METERTRAIL_ENDPOINT/v1/events/batch" \\\n+  -H "Authorization: Bearer $METERTRAIL_API_KEY" \\\n+  -H 'Content-Type: application/json' \\\n+  --data @examples/batch.json`;
@@ -483,6 +510,9 @@ async function copy() {
         </div>
         <div v-if="error" class="notice error" role="alert">{{ error }}</div>
         <div v-if="message" class="notice">{{ message }}</div>
+        <p v-if="page === 'forgot-password' && resendSeconds > 0" class="notice" role="status">
+          {{ t(`A code was already sent. Try again in ${resendSeconds}s.`, `验证码已发送，请在${resendSeconds}秒后重试。`) }}
+        </p>
         <form @submit.prevent="submit">
           <label
             >{{ t("Email address", "邮箱地址")
@@ -522,8 +552,8 @@ async function copy() {
                 maxlength="6"
                 required
                 autocomplete="one-time-code" /></label
-            ><button class="text-button" type="button" @click="resend">
-              {{ t("Send a new code", "重新发送验证码") }}
+            ><button class="text-button" type="button" :disabled="busy || resendBusy || resendSeconds > 0" @click="resend">
+              {{ resendBusy ? t("Sending…", "正在发送…") : resendSeconds > 0 ? t(`Resend in ${resendSeconds}s`, `${resendSeconds}秒后可重新发送`) : t("Send a new code", "重新发送验证码") }}
             </button></template
           ><label v-if="page === 'register'" class="check-label"
             ><input v-model="form.terms" type="checkbox" required />{{
@@ -532,7 +562,7 @@ async function copy() {
             <RouterLink to="/terms">{{
               t("Terms of Service", "服务条款")
             }}</RouterLink></label
-          ><button :disabled="busy" class="btn primary full">
+          ><button :disabled="busy || resendBusy || (page === 'forgot-password' && resendSeconds > 0)" class="btn primary full">
             {{
               busy
                 ? t("Please wait…", "请稍候…")
