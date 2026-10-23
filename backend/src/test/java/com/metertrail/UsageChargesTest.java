@@ -26,6 +26,7 @@ class UsageChargesTest {
     var item=UsageCharges.item(id,"pro_test",new BigDecimal("7.35"),"MeterTrail overage");
     var price=(Map<?,?>)item.get("price");
     assertNull(price.get("billing_cycle"));assertEquals(1,item.get("quantity"));
+    assertEquals(Map.of("minimum",1,"maximum",1),price.get("quantity"));
     assertEquals("735",((Map<?,?>)price.get("unit_price")).get("amount"));
     assertEquals(id,ChargeLedger.reference(new com.fasterxml.jackson.databind.ObjectMapper().valueToTree(Map.of("items",List.of(item)))));
   }

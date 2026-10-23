@@ -188,6 +188,6 @@ class GithubController {
               return uid;
             });
     auth.session(user, res, intent.equals("login:remember"));
-    res.sendRedirect(publicUrl + "/app/overview");
+    res.sendRedirect(publicUrl + "/app/workspace");
   }
 }

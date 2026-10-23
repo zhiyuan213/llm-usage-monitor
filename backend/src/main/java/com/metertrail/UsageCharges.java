@@ -41,6 +41,7 @@ class UsageCharges {
     var price=new HashMap<String,Object>();
     price.put("product_id",product); price.put("description",ChargeLedger.marker(id)); price.put("name",name);
     price.put("billing_cycle",null); price.put("tax_mode","internal");
+    price.put("quantity",Map.of("minimum",1,"maximum",1));
     price.put("unit_price",Map.of("amount",amount.movePointRight(2).toBigIntegerExact().toString(),"currency_code","USD"));
     return Map.of("quantity",1,"price",price);
   }

@@ -70,7 +70,7 @@ watch(
       const user = await api("/me");
       if (active && !busy.value) {
         session.value = user;
-        if (value === "login") router.replace("/app/overview");
+        if (value === "login") router.replace("/app/workspace");
       }
     } catch (e) {
       if (active && !busy.value && e instanceof ApiError && e.status === 401)
@@ -98,7 +98,7 @@ async function submit() {
     } else if (page.value === "login") {
       await api("/auth/login", form);
       await loadSession();
-      router.push("/app/overview");
+      router.push("/app/workspace");
     } else if (page.value === "verify") {
       await api("/auth/verify", form);
       router.push("/login");
@@ -164,7 +164,7 @@ async function copy() {
         }}</RouterLink>
       </nav>
       <div class="header-actions">
-        <RouterLink v-if="session" class="btn primary" to="/app/overview"
+        <RouterLink v-if="session" class="btn primary" to="/app/workspace"
           >{{ t("Open console", "进入控制台") }} <ArrowUpRight :size="14"
         /></RouterLink>
         <template v-else-if="sessionChecked"
@@ -200,7 +200,7 @@ async function copy() {
           <div class="hero-buttons">
             <RouterLink
               v-if="sessionChecked"
-              :to="session ? '/app/overview' : '/register'"
+              :to="session ? '/app/workspace' : '/register'"
               class="btn primary large auth-cta"
               >{{
                 session

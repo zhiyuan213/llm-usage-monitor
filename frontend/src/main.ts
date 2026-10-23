@@ -9,6 +9,7 @@ import "./public-v2.css";
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: "/app", redirect: "/app/workspace" },
     { path: "/app/projects", redirect: "/app/workspace" },
     { path: "/app/:page?/:detail?", component: Console },
     { path: "/:page?", component: Public },
