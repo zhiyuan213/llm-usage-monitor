@@ -758,6 +758,73 @@ class IngestIntegrationTest {
     assertEquals(2, units());
   }
 
+  @Test
+  void lostWorkerDatabaseConnectionRollsBackPartialBatchAndRestartRecoversOnce() throws Exception {
+    var receipt=ingest.accept(project,batch(event("observation","disconnect-first",1),event("trace","disconnect-second",1)));
+    Object batchId=receipt.get("batchId");
+    store.db.update("UPDATE ingest_batches SET created_at=now()-interval '1 year' WHERE id=?",batchId);
+    String function="worker_fault_"+UUID.randomUUID().toString().replace("-","");
+    store.db.execute("CREATE FUNCTION "+function+"() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.project_id='"+project+"'::uuid AND NEW.object_id='disconnect-second' THEN PERFORM pg_sleep(30); END IF; RETURN NEW; END $$");
+    store.db.execute("CREATE TRIGGER "+function+" BEFORE INSERT ON objects FOR EACH ROW EXECUTE FUNCTION "+function+"()");
+    var pid=new java.util.concurrent.atomic.AtomicInteger();var connected=new CountDownLatch(1);
+    var faultTx=new org.springframework.transaction.support.TransactionTemplate(tx.getTransactionManager()) {
+      @Override public <T> T execute(org.springframework.transaction.support.TransactionCallback<T> action) {
+        return super.execute(status->{pid.set(store.db.queryForObject("SELECT pg_backend_pid()",Integer.class));connected.countDown();return action.doInTransaction(status);});
+      }
+    };
+    var worker=CompletableFuture.runAsync(()->new Worker(store,faultTx,mail,true,"test@test.local").process());
+    try {
+      assertTrue(connected.await(10,TimeUnit.SECONDS));int workerPid=pid.get();boolean sleeping=false;
+      for(int attempt=0;attempt<100;attempt++) {
+        sleeping=store.db.queryForObject("SELECT count(*) FROM pg_stat_activity WHERE pid=? AND wait_event='PgSleep'",Integer.class,workerPid)==1;
+        if(sleeping)break;Thread.sleep(100);
+      }
+      assertTrue(sleeping,"Worker must reach second-object fault after first-object writes");
+      assertTrue(store.db.queryForObject("SELECT pg_terminate_backend(?)",Boolean.class,workerPid));
+      worker.get(20,TimeUnit.SECONDS);
+    } finally {
+      store.db.execute("DROP TRIGGER IF EXISTS "+function+" ON objects");
+      store.db.execute("DROP FUNCTION IF EXISTS "+function+"()");
+    }
+    assertEquals("pending",result(receipt).get("status"));
+    assertEquals(0,store.db.queryForObject("SELECT count(*) FROM objects WHERE project_id=?",Integer.class,project));
+    assertEquals(0,store.db.queryForObject("SELECT count(*) FROM cost_entries WHERE project_id=?",Integer.class,project));
+    assertEquals(0,store.db.queryForObject("SELECT count(*) FROM ingest_events WHERE batch_id=? AND processed",Integer.class,batchId));
+    assertEquals(2,units());
+    store.db.update("UPDATE ingest_batches SET lease_until=now()-interval '1 second' WHERE id=?",batchId);
+    new Worker(store,tx,mail,true,"test@test.local").process();
+    new Worker(store,tx,mail,true,"test@test.local").process();
+    assertEquals("completed",result(receipt).get("status"));
+    assertEquals(2,store.db.queryForObject("SELECT count(*) FROM objects WHERE project_id=?",Integer.class,project));
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM cost_entries WHERE project_id=?",Integer.class,project));
+    assertEquals(2,units());
+    assertEquals(2L,store.db.queryForObject("SELECT sum(units) FROM usage_ledger WHERE workspace_id=?",Long.class,workspace));
+  }
+
+  @Test
+  void repairedQuarantinedBatchReplaysThroughHttpWithoutReservingAgain() throws Exception {
+    var payload=event("trace","repaired-poison",1);var receipt=ingest.accept(project,batch(payload));
+    Object batchId=receipt.get("batchId");
+    store.db.update("UPDATE ingest_batches SET attempts=9,created_at=now()-interval '1 year' WHERE id=?",batchId);
+    store.db.update("UPDATE ingest_events SET payload=jsonb_set(payload,'{startedAt}','\"invalid\"') WHERE batch_id=?",batchId);
+    new Worker(store,tx,mail,true,"test@test.local").process();
+    assertEquals("quarantined",result(receipt).get("status"));
+    assertEquals(1,units());
+    store.db.update("UPDATE ingest_events SET payload=?::jsonb WHERE batch_id=?",payload.toString(),batchId);
+    String token=Support.token();
+    store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(token),user,"csrf-test");
+    String path="/api/projects/"+project+"/batches/"+batchId+"/replay";
+    mvc.perform(post(path).cookie(new jakarta.servlet.http.Cookie("mt_session",token)).header("X-CSRF-Token","csrf-test").contentType("application/json").content("{}"))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("pending"));
+    mvc.perform(post(path).cookie(new jakarta.servlet.http.Cookie("mt_session",token)).header("X-CSRF-Token","csrf-test").contentType("application/json").content("{}"))
+        .andExpect(status().isConflict());
+    assertEquals(1,units());
+    new Worker(store,tx,mail,true,"test@test.local").process();
+    assertEquals("completed",result(receipt).get("status"));
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM objects WHERE project_id=?",Integer.class,project));
+    assertEquals(1L,store.db.queryForObject("SELECT sum(units) FROM usage_ledger WHERE workspace_id=?",Long.class,workspace));
+  }
+
   @Container static PostgreSQLContainer<?> pg = new PostgreSQLContainer<>("postgres:16-alpine");
 
   @DynamicPropertySource
