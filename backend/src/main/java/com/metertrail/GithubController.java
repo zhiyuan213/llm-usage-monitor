@@ -104,17 +104,26 @@ class GithubController {
 
   @GetMapping("/api/auth/github/callback")
   void callback(
-      @RequestParam String code,
-      @RequestParam String state,
+      @RequestParam(required = false) String code,
+      @RequestParam(defaultValue = "") String state,
+      @RequestParam(defaultValue = "") String error,
       HttpServletRequest req,
       HttpServletResponse res)
       throws java.io.IOException {
     String cookie = "";
     if (req.getCookies() != null)
       for (Cookie c : req.getCookies()) if (c.getName().equals("mt_oauth")) cookie = c.getValue();
-    if (!Support.equal(cookie, state)) throw new ApiError(400, "OAUTH_STATE_INVALID");
+    if (state.isBlank() || !Support.equal(cookie, state)) throw new ApiError(400, "OAUTH_STATE_INVALID");
     String intent = redis.opsForValue().getAndDelete("oauth:" + state);
     if (intent == null) throw new ApiError(400, "OAUTH_STATE_INVALID");
+    res.addHeader("Set-Cookie", ResponseCookie.from("mt_oauth", "").httpOnly(true)
+        .secure(auth.secure).sameSite("Lax").path("/api/auth/github").maxAge(0).build().toString());
+    if (!error.isBlank()) {
+      String target = intent.equals("login") || intent.equals("login:remember") ? "/login" : "/app/account";
+      res.sendRedirect(publicUrl + target + "?oauth=" + (error.equals("access_denied") ? "cancelled" : "failed"));
+      return;
+    }
+    if (code == null || code.isBlank()) throw new ApiError(400, "OAUTH_FAILED");
     var http = RestClient.create();
     JsonNode token =
         http.post()

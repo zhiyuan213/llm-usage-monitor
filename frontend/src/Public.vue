@@ -475,6 +475,12 @@ async function copy() {
         <p>
           {{ t("Your workspace, one step closer.", "即将进入你的工作空间。") }}
         </p>
+        <div v-if="route.query.oauth === 'cancelled'" class="notice" role="status">
+          {{ t("GitHub authorization was cancelled. You can try again or sign in with email.", "已取消 GitHub 授权，可以重试或使用邮箱登录。") }}
+        </div>
+        <div v-if="route.query.oauth === 'failed'" class="notice error" role="alert">
+          {{ t("GitHub authorization failed. Please try again.", "GitHub 授权失败，请重试。") }}
+        </div>
         <div v-if="error" class="notice error" role="alert">{{ error }}</div>
         <div v-if="message" class="notice">{{ message }}</div>
         <form @submit.prevent="submit">
