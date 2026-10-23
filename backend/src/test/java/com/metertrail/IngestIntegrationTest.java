@@ -32,7 +32,14 @@ import org.testcontainers.junit.jupiter.*;
     })
 @AutoConfigureMockMvc
 @Testcontainers
+@org.springframework.test.annotation.DirtiesContext(classMode = org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS)
 class IngestIntegrationTest {
+  // Stop scheduled tasks before Testcontainers stops PostgreSQL; Spring closes the context afterward.
+  @AfterAll static void closeTestContext(@Autowired org.springframework.context.ConfigurableApplicationContext context) {
+    context.getBeansOfType(org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler.class)
+        .values().forEach(org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler::destroy);
+  }
+
   UUID pack() {
     store.db.update("UPDATE workspaces SET plan='Core',subscription_status='active',subscription_id=?,period_end=now()+interval '1 month' WHERE id=?","sub_"+workspace,workspace);
     UUID id=UUID.randomUUID();
