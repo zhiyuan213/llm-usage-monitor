@@ -24,6 +24,7 @@ import org.testcontainers.junit.jupiter.*;
     properties = {
       "metertrail.secret=test-secret-at-least-32-characters-long",
       "metertrail.worker-enabled=false",
+      "metertrail.usage-collection-enabled=true",
       "metertrail.secure-cookies=false",
       "metertrail.paddle-secret=local-webhook-test-secret",
       "metertrail.paddle-core-price=pri_core_test",
@@ -32,6 +33,89 @@ import org.testcontainers.junit.jupiter.*;
 @AutoConfigureMockMvc
 @Testcontainers
 class IngestIntegrationTest {
+  UUID pack() {
+    store.db.update("UPDATE workspaces SET plan='Core',subscription_status='active',subscription_id=?,period_end=now()+interval '1 month' WHERE id=?","sub_"+workspace,workspace);
+    UUID id=UUID.randomUUID();
+    store.db.update("INSERT INTO usage_charges(id,workspace_id,subscription_id,period_start,period_end,kind,units,amount,status) SELECT ?,id,subscription_id,period_start,period_end,'addon',100000,8,'submitted' FROM workspaces WHERE id=?",id,workspace);
+    return id;
+  }
+  JsonNode packTransaction(UUID id,String status,String cents) {
+    var price=new HashMap<String,Object>();price.put("description",ChargeLedger.marker(id));price.put("billing_cycle",null);price.put("unit_price",Map.of("amount",cents,"currency_code","USD"));
+    return new ObjectMapper().valueToTree(Map.of("id","txn_"+id,"status",status,"currency_code","USD","custom_data",Map.of("metertrail_charge",id),"items",List.of(Map.of("quantity",1,"price",price)),"details",Map.of("totals",Map.of("grand_total","800"))));
+  }
+  void packEvent(UUID id,String status,String cents) {
+    JsonNode data=packTransaction(id,status,cents);
+    JsonNode event=new ObjectMapper().valueToTree(Map.of("event_id",UUID.randomUUID(),"event_type","transaction.updated","occurred_at",Instant.now().toString(),"data",data));
+    tx.executeWithoutResult(x->payments.applyEvent(event));
+  }
+  @Test void purchasedPackIsVerifiedOnceAndRefundCannotRegrantIt() {
+    UUID id=pack();
+    packEvent(id,"ready","800");assertEquals(0L,store.db.queryForObject("SELECT addon_units FROM workspaces WHERE id=?",Long.class,workspace));
+    packEvent(id,"completed","800");packEvent(id,"completed","800");
+    assertEquals(100000L,store.db.queryForObject("SELECT addon_units FROM workspaces WHERE id=?",Long.class,workspace));
+    JsonNode refund=Support.parse("{\"action\":\"refund\",\"status\":\"approved\",\"transaction_id\":\"txn_"+id+"\"}");
+    tx.executeWithoutResult(x->{var w=store.db.queryForMap("SELECT * FROM workspaces WHERE id=? FOR UPDATE",workspace);ChargeLedger.refund(store,w,refund);ChargeLedger.refund(store,w,refund);});
+    packEvent(id,"completed","800");
+    assertEquals(0L,store.db.queryForObject("SELECT addon_units FROM workspaces WHERE id=?",Long.class,workspace));
+  }
+  @Test void wrongPriceDeclineAndLatePaymentNeverGrantPack() {
+    UUID id=pack();
+    assertThrows(ApiError.class,()->packEvent(id,"completed","1"));
+    packEvent(id,"canceled","800");assertEquals(0L,store.db.queryForObject("SELECT addon_units FROM workspaces WHERE id=?",Long.class,workspace));
+    store.db.update("UPDATE workspaces SET period_start=period_start+interval '1 month',period_end=period_end+interval '1 month' WHERE id=?",workspace);
+    packEvent(id,"completed","800");
+    assertEquals("refund_required",store.db.queryForObject("SELECT status FROM usage_charges WHERE id=?",String.class,id));
+    assertEquals(0L,store.db.queryForObject("SELECT addon_units FROM workspaces WHERE id=?",Long.class,workspace));
+  }
+  @Test void packRefundDoesNotInventUnconsentedOverageAndNewUsageCountsSeparately() {
+    UUID id=pack();packEvent(id,"completed","800");
+    store.db.update("UPDATE workspaces SET used_units=199999,addon_consumed=99999 WHERE id=?",workspace);
+    store.db.update("UPDATE usage_charges SET consumed_units=99999 WHERE id=?",id);
+    ingest.accept(project,batch(event("trace","pre-refund",1)));
+    assertEquals(0,ChargeLedger.accrued(store.workspace(user)).signum());
+    tx.executeWithoutResult(x->ChargeLedger.refund(store,store.workspace(user),Support.parse("{\"action\":\"refund\",\"status\":\"approved\",\"transaction_id\":\"txn_"+id+"\"}")));
+    assertEquals(0,ChargeLedger.accrued(store.workspace(user)).signum());
+    assertThrows(ApiError.class,()->ingest.accept(project,batch(event("trace","unconsented",1))));
+    store.db.update("UPDATE workspaces SET auto_overage=true,overage_cap=1 WHERE id=?",workspace);
+    ingest.accept(project,batch(event("trace","authorized",1)));
+    assertEquals(0,new java.math.BigDecimal("0.00008").compareTo(ChargeLedger.accrued(store.workspace(user))));
+  }
+
+  @Test void buyingPackAfterOverageCoversFutureUsageWithoutRepricingPastCharges() {
+    UUID id=pack();
+    store.db.update("UPDATE workspaces SET used_units=150000,overage_units=50000 WHERE id=?",workspace);
+    packEvent(id,"completed","800");
+    ingest.accept(project,batch(event("trace","post-overage-pack",1)));
+    var w=store.workspace(user);
+    assertEquals(50000L,((Number)w.get("overage_units")).longValue());
+    assertEquals(1L,((Number)w.get("addon_consumed")).longValue());
+    assertEquals(0,new java.math.BigDecimal("4").compareTo(ChargeLedger.accrued(w)));
+  }
+
+  @Test void publicQuotaReportsRealAvailablePacksAndBlocksInactiveSubscriptions() throws Exception {
+    UUID id=pack();packEvent(id,"completed","800");
+    mvc.perform(get("/v1/quota").header("Authorization","Bearer "+key))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.addon_units").value(100000)).andExpect(jsonPath("$.available_units").value(200000));
+    ingest.accept(project,batch(event("trace","quota-pack",1)));
+    mvc.perform(get("/v1/quota").header("Authorization","Bearer "+key)).andExpect(jsonPath("$.available_units").value(199999));
+    store.db.update("UPDATE workspaces SET subscription_status='canceled' WHERE id=?",workspace);
+    mvc.perform(get("/v1/quota").header("Authorization","Bearer "+key)).andExpect(jsonPath("$.available_units").value(0));
+  }
+
+  @Test void addonQuotaAndImmutablePeriodSettlementShareTheWorkspaceLock() {
+    UUID id=pack();packEvent(id,"completed","800");
+    store.db.update("UPDATE usage_charges SET consumed_units=100000 WHERE id=?",id);
+    store.db.update("UPDATE workspaces SET addon_consumed=100000,used_units=200000 WHERE id=?",workspace);
+    assertThrows(ApiError.class,()->ingest.accept(project,batch(event("trace","after-pack",1))));
+    store.db.update("UPDATE workspaces SET used_units=199999,addon_consumed=99999 WHERE id=?",workspace);
+    store.db.update("UPDATE usage_charges SET consumed_units=99999 WHERE id=?",id);
+    ingest.accept(project,batch(event("trace","last-pack",1)));assertEquals(200000,units());
+    store.db.update("UPDATE workspaces SET used_units=300000,overage_units=100000 WHERE id=?",workspace);
+    tx.executeWithoutResult(x->{var w=store.db.queryForMap("SELECT * FROM workspaces WHERE id=? FOR UPDATE",workspace);ChargeLedger.close(store,w);ChargeLedger.close(store,w);});
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM usage_charges WHERE workspace_id=? AND kind='overage'",Integer.class,workspace));
+    assertEquals(0,new java.math.BigDecimal("8.00").compareTo(store.db.queryForObject("SELECT amount FROM usage_charges WHERE workspace_id=? AND kind='overage'",java.math.BigDecimal.class,workspace)));
+  }
+
   @Test
   void checkoutConfigIsPublicAndDoesNotExposeServerCredentials() throws Exception {
     mvc.perform(get("/v1/checkout/config"))

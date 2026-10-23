@@ -1028,3 +1028,7 @@
   .ui-v2 .breadcrumb { display: block; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .ui-v2 .breadcrumb > svg { display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin: 0 6px; }
 }
+
+.ui-v2 .usage-charges-panel { margin-top: 24px; }
+.ui-v2 .usage-pack-form { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.ui-v2 .usage-pack-form .check-label { flex:1; min-width:220px; }

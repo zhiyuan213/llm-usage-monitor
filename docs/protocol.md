@@ -93,3 +93,7 @@ Rates are USD per million tokens, versioned by project/provider/model/effective 
 See the [Chinese request-level and per-event error tables](error-codes.zh-CN.md), or the bilingual tables at `/docs#retries`. Error codes are stable protocol values and are not translated.
 
 Full Header / Body / response field definitions and examples: [REST integration reference (Chinese)](rest-reference.zh-CN.md), also available bilingually at `/docs#fields`; request and response examples remain at `/docs#protocol`.
+
+### Purchased units and quota
+
+`GET /v1/quota` additionally returns `addon_units` (current-period purchased units), `addon_consumed` (current-period historical pack consumption, including later refunded packs), `overage_units` (authorized usage billed separately) and `available_units` (remaining base plus valid purchased units). An inactive paid subscription has zero available units. A pack does not reprice previously accrued overage. Pack expiry and refunds preserve historical consumption and cannot create a new, unconsented charge.

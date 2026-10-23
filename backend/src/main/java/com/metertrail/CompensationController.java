@@ -57,22 +57,23 @@ class CompensationController {
             project,
             batch,
             batch);
-    int released = 0;
+    int released = 0, releasedOverage=0, releasedAddon=0;
     for (var object : refundable) {
       int generation = ((Number) object.get("charge_generation")).intValue();
       String accepted = generation == 1 ? "accepted" : "accepted:" + generation;
       var ledger =
           store.db.queryForMap(
-              "SELECT period_start FROM usage_ledger WHERE project_id=? AND type=? AND object_id=?"
+              "SELECT period_start,overage,addon_charge_id FROM usage_ledger WHERE project_id=? AND type=? AND object_id=?"
                   + " AND reason=?",
               project,
               object.get("type"),
               object.get("object_id"),
               accepted);
       Support.require(
-          ledger.get("period_start").equals(w.get("period_start")),
+          ledger.get("period_start").equals(w.get("period_start"))
+              && store.db.queryForList("SELECT id FROM usage_charges WHERE workspace_id=? AND period_start=? AND kind='overage'",w.get("id"),w.get("period_start")).isEmpty(),
           "CLOSED_PERIOD_REQUIRES_REVIEW");
-      released +=
+      int change =
           store.db.update(
               "INSERT INTO"
                   + " usage_ledger(workspace_id,project_id,type,object_id,units,reason,period_start)"
@@ -83,6 +84,12 @@ class CompensationController {
               object.get("object_id"),
               "released:" + generation,
               w.get("period_start"));
+      released += change;
+      if(change>0 && Boolean.TRUE.equals(ledger.get("overage"))) releasedOverage++;
+      if(change>0 && ledger.get("addon_charge_id")!=null){
+        releasedAddon++;
+        store.db.update("UPDATE usage_charges SET consumed_units=greatest(0,consumed_units-1) WHERE id=?",ledger.get("addon_charge_id"));
+      }
       store.db.update(
           "UPDATE billable_objects SET charged=false WHERE project_id=? AND type=? AND object_id=?",
           project,
@@ -90,7 +97,7 @@ class CompensationController {
           object.get("object_id"));
     }
     store.db.update(
-        "UPDATE workspaces SET used_units=used_units-? WHERE id=?", released, w.get("id"));
+        "UPDATE workspaces SET used_units=used_units-?,overage_units=greatest(0,overage_units-?),addon_consumed=greatest(0,addon_consumed-?) WHERE id=?", released, releasedOverage, releasedAddon, w.get("id"));
     store.db.update("UPDATE ingest_events SET processed=true WHERE batch_id=?", batch);
     store.db.update(
         "UPDATE ingest_batches SET status='failed',completed_at=now() WHERE id=?", batch);

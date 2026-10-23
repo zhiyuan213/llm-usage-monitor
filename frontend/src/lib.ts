@@ -61,6 +61,9 @@ export const money = (v: any) =>
 export const date = (v: string) =>
   v ? new Date(v).toISOString().replace("T", " ").slice(0, 19) + " UTC" : "—";
 const errors: Record<string, [string, string]> = {
+  USAGE_COLLECTION_NOT_CONFIGURED: ["Additional billing is not enabled yet.", "尚未启用加购及超额扣款。"],
+  ADDON_UNAVAILABLE: ["An active paid subscription with at least 15 minutes left is required.", "需要活跃的付费订阅，且距离账期结束至少15分钟。"],
+  CHARGE_PENDING_REVIEW: ["The payment result is being reconciled. Do not purchase again.", "付款结果正在核对，请勿重复购买。"],
   SUBSCRIPTION_REQUIRED: ["Choose a paid plan first.", "请先订阅付费套餐。"],
   SUBSCRIPTION_CHANGE_UNAVAILABLE: ["The subscription cannot be changed now. Check its status or scheduled cancellation in Manage subscription.", "当前无法切换，请在管理订阅核对订阅状态或计划取消。"],
   PLAN_ALREADY_SELECTED: ["This is already your current plan. Refresh Billing.", "当前已是此套餐，请刷新账单。"],

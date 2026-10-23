@@ -85,6 +85,19 @@ class PaymentsController {
         .header("Authorization", "Bearer " + apiKey).body(body).retrieve().body(JsonNode.class);
   }
 
+  JsonNode readUsageTransaction(String id) {
+    return paddleClient.get().uri(url+"/transactions/"+id).header("Authorization","Bearer "+apiKey).retrieve().body(JsonNode.class);
+  }
+  JsonNode usageTransactions(String customer, String after, Instant created) {
+    return paddleClient.get().uri(url+"/transactions?customer_id="+customer+"&per_page=30&order_by=id[ASC]&created_at[GTE]="+created.minusSeconds(300)+(after.isBlank()?"":"&after="+after))
+        .header("Authorization","Bearer "+apiKey).retrieve().body(JsonNode.class);
+  }
+
+  JsonNode postUsage(String path, Map<String,Object> body) {
+    if (!reconciliationEnabled()) throw new ApiError(503,"PAYMENTS_NOT_CONFIGURED");
+    return paddleClient.post().uri(url+path).header("Authorization","Bearer "+apiKey).body(body).retrieve().body(JsonNode.class);
+  }
+
   @PostMapping("/api/billing/checkout")
   Map<String, String> checkout(@RequestBody JsonNode b, HttpServletRequest req) {
     String plan = b.path("plan").asText();
@@ -193,6 +206,8 @@ class PaymentsController {
             : d.path("subscription_id").asText();
     var workspaces =
         store.db.queryForList("SELECT * FROM workspaces WHERE subscription_id=? FOR UPDATE", sub);
+    UUID charge = type.startsWith("transaction.") ? ChargeLedger.reference(d) : null;
+    if (charge != null) workspaces = store.db.queryForList("SELECT w.* FROM workspaces w JOIN usage_charges c ON c.workspace_id=w.id WHERE c.id=? FOR UPDATE OF w",charge);
     if (workspaces.isEmpty() && d.path("custom_data").hasNonNull("metertrail_intent")) {
       UUID intent = Support.uuid(d.path("custom_data").path("metertrail_intent").asText());
       workspaces =
@@ -211,6 +226,7 @@ class PaymentsController {
     var w = workspaces.get(0);
     UUID workspace = (UUID) w.get("id");
     if (type.startsWith("transaction.")) {
+      ChargeLedger.transaction(store,w,d,occurred);
       String amount = d.path("details").path("totals").path("grand_total").asText("0");
       store.db.update(
           "INSERT INTO payments(id,workspace_id,status,amount,currency,updated_at)"
@@ -227,6 +243,7 @@ class PaymentsController {
       return Map.of("status", "processed");
     }
     if (type.startsWith("adjustment.")) {
+      ChargeLedger.refund(store,w,d);
       store.db.update(
           "INSERT INTO"
               + " payment_adjustments(id,workspace_id,transaction_id,action,status,amount,currency,updated_at)"
@@ -271,25 +288,31 @@ class PaymentsController {
         Instant previousStart = ((Timestamp) w.get("period_start")).toInstant();
         if (start.isBefore(previousStart)) return Map.of("status", "stale");
         boolean newPeriod = start.isAfter(previousStart);
+        if(newPeriod) ChargeLedger.close(store,w);
         store.db.update(
             "UPDATE workspaces SET"
                 + " plan=?,subscription_id=?,subscription_status=?,period_start=?,period_end=?,used_units=CASE"
-                + " WHEN ? THEN 0 ELSE used_units END,payment_updated_at=? WHERE id=?",
+                + " WHEN ? THEN 0 ELSE used_units END,addon_units=CASE WHEN ? THEN 0 ELSE addon_units END,overage_units=CASE WHEN ? THEN 0 ELSE overage_units END,addon_consumed=CASE WHEN ? THEN 0 ELSE addon_consumed END,payment_updated_at=? WHERE id=?",
             plan,
             sub,
             status,
             Timestamp.from(start),
             Timestamp.from(end),
             newPeriod,
+            newPeriod,
+            newPeriod,
+            newPeriod,
             Timestamp.from(occurred),
             workspace);
-      } else
+      } else {
+        if(status.equals("canceled")) ChargeLedger.close(store,w);
         store.db.update(
             "UPDATE workspaces SET subscription_status=?,auto_overage=false,payment_updated_at=?"
                 + " WHERE id=?",
             status,
             Timestamp.from(occurred),
             workspace);
+      }
       store.db.update("UPDATE workspaces SET scheduled_change=?::jsonb WHERE id=?", d.path("scheduled_change").isMissingNode() ? "null" : d.path("scheduled_change").toString(), workspace);
       if (status.equals("active")) store.db.update("UPDATE subscription_change_quotes SET status='confirmed' WHERE workspace_id=? AND subscription_id=? AND plan=? AND status IN ('processing','submitted') AND created_at<=?", workspace, sub, plan, Timestamp.from(occurred));
       store.audit(null, workspace, "payment." + type, id, true, null);

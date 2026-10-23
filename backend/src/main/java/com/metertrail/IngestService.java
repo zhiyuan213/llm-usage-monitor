@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 class IngestService {
+  @org.springframework.beans.factory.annotation.Value("${metertrail.usage-collection-enabled:false}")
+  boolean collectionEnabled;
   final Store store;
   final MeterRegistry metrics;
 
@@ -30,7 +32,10 @@ class IngestService {
     UUID workspace = (UUID) w.get("id");
     String plan = (String) w.get("plan");
     long used = ((Number) w.get("used_units")).longValue();
+    long addonConsumed=((Number)w.get("addon_consumed")).longValue();
+    var packs=store.db.queryForList("SELECT id,units,consumed_units FROM usage_charges WHERE workspace_id=? AND period_start=? AND kind='addon' AND credited AND NOT revoked AND status='paid' ORDER BY created_at,id",workspace,w.get("period_start"));
     long before = used;
+    long overageUnits=((Number)w.get("overage_units")).longValue();
     Instant end = ((Timestamp) w.get("period_end")).toInstant();
     if (!end.isAfter(Instant.now()) && plan.equals("Free")) {
       store.db.update(
@@ -42,6 +47,7 @@ class IngestService {
       w = store.db.queryForMap("SELECT * FROM workspaces WHERE id=?", workspace);
       before = 0;
     }
+    boolean collectionBlocked = !store.db.queryForList("SELECT id FROM usage_charges WHERE workspace_id=? AND kind='overage' AND amount>0 AND status IN ('failed','unknown','processing','submitted') LIMIT 1",workspace).isEmpty();
     UUID batch = UUID.randomUUID();
     store.db.update(
         "INSERT INTO ingest_batches(id,project_id,agent,received) VALUES(?,?,?::jsonb,?)",
@@ -120,26 +126,31 @@ class IngestService {
               "OUTSIDE_TIME_WINDOW");
         }
         if (needsCharge) {
-          boolean allowed =
-              used < Billing.included(plan)
-                  || (!plan.equals("Free")
-                      && (boolean) w.get("auto_overage")
-                      && Billing.overage(used + 1).compareTo((BigDecimal) w.get("overage_cap"))
-                          <= 0);
+          boolean baseAvailable=used-overageUnits-addonConsumed < Billing.included(plan);
+          Map<String,Object> pack=null;
+          if(!baseAvailable) for(var candidate:packs) if(((Number)candidate.get("consumed_units")).longValue()<((Number)candidate.get("units")).longValue()){pack=candidate;break;}
+          boolean overage=!baseAvailable && pack==null;
+          boolean allowed=!overage || (!plan.equals("Free") && collectionEnabled && !collectionBlocked
+              && (boolean)w.get("auto_overage")
+              && Billing.overage(Math.addExact(100001,overageUnits)).compareTo((BigDecimal)w.get("overage_cap"))<=0);
           if (!allowed
               || (!plan.equals("Free")
                   && (!end.isAfter(now) || !"active".equals(w.get("subscription_status")))))
             throw new ApiError(429, "QUOTA_EXCEEDED");
           store.db.update(
               "INSERT INTO"
-                  + " usage_ledger(workspace_id,project_id,type,object_id,units,reason,period_start)"
-                  + " VALUES(?,?,?,?,1,?,?)",
+                  + " usage_ledger(workspace_id,project_id,type,object_id,units,reason,period_start,overage,addon_charge_id)"
+                  + " VALUES(?,?,?,?,1,?,?,?,?)",
               workspace,
               project,
               type,
               object,
               generation == 1 ? "accepted" : "accepted:" + generation,
-              w.get("period_start"));
+              w.get("period_start"),
+              overage,
+              pack==null?null:pack.get("id"));
+          if(overage) overageUnits++;
+          if(pack!=null){addonConsumed++;pack.put("consumed_units",((Number)pack.get("consumed_units")).longValue()+1);}
           used++;
         }
         store.db.update(
@@ -169,8 +180,9 @@ class IngestService {
         && duplicates == 0
         && errors.stream().anyMatch(e -> e.get("code").equals("QUOTA_EXCEEDED")))
       throw new ApiError(429, "QUOTA_EXCEEDED");
-    store.db.update("UPDATE workspaces SET used_units=? WHERE id=?", used, workspace);
-    long included = Billing.included(plan);
+    store.db.update("UPDATE workspaces SET used_units=?,overage_units=?,addon_consumed=? WHERE id=?", used, overageUnits, addonConsumed, workspace);
+    for(var pack:packs)store.db.update("UPDATE usage_charges SET consumed_units=? WHERE id=?",pack.get("consumed_units"),pack.get("id"));
+    long included = ChargeLedger.included(w);
     if ((before < included * 8 / 10 && used >= included * 8 / 10)
         || (before < included && used >= included)) {
       String recipient =

@@ -57,4 +57,4 @@ Transport data is removed only after processing and 8 days. Object billing ident
 
 Subscription states only come from verified provider notifications or authenticated server-to-server reconciliation. Paid quota does not automatically roll into a new period without provider confirmation. Webhook events are unique by provider event ID. Subscription updates compare `occurred_at`; transaction/refund records compare their own timestamps. Checkout uses a backend-created intent to bind provider metadata to a workspace.
 
-There is no live card form and no automatic frontend entitlement grant. The default Paddle endpoint is sandbox. Plan-change proration, cancellation access, refunds, add-on pricing, and live overage collection require the decisions and external tests listed in implementation status.
+There is no live card form and no automatic frontend entitlement grant. The default Paddle endpoint is sandbox. Plan-change proration, cancellation access, refunds, add-on pricing and live overage collection use the gated flow documented in usage-collection.zh-CN.md; activation and real payment acceptance remain separate checks.

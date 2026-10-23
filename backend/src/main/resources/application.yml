@@ -54,3 +54,4 @@ metertrail:
   paddle-core-price: ${PADDLE_CORE_PRICE:}
   paddle-pro-price: ${PADDLE_PRO_PRICE:}
   paddle-url: ${PADDLE_API_URL:https://sandbox-api.paddle.com}
+  usage-collection-enabled: ${USAGE_COLLECTION_ENABLED:false}

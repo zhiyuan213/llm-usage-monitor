@@ -40,6 +40,8 @@ class ConsoleController {
     return Map.of("status", "pending");
   }
 
+  @org.springframework.beans.factory.annotation.Value("${metertrail.usage-collection-enabled:false}")
+  boolean collectionEnabled;
   final Store store;
   final Challenges challenges;
   final RateLimits limits;
@@ -476,9 +478,9 @@ class ConsoleController {
         "workspace",
         w,
         "overage",
-        Billing.overage(((Number) w.get("used_units")).longValue()),
+        ChargeLedger.accrued(w),
         "included",
-        Billing.included((String) w.get("plan")),
+        ChargeLedger.included(w),
         "payments",
         store.db.queryForList(
             "SELECT * FROM payments WHERE workspace_id=? ORDER BY created_at DESC LIMIT 100",
@@ -499,6 +501,7 @@ class ConsoleController {
     var base = store.workspace(uid(req));
     var w = store.db.queryForMap("SELECT * FROM workspaces WHERE id=? FOR UPDATE", base.get("id"));
     boolean enabled = b.path("enabled").asBoolean();
+    if(enabled && !collectionEnabled) throw new ApiError(503,"USAGE_COLLECTION_NOT_CONFIGURED");
     BigDecimal cap = decimal(b, "cap");
     Support.require(
         !enabled || (!w.get("plan").equals("Free") && b.path("consent").asBoolean()),
@@ -506,7 +509,7 @@ class ConsoleController {
     String target = enabled + ":" + cap.stripTrailingZeros().toPlainString();
     verify(b, "billing.overage", target, req);
     Support.require(
-        cap.compareTo(Billing.overage(((Number) w.get("used_units")).longValue())) >= 0,
+        cap.compareTo(ChargeLedger.accrued(w)) >= 0,
         "CAP_BELOW_ACCRUED");
     store.db.update(
         "UPDATE workspaces SET auto_overage=?,overage_cap=? WHERE id=?", enabled, cap, w.get("id"));

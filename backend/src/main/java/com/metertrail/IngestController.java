@@ -76,7 +76,8 @@ class IngestController {
       @RequestHeader(value = "Authorization", required = false) String bearer) {
     UUID project = store.key(bearer);
     return store.db.queryForMap(
-        "SELECT w.plan,w.used_units,w.period_end,w.auto_overage,w.overage_cap FROM workspaces w"
+        "SELECT w.plan,w.used_units,w.period_end,w.auto_overage,w.overage_cap,w.addon_units,w.addon_consumed,w.overage_units,"
+            + " CASE WHEN w.plan<>'Free' AND (w.subscription_status<>'active' OR w.period_end<=now()) THEN 0 ELSE greatest(0,(CASE WHEN w.plan='Free' THEN 50000 ELSE 100000 END)-(w.used_units-w.overage_units-w.addon_consumed))+coalesce((SELECT sum(c.units-c.consumed_units) FROM usage_charges c WHERE c.workspace_id=w.id AND c.period_start=w.period_start AND c.kind='addon' AND c.credited AND NOT c.revoked AND c.status='paid'),0) END AS available_units FROM workspaces w"
             + " JOIN projects p ON p.workspace_id=w.id WHERE p.id=?",
         project);
   }

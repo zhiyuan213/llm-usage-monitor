@@ -30,6 +30,7 @@ x-app: &app
     PADDLE_CORE_PRICE: ${PADDLE_CORE_PRICE:-}
     PADDLE_PRO_PRICE: ${PADDLE_PRO_PRICE:-}
     PADDLE_API_URL: ${PADDLE_API_URL:-https://sandbox-api.paddle.com}
+    USAGE_COLLECTION_ENABLED: ${USAGE_COLLECTION_ENABLED:-false}
     WORKER_ENABLED: 'false'
   depends_on:
     postgres: {condition: service_healthy}

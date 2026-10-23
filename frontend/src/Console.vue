@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UsageCharges from "./UsageCharges.vue";
 import BillingSubscription from "./BillingSubscription.vue";
 import PlanFeatures from "./PlanFeatures.vue";
 import QueryControls from "./QueryControls.vue";
@@ -1464,7 +1465,7 @@ const usagePercent = computed(() =>
                 <span>{{ t("No payments recorded.", "暂无支付记录。") }}</span>
               </div>
             </section>
-          </div></template
+          </div><UsageCharges :workspace="data.workspace" /></template
         >
         <template v-if="page === 'settings' && selected"
           ><section class="panel form-panel">
