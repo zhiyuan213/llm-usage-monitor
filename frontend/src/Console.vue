@@ -211,6 +211,7 @@ async function refresh(force = true) {
     localStorage.setItem("metertrail.project", selected.value);
     if (page.value === "billing") {
       data.value = await request("/billing");
+      if (session.value?.workspace) Object.assign(session.value.workspace, data.value.workspace);
       billing.enabled = data.value.workspace.auto_overage;
       billing.cap = String(data.value.workspace.overage_cap);
     } else if (page.value === "workspace")

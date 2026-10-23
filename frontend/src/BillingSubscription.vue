@@ -37,11 +37,11 @@ function status(value: string) {
   };
   return labels[value] ? t(...labels[value]) : value;
 }
-function amount(totals: any) {
-  if (!totals?.currency_code || totals.total == null) return t('None','无');
+function amount(totals: any, field = "total") {
+  if (!totals?.currency_code || totals[field] == null) return t('None','无');
   const currency=totals.currency_code;
   const digits=new Intl.NumberFormat('en',{style:'currency',currency}).resolvedOptions().maximumFractionDigits ?? 2;
-  return new Intl.NumberFormat(language.value,{style:'currency',currency}).format(Number(totals.total)/10**digits);
+  return new Intl.NumberFormat(language.value,{style:'currency',currency}).format(Number(totals[field])/10**digits);
 }
 function scheduled() {
   const raw=props.data.workspace?.scheduled_change;
@@ -87,9 +87,14 @@ async function confirm() {
     <button v-if="error && !busy" class="btn" @click="loadPreview(targetPlan)">{{t('Refresh preview','重新预览')}}</button>
     <template v-if="quote">
       <p>{{t('Immediate transaction','本次即时交易')}}: <strong>{{amount(quote.totals.immediate_transaction)}}</strong></p>
+      <p v-if="Number(quote.totals.immediate_transaction?.credit || 0)">{{t('Credit applied now','本次使用余额抵扣')}}: {{amount(quote.totals.immediate_transaction, 'credit')}}</p>
+      <p v-if="quote.totals.immediate_transaction?.balance != null">{{t('Amount due now','本次实际应付')}}: <strong>{{amount(quote.totals.immediate_transaction, 'balance')}}</strong></p>
+      <p v-if="Number(quote.totals.immediate_transaction?.credit_to_balance || 0)">{{t('Credit added to balance','本次转入抵扣余额')}}: {{amount(quote.totals.immediate_transaction, 'credit_to_balance')}}</p>
       <p>{{t('Next transaction','下次交易')}}: {{amount(quote.totals.next_transaction)}}</p>
+      <p v-if="Number(quote.totals.next_transaction?.credit || 0)">{{t('Credit applied next time','下次使用余额抵扣')}}: {{amount(quote.totals.next_transaction, 'credit')}}</p>
+      <p v-if="quote.totals.next_transaction?.balance != null">{{t('Amount due next time','下次实际应付')}}: {{amount(quote.totals.next_transaction, 'balance')}}</p>
       <p>{{t('Recurring amount','后续周期金额')}}: {{amount(quote.totals.recurring_transaction_details)}}</p>
-      <p class="muted">{{t('A negative amount is a Paddle credit, not a guaranteed bank refund. Quote expires at','负数金额为 Paddle 抵扣，不代表银行退款。预览到期时间')}} {{date(quote.expiresAt)}}</p>
+      <p class="muted">{{t('A negative amount is a Paddle credit, not a guaranteed bank refund. Re-preview if proration changes. Quote expires at','负数金额为 Paddle 抵扣，不代表银行退款；金额随剩余账期变化时需重新预览。预览到期时间')}} {{date(quote.expiresAt)}}</p>
       <button class="btn primary" :disabled="busy" @click="confirm">{{t('Confirm change','确认变更')}}</button>
     </template>
     <button class="btn" :disabled="busy" @click="emit('update:targetPlan','')">{{t('Close','关闭')}}</button>
