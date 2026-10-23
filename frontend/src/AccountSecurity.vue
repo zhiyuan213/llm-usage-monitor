@@ -2,6 +2,7 @@
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { api, t, errorText, session } from "./lib";
+const props = defineProps<{ disabled?: boolean }>();
 const router = useRouter(),
   error = ref(""),
   notice = ref(""),
@@ -15,6 +16,7 @@ const email = reactive({
   }),
   deletion = reactive({ challengeId: "", code: "", confirm: "" });
 async function run(fn: () => Promise<void>) {
+  if (props.disabled || busy.value) return;
   busy.value = true;
   error.value = "";
   try {
@@ -78,14 +80,14 @@ async function emailCode(action: string) {
           <button
             class="btn"
             type="button"
-            :disabled="busy || !email.email"
+            :disabled="props.disabled || busy || !email.email"
             @click="emailCode('email.old')"
           >
             {{ t("Send to current email", "发送至旧邮箱") }}</button
           ><button
             class="btn"
             type="button"
-            :disabled="busy || !email.email"
+            :disabled="props.disabled || busy || !email.email"
             @click="emailCode('email.new')"
           >
             {{ t("Send to new email", "发送至新邮箱") }}
@@ -106,7 +108,7 @@ async function emailCode(action: string) {
               required /></label
           ><button
             class="btn primary"
-            :disabled="busy || !email.oldChallengeId || !email.newChallengeId"
+            :disabled="props.disabled || busy || !email.oldChallengeId || !email.newChallengeId"
           >
             {{ t("Change email", "修改邮箱") }}
           </button>
@@ -135,7 +137,7 @@ async function emailCode(action: string) {
         <button
           type="button"
           class="btn"
-          :disabled="busy"
+          :disabled="props.disabled || busy"
           @click="
             run(async () => {
               const r = await api('/verification', {
@@ -163,7 +165,7 @@ async function emailCode(action: string) {
               required /></label
           ><button
             class="btn danger-button"
-            :disabled="busy || !deletion.challengeId"
+            :disabled="props.disabled || busy || !deletion.challengeId"
           >
             {{ t("Close my account", "注销账号") }}
           </button>

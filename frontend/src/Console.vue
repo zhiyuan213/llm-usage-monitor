@@ -92,11 +92,14 @@ const title = computed(() => {
 const projects = ref<any[]>([]),
   selected = ref(localStorage.getItem("metertrail.project") || ""),
   loading = ref(true),
+  contextReady = ref(false),
+  signingOut = ref(false),
   error = ref(""),
   notice = ref(""),
   data = ref<any>({}),
   overview = ref<any>({}),
   recent = ref<any[]>([]);
+const accountReady = computed(() => contextReady.value && !loading.value && !!session.value?.csrf);
 const activityPage = ref(0),
   activitySize = ref(5),
   activityTotal = ref(0),
@@ -152,6 +155,7 @@ async function verify(
   target: string,
   fn: (proof: any) => Promise<void>,
 ) {
+  if (!accountReady.value) return;
   perform = fn;
   openVerification(action, target);
 }
@@ -174,6 +178,7 @@ async function confirm() {
   }
 }
 async function run(fn: () => Promise<void>) {
+  if (!accountReady.value) return;
   error.value = "";
   try {
     await fn();
@@ -199,6 +204,7 @@ async function refresh(force = true) {
     return result;
   };
   loading.value = true;
+  contextReady.value = false;
   error.value = "";
   try {
     const [projectList, user] = await loadContext(
@@ -207,6 +213,7 @@ async function refresh(force = true) {
     current();
     projects.value = projectList;
     session.value = user;
+    contextReady.value = true;
     if (!projects.value.some((p) => p.id === selected.value))
       selected.value = projects.value[0]?.id || "";
     localStorage.setItem("metertrail.project", selected.value);
@@ -375,9 +382,17 @@ async function copyKey() {
   copied.value = true;
 }
 async function logout() {
-  await api("/logout", {});
-  session.value = null;
-  router.push("/login");
+  if (!accountReady.value || signingOut.value) return;
+  signingOut.value = true;
+  try {
+    await api("/logout", {});
+    refreshId++;
+    contextReady.value = false;
+    session.value = null;
+    await router.push("/login");
+  } finally {
+    signingOut.value = false;
+  }
 }
 const daily = computed(() => [...(overview.value.daily || [])].reverse()),
   maxCalls = computed(() =>
@@ -473,6 +488,7 @@ const usagePercent = computed(() =>
           ><button
             class="icon-button"
             :title="t('Sign out', '退出登录')"
+            :disabled="!accountReady || signingOut"
             @click="run(logout)"
           >
             <LogOut :size="16" />
@@ -1649,6 +1665,7 @@ const usagePercent = computed(() =>
               }}</RouterLink
               ><button
                 class="btn"
+                :disabled="!accountReady || signingOut"
                 @click="
                   verify(
                     session?.githubConnected ? 'github.unlink' : 'github.link',
@@ -1669,7 +1686,7 @@ const usagePercent = computed(() =>
                     ? t("Unlink GitHub", "解绑 GitHub")
                     : t("Link GitHub", "绑定 GitHub")
                 }}</button
-              ><button class="btn" @click="run(logout)">
+              ><button class="btn" :disabled="!accountReady || signingOut" @click="run(logout)">
                 {{ t("Sign out", "退出登录") }}
               </button>
             </div>
@@ -1691,7 +1708,7 @@ const usagePercent = computed(() =>
         />
 
         <BatchHistory v-if="page === 'keys' && selected" :project="selected" />
-        <AccountSecurity v-if="page === 'account'" />
+        <AccountSecurity v-if="page === 'account'" :disabled="!accountReady || signingOut" />
         <template v-if="page === 'audit'"
           ><div class="audit-toolbar query-export trace-export">
             <h2>{{ t("Activity log", "操作记录") }}</h2>
