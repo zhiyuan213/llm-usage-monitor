@@ -19,7 +19,7 @@ class SubscriptionChanges {
 
   Map<String, Object> body(String plan) {
     if (!Set.of("Core", "Pro").contains(plan)) throw new ApiError(400, "INVALID_PLAN");
-    String price = plan.equals("Core") ? payments.core : payments.pro;
+    String price = payments.planPrice(plan);
     if (price.isBlank()) throw new ApiError(503, "PAYMENTS_NOT_CONFIGURED");
     return Map.of("items", List.of(Map.of("price_id", price, "quantity", 1)),
         "proration_billing_mode", "prorated_immediately", "on_payment_failure", "prevent_change");
@@ -37,8 +37,7 @@ class SubscriptionChanges {
   }
 
   JsonNode preview(String sub, String plan) {
-    JsonNode response = payments.paddleClient.patch().uri(payments.url + "/subscriptions/" + sub + "/preview")
-        .header("Authorization", "Bearer " + payments.apiKey).body(body(plan)).retrieve().body(JsonNode.class);
+    JsonNode response = payments.previewSubscription(sub, body(plan));
     if (response == null || !response.hasNonNull("data")) throw new ApiError(503, "PLAN_PREVIEW_UNAVAILABLE");
     JsonNode data = response.get("data");
     if (!data.path("recurring_transaction_details").path("totals").hasNonNull("total")
@@ -66,7 +65,7 @@ class SubscriptionChanges {
     body(plan);
     JsonNode sub = subscription(workspace);
     String currentPrice = sub.path("items").get(0).path("price").path("id").asText();
-    if (currentPrice.equals(plan.equals("Core") ? payments.core : payments.pro)) throw new ApiError(409, "PLAN_ALREADY_SELECTED");
+    if (currentPrice.equals(payments.planPrice(plan))) throw new ApiError(409, "PLAN_ALREADY_SELECTED");
     JsonNode result = preview(sub.path("id").asText(), plan);
     UUID id = UUID.randomUUID();
     Instant expires = Instant.now().plusSeconds(300);
@@ -100,8 +99,7 @@ class SubscriptionChanges {
         || !totals(preview(subscription, plan)).equals(totals(Support.parse(quote.get("preview").toString()))))
       throw new ApiError(409, "PLAN_QUOTE_CHANGED");
       mutationStarted = true;
-      payments.paddleClient.patch().uri(payments.url + "/subscriptions/" + subscription)
-          .header("Authorization", "Bearer " + payments.apiKey).body(body(plan)).retrieve().body(JsonNode.class);
+      payments.patchSubscription(subscription, body(plan));
       store.db.update("UPDATE subscription_change_quotes SET status='submitted' WHERE id=? AND status IN ('processing','submitted')", id);
       store.audit(SessionFilter.uid(request), (UUID) workspace.get("id"), "subscription.change", id.toString(), true, request);
       return Map.of("status", "pending");

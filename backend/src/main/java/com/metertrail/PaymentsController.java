@@ -71,6 +71,20 @@ class PaymentsController {
         .body(JsonNode.class);
   }
 
+  String planPrice(String plan) {
+    return plan.equals("Core") ? core : pro;
+  }
+
+  JsonNode previewSubscription(String subscriptionId, Map<String, Object> body) {
+    return patchSubscription(subscriptionId + "/preview", body);
+  }
+
+  JsonNode patchSubscription(String subscriptionId, Map<String, Object> body) {
+    if (!reconciliationEnabled()) throw new ApiError(503, "PAYMENTS_NOT_CONFIGURED");
+    return paddleClient.patch().uri(url + "/subscriptions/" + subscriptionId)
+        .header("Authorization", "Bearer " + apiKey).body(body).retrieve().body(JsonNode.class);
+  }
+
   @PostMapping("/api/billing/checkout")
   Map<String, String> checkout(@RequestBody JsonNode b, HttpServletRequest req) {
     String plan = b.path("plan").asText();

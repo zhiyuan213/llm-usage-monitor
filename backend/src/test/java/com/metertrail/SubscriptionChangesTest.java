@@ -49,7 +49,14 @@ class SubscriptionChangesTest {
     when(db.queryForList("SELECT * FROM workspaces WHERE owner_id=?",user)).thenReturn(List.of(Map.of("id",workspace,"subscription_id","sub_test")));
     var store=new Store(db,mock(Secrets.class));
     var payments=new PaymentsController(store,new SimpleMeterRegistry(),new CheckoutConfiguration("test_example","https://sandbox-api.paddle.com"),"https://example.test","test-secret","api-key","pri_core","pri_pro","http://127.0.0.1:"+server.getAddress().getPort());
-    changes=new SubscriptionChanges(payments,store);
+    var factory=new org.springframework.aop.framework.ProxyFactory(payments);
+    factory.setProxyTargetClass(true);
+    factory.addAdvice((org.aopalliance.intercept.MethodInterceptor) invocation -> invocation.proceed());
+    var proxy=(PaymentsController)factory.getProxy();
+    // Spring's constructor-bypassing proxy has empty fields; methods reach the initialized target.
+    assertNull(proxy.core);
+    assertEquals("pri_core",proxy.planPrice("Core"));
+    changes=new SubscriptionChanges(proxy,store);
     request=new MockHttpServletRequest(); request.setAttribute("user",Map.of("id",user));
   }
   @AfterEach void stop(){server.stop(0);}
