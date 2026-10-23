@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +46,9 @@ class ConsoleController {
   final Store store;
   final Challenges challenges;
   final RateLimits limits;
+  final Map<UUID, CachedCount> traceCounts = new ConcurrentHashMap<>();
+
+  record CachedCount(long value, long expiresAt) {}
 
   ConsoleController(Store store, Challenges challenges, RateLimits limits) {
     this.store = store;
@@ -257,21 +261,36 @@ class ConsoleController {
       HttpServletRequest req) {
     store.project(uid(req), project);
     Support.require(page >= 0 && page <= 100000 && search.length() <= 128, "INVALID_FILTER");
-    String where =
-        source()
-            + " AND o.type='trace' AND (?='' OR o.data->>'status'=?) AND (?='' OR o.object_id ILIKE"
-            + " ? OR o.data->>'name' ILIKE ?)";
-    Object[] args = {
-      project, uid(req), status, status, search, "%" + search + "%", "%" + search + "%"
-    };
-    var params = new ArrayList<>(Arrays.asList(args));
+    StringBuilder where = new StringBuilder(source()).append(" AND o.type='trace'");
+    var args = new ArrayList<Object>(List.of(project, uid(req)));
+    if (!status.isEmpty()) {
+      where.append(" AND o.data->>'status'=?");
+      args.add(status);
+    }
+    if (!search.isEmpty()) {
+      where.append(" AND (o.object_id ILIKE ? OR o.data->>'name' ILIKE ?)");
+      args.add("%" + search + "%");
+      args.add("%" + search + "%");
+    }
+    var params = new ArrayList<>(args);
     params.add(page * 50);
     var rows =
         decode(
             store.db.queryForList(
                 "SELECT o.*" + where + " ORDER BY o.started_at DESC LIMIT 50 OFFSET ?",
                 params.toArray()));
-    long count = store.db.queryForObject("SELECT count(*)" + where, Long.class, args);
+    long count;
+    if (search.isEmpty() && status.isEmpty()) {
+      long now = System.nanoTime();
+      var cached = traceCounts.get(project);
+      if (cached != null && cached.expiresAt() > now) count = cached.value();
+      else {
+        count = store.db.queryForObject("SELECT count(*)" + where, Long.class, args.toArray());
+        traceCounts.put(project, new CachedCount(count, now + 1_000_000_000L));
+      }
+    } else {
+      count = store.db.queryForObject("SELECT count(*)" + where, Long.class, args.toArray());
+    }
     return Map.of("items", rows, "total", count, "page", page);
   }
 

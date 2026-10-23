@@ -55,6 +55,8 @@ class IngestService {
         project,
         b.path("agent").toString(),
         b.path("events").size());
+    var fast = fastFresh(project, workspace, w, packs, batch, b, used, overageUnits, addonConsumed, before);
+    if (fast != null) return fast;
     int accepted = 0, duplicates = 0, rejected = 0, index = 0;
     List<Map<String, Object>> errors = new ArrayList<>();
     for (JsonNode e : b.path("events")) {
@@ -211,6 +213,120 @@ class IngestService {
     metrics.counter("metertrail_events_accepted").increment(accepted);
     metrics.counter("metertrail_events_duplicates").increment(duplicates);
     return Map.of("batchId", batch, "received", b.path("events").size(), "status", "pending");
+  }
+
+  /**
+   * The normal SDK/load path consists entirely of new identities. Persist that path in three
+   * set-based statements instead of issuing several database round trips per event. Any replay,
+   * revision, duplicate-in-envelope, quota edge, or usage notification crossing stays on the
+   * established per-event path above.
+   */
+  private Map<String, Object> fastFresh(
+      UUID project,
+      UUID workspace,
+      Map<String, Object> w,
+      List<Map<String, Object>> packs,
+      UUID batch,
+      JsonNode body,
+      long used,
+      long overageUnits,
+      long addonConsumed,
+      long before) {
+    var events = new ArrayList<JsonNode>();
+    var eventIds = new ArrayList<UUID>();
+    var identities = new ArrayList<String>();
+    var eventSet = new HashSet<UUID>();
+    var identitySet = new HashSet<String>();
+    Instant now = Instant.now();
+    String plan = (String) w.get("plan");
+    Instant end = ((Timestamp) w.get("period_end")).toInstant();
+    for (JsonNode event : body.path("events")) {
+      try {
+        Protocol.event(event);
+        UUID eventId = Support.uuid(event.path("eventId").asText());
+        String identity = event.path("type").asText() + "\u0000" + event.path("objectId").asText();
+        Instant started = Instant.parse(event.path("startedAt").asText());
+        if (!eventSet.add(eventId) || !identitySet.add(identity)) return null;
+        if (started.isBefore(now.minus(Duration.ofDays(7))) || started.isAfter(now.plusSeconds(300)))
+          return null;
+        events.add(event);
+        eventIds.add(eventId);
+        identities.add(identity);
+      } catch (RuntimeException invalid) {
+        return null;
+      }
+    }
+    if (events.isEmpty() || !end.isAfter(now) && !plan.equals("Free")) return null;
+    long included = Billing.included(plan);
+    if ((before < included * 8 / 10 && used + events.size() >= included * 8 / 10)
+        || (before < included && used + events.size() >= included)) return null;
+    String eventMarks = String.join(",", Collections.nCopies(eventIds.size(), "?"));
+    var eventArgs = new ArrayList<Object>();
+    eventArgs.add(project);
+    eventArgs.addAll(eventIds);
+    if (!store.db.queryForList(
+            "SELECT 1 FROM ingest_events WHERE project_id=? AND event_id IN (" + eventMarks + ") LIMIT 1",
+            eventArgs.toArray()).isEmpty()) return null;
+    String identityWhere = String.join(" OR ", Collections.nCopies(identities.size(), "(type=? AND object_id=?)"));
+    var identityArgs = new ArrayList<Object>();
+    identityArgs.add(project);
+    for (String identity : identities) {
+      int split = identity.indexOf('\u0000');
+      identityArgs.add(identity.substring(0, split));
+      identityArgs.add(identity.substring(split + 1));
+    }
+    if (!store.db.queryForList(
+            "SELECT 1 FROM billable_objects WHERE project_id=? AND (" + identityWhere + ") LIMIT 1",
+            identityArgs.toArray()).isEmpty()) return null;
+
+    Map<String, Object> pack = null;
+    for (var candidate : packs)
+      if (((Number) candidate.get("consumed_units")).longValue()
+          < ((Number) candidate.get("units")).longValue()) { pack = candidate; break; }
+    long baseRemaining = Math.max(0, included - (used - overageUnits - addonConsumed));
+    long packRemaining = pack == null ? 0 : ((Number) pack.get("units")).longValue()
+        - ((Number) pack.get("consumed_units")).longValue();
+    if (events.size() > baseRemaining + packRemaining) return null;
+
+    var ledger = new ArrayList<Object>();
+    var objects = new ArrayList<Object>();
+    var pending = new ArrayList<Object>();
+    int index = 0;
+    long packUsed = 0;
+    for (JsonNode event : events) {
+      String type = event.path("type").asText(), object = event.path("objectId").asText();
+      var content = event.deepCopy();
+      ((com.fasterxml.jackson.databind.node.ObjectNode) content).remove("eventId");
+      UUID packId = index >= baseRemaining && pack != null ? (UUID) pack.get("id") : null;
+      if (packId != null) packUsed++;
+      Collections.addAll(ledger, workspace, project, type, object, "accepted", w.get("period_start"), false, packId);
+      Collections.addAll(objects, project, type, object, event.path("revision").asLong(),
+          Support.hash(Support.canonical(content)), batch);
+      Collections.addAll(pending, project, eventIds.get(index), Support.hash(Support.canonical(event)),
+          batch, index, event.toString(), false);
+      index++;
+    }
+    multiInsert("INSERT INTO usage_ledger(workspace_id,project_id,type,object_id,units,reason,period_start,overage,addon_charge_id) VALUES ",
+        "(?,?,?,?,1,?,?,?,?)", events.size(), ledger);
+    multiInsert("INSERT INTO billable_objects(project_id,type,object_id,revision,content_hash,reservation_batch,charge_generation,charged) VALUES ",
+        "(?,?,?,?,?,?,1,true)", events.size(), objects);
+    multiInsert("INSERT INTO ingest_events(project_id,event_id,content_hash,batch_id,event_index,payload,processed) VALUES ",
+        "(?,?,?,?,?,?::jsonb,?)", events.size(), pending);
+    used += events.size();
+    addonConsumed += packUsed;
+    store.db.update("UPDATE workspaces SET used_units=?,addon_consumed=? WHERE id=?", used, addonConsumed, workspace);
+    if (pack != null && packUsed > 0) {
+      long consumed = ((Number) pack.get("consumed_units")).longValue() + packUsed;
+      pack.put("consumed_units", consumed);
+      store.db.update("UPDATE usage_charges SET consumed_units=? WHERE id=?", consumed, pack.get("id"));
+    }
+    store.db.update("UPDATE ingest_batches SET accepted=? WHERE id=?", events.size(), batch);
+    metrics.counter("metertrail_events_accepted").increment(events.size());
+    return Map.of("batchId", batch, "received", events.size(), "status", "pending");
+  }
+
+  private void multiInsert(String prefix, String row, int count, List<Object> args) {
+    store.db.update(prefix + String.join(",", Collections.nCopies(count, row)), args.toArray());
   }
 
   private void remember(

@@ -71,6 +71,9 @@ class Worker {
                           "SELECT * FROM ingest_events WHERE batch_id=? AND NOT processed ORDER BY"
                               + " event_index",
                           batch);
+                  var objectArgs = new ArrayList<Object>();
+                  var costArgs = new ArrayList<Object>();
+                  int costCount = 0;
                   for (var row : events) {
                     JsonNode e = Support.parse(row.get("payload").toString());
                     JsonNode d = e.path("data");
@@ -110,41 +113,32 @@ class Worker {
                                 .divide(BigDecimal.valueOf(1_000_000));
                       }
                     }
+                    Collections.addAll(objectArgs, project, type, e.path("objectId").asText(),
+                        e.path("revision").asLong(), e.path("traceId").asText(null),
+                        e.path("spanId").asText(null), e.path("parentSpanId").asText(null),
+                        Timestamp.from(started), d.toString(), cost, price);
+                    if (type.equals("observation")) {
+                      Collections.addAll(costArgs, project, e.path("objectId").asText(),
+                          e.path("revision").asLong(), Timestamp.from(started),
+                          d.has("usage") ? d.path("usage").toString() : null, price, cost);
+                      costCount++;
+                    }
+                  }
+                  if (!events.isEmpty()) {
                     store.db.update(
-                        "INSERT INTO"
-                            + " objects(project_id,type,object_id,revision,trace_id,span_id,parent_span_id,started_at,data,cost,price_version)"
-                            + " VALUES(?,?,?,?,?,?,?,?,?::jsonb,?,?) ON"
-                            + " CONFLICT(project_id,type,object_id) DO UPDATE SET"
+                        "INSERT INTO objects(project_id,type,object_id,revision,trace_id,span_id,parent_span_id,started_at,data,cost,price_version) VALUES "
+                            + String.join(",", Collections.nCopies(events.size(), "(?,?,?,?,?,?,?,?,?::jsonb,?,?)"))
+                            + " ON CONFLICT(project_id,type,object_id) DO UPDATE SET"
                             + " revision=excluded.revision,trace_id=excluded.trace_id,span_id=excluded.span_id,parent_span_id=excluded.parent_span_id,started_at=excluded.started_at,data=excluded.data,cost=excluded.cost,price_version=excluded.price_version"
                             + " WHERE objects.revision<excluded.revision",
-                        project,
-                        type,
-                        e.path("objectId").asText(),
-                        e.path("revision").asLong(),
-                        e.path("traceId").asText(null),
-                        e.path("spanId").asText(null),
-                        e.path("parentSpanId").asText(null),
-                        Timestamp.from(started),
-                        d.toString(),
-                        cost,
-                        price);
-                    store.db.update(
-                        "INSERT INTO"
-                            + " cost_entries(project_id,object_id,revision,started_at,usage,price_version,estimated_cost)"
-                            + " SELECT ?,?,?,?,?::jsonb,?,? WHERE ?='observation' ON CONFLICT DO"
-                            + " NOTHING",
-                        project,
-                        e.path("objectId").asText(),
-                        e.path("revision").asLong(),
-                        Timestamp.from(started),
-                        d.has("usage") ? d.path("usage").toString() : null,
-                        price,
-                        cost,
-                        type);
-                    store.db.update(
-                        "UPDATE ingest_events SET processed=true WHERE project_id=? AND event_id=?",
-                        project,
-                        row.get("event_id"));
+                        objectArgs.toArray());
+                    if (costCount > 0)
+                      store.db.update(
+                          "INSERT INTO cost_entries(project_id,object_id,revision,started_at,usage,price_version,estimated_cost) VALUES "
+                              + String.join(",", Collections.nCopies(costCount, "(?,?,?,?,?::jsonb,?,?)"))
+                              + " ON CONFLICT DO NOTHING",
+                          costArgs.toArray());
+                    store.db.update("UPDATE ingest_events SET processed=true WHERE batch_id=?", batch);
                   }
                   store.db.update(
                       "UPDATE ingest_batches SET status='completed',completed_at=now() WHERE id=?",
