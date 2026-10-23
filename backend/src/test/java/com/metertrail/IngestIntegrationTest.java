@@ -1288,6 +1288,18 @@ class IngestIntegrationTest {
     System.out.println("ISOLATED_BACKLOG_1200_ELAPSED_MS="+TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-start));
   }
 
+  @Test
+  void maximumBatchOfFreshObjectsIsAcceptedAndRemainsIdempotent() {
+    JsonNode[] events = new JsonNode[500];
+    for (int index=0; index<events.length; index++) {
+      events[index]=event("trace", "maximum-batch-"+index, 1);
+    }
+    var payload=batch(events);
+    assertEquals(500, result(ingest.accept(project,payload)).get("accepted"));
+    assertEquals(500, result(ingest.accept(project,payload)).get("duplicates"));
+    assertEquals(500, units());
+  }
+
   @Test void emailChangeRevokesAllOldSessionsAndOnlyNewEmailCanLogIn() throws Exception {
     String oldEmail=user+"@test.local",newEmail=user+"@new.test",password="synthetic-password-12345";
     store.db.update("UPDATE users SET password_hash=? WHERE id=?",new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(4).encode(password),user);

@@ -267,16 +267,28 @@ class IngestService {
     if (!store.db.queryForList(
             "SELECT 1 FROM ingest_events WHERE project_id=? AND event_id IN (" + eventMarks + ") LIMIT 1",
             eventArgs.toArray()).isEmpty()) return null;
-    String identityWhere = String.join(" OR ", Collections.nCopies(identities.size(), "(type=? AND object_id=?)"));
-    var identityArgs = new ArrayList<Object>();
-    identityArgs.add(project);
+    var identitiesByType = new LinkedHashMap<String, List<String>>();
     for (String identity : identities) {
       int split = identity.indexOf('\u0000');
-      identityArgs.add(identity.substring(0, split));
-      identityArgs.add(identity.substring(split + 1));
+      identitiesByType
+          .computeIfAbsent(identity.substring(0, split), ignored -> new ArrayList<>())
+          .add(identity.substring(split + 1));
+    }
+    var identityClauses = new ArrayList<String>();
+    var identityArgs = new ArrayList<Object>();
+    identityArgs.add(project);
+    for (var group : identitiesByType.entrySet()) {
+      identityClauses.add(
+          "(type=? AND object_id IN ("
+              + String.join(",", Collections.nCopies(group.getValue().size(), "?"))
+              + "))");
+      identityArgs.add(group.getKey());
+      identityArgs.addAll(group.getValue());
     }
     if (!store.db.queryForList(
-            "SELECT 1 FROM billable_objects WHERE project_id=? AND (" + identityWhere + ") LIMIT 1",
+            "SELECT 1 FROM billable_objects WHERE project_id=? AND ("
+                + String.join(" OR ", identityClauses)
+                + ") LIMIT 1",
             identityArgs.toArray()).isEmpty()) return null;
 
     Map<String, Object> pack = null;
