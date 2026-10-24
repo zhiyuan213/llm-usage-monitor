@@ -861,6 +861,7 @@ async function copy() {
         <RouterLink to="/privacy">{{ t("Privacy", "隐私") }}</RouterLink
         ><RouterLink to="/terms">{{ t("Terms", "条款") }}</RouterLink
         ><RouterLink to="/refunds">{{ t("Refunds", "退款") }}</RouterLink>
+        <a href="https://basaltkit.com/" target="_blank" rel="noopener noreferrer">{{ t('Developer tools', '开发工具') }}</a>
       </nav>
     </footer>
   </div>

@@ -25,7 +25,7 @@ try {
     const output = shell.replace(/<title>.*?<\/title>/,`<title>${escape(title)}</title>`)
       .replace(/<meta name="description" content="[^"]*">/,`<meta name="description" content="${escape(page.description)}">`)
       .replace('</head>',`<link rel="canonical" href="https://metertrail.com${page.path}"></head>`)
-      .replace('<div id="app"></div>',`<div id="app"><div class="public public-v2">${nav}<main class="public-content">${page.html}</main><footer>${link('/privacy','Privacy')} · ${link('/terms','Terms')} · ${link('/refunds','Refunds')}</footer></div></div>`);
+      .replace('<div id="app"></div>',`<div id="app"><div class="public public-v2">${nav}<main class="public-content">${page.html}</main><footer>${link('/privacy','Privacy')} · ${link('/terms','Terms')} · ${link('/refunds','Refunds')} · <a href="https://basaltkit.com/" target="_blank" rel="noopener noreferrer">Developer tools</a></footer></div></div>`);
     const target = page.path==='/' ? 'dist/home.html' : 'dist'+page.path+'.html';
     await mkdir(dirname(target),{recursive:true}); await writeFile(target,output);
   }
