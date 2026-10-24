@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /api/
+Disallow: /v1/
+Disallow: /webhooks/
+
+Sitemap: https://metertrail.com/sitemap.xml

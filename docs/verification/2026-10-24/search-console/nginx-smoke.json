@@ -1,0 +1,78 @@
+{
+  "result": "passed",
+  "server": "nginx:stable-alpine with production configuration and built frontend",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "private_noindex": false,
+      "security_headers_retained": true
+    },
+    {
+      "path": "/pricing",
+      "status": 200,
+      "private_noindex": false,
+      "security_headers_retained": true
+    },
+    {
+      "path": "/docs",
+      "status": 200,
+      "private_noindex": false,
+      "security_headers_retained": true
+    },
+    {
+      "path": "/apple-touch-icon.png",
+      "status": 200,
+      "private_noindex": false,
+      "security_headers_retained": true
+    },
+    {
+      "path": "/app",
+      "status": 200,
+      "private_noindex": true,
+      "security_headers_retained": true
+    },
+    {
+      "path": "/app/workspace?test=1",
+      "status": 200,
+      "private_noindex": true,
+      "security_headers_retained": true
+    },
+    {
+      "path": "/login?test=1",
+      "status": 200,
+      "private_noindex": true,
+      "security_headers_retained": true
+    },
+    {
+      "path": "/register",
+      "status": 200,
+      "private_noindex": true,
+      "security_headers_retained": true
+    },
+    {
+      "path": "/verify",
+      "status": 200,
+      "private_noindex": true,
+      "security_headers_retained": true
+    },
+    {
+      "path": "/pay?checkout=fixture",
+      "status": 200,
+      "private_noindex": true,
+      "security_headers_retained": true
+    },
+    {
+      "path": "/api/me",
+      "status": 502,
+      "private_noindex": true,
+      "security_headers_retained": true
+    }
+  ],
+  "sitemap": [
+    "https://metertrail.com/",
+    "https://metertrail.com/pricing",
+    "https://metertrail.com/docs"
+  ],
+  "google_file_exact_match": true
+}
