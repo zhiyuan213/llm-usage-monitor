@@ -71,6 +71,8 @@ jobs:
           push: false
           tags: metertrail-web:${{ github.sha }}
           outputs: type=oci,dest=/tmp/metertrail-web.tar
+      - name: Verify non-root web runtime with restrictive source permissions
+        run: python3 scripts/check-web-image.py
       - run: sha256sum /tmp/metertrail-api.tar /tmp/metertrail-web.tar > /tmp/checksums.txt
       - uses: actions/upload-artifact@v4
         with: {name: immutable-images, path: '/tmp/metertrail-*.tar', retention-days: 7}

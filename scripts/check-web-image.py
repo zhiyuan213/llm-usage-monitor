@@ -1,0 +1,78 @@
+"""Build with 0600/0700 source permissions, then exercise the non-root web image."""
+import io
+import json
+import os
+from pathlib import Path
+import subprocess
+import tarfile
+import time
+import urllib.request
+import uuid
+
+ROOT = Path(__file__).resolve().parent.parent
+TAG = "metertrail-web:permissions-check"
+NAME = "metertrail-web-check-" + uuid.uuid4().hex[:12]
+
+def docker(*args, **kwargs):
+    return subprocess.run(["docker", *args], check=True, timeout=kwargs.pop("timeout", 60), **kwargs)
+
+def main():
+    context = io.BytesIO()
+    with tarfile.open(fileobj=context, mode="w:gz") as archive:
+        for base, dirs, files in os.walk(ROOT / "frontend"):
+            dirs[:] = sorted(d for d in dirs if d not in {"node_modules", "dist", ".git"})
+            for name in sorted(dirs + files):
+                source = Path(base) / name
+                if source.is_symlink():
+                    raise RuntimeError("Unexpected symlink in frontend context")
+                item = archive.gettarinfo(str(source), arcname=source.relative_to(ROOT / "frontend").as_posix())
+                item.mode = 0o700 if source.is_dir() else 0o600
+                item.uid = item.gid = 0
+                item.uname = item.gname = "root"
+                if source.is_file():
+                    with source.open("rb") as stream:
+                        archive.addfile(item, stream)
+                else:
+                    archive.addfile(item)
+    docker("build", "--progress=plain", "-t", TAG, "-", input=context.getvalue(), timeout=600)
+    try:
+        docker("run", "-d", "--name", NAME, "--add-host", "api-blue:127.0.0.1",
+               "-p", "127.0.0.1::8080", "-v",
+               f"{ROOT / 'ops/nginx/upstream.conf'}:/etc/nginx/conf.d/upstream.conf:ro", TAG)
+        uid = docker("exec", NAME, "id", "-u", capture_output=True, text=True).stdout.strip()
+        if uid == "0":
+            raise AssertionError("Web server must run as non-root")
+        docker("exec", NAME, "nginx", "-t")
+        port = docker("port", NAME, "8080/tcp", capture_output=True, text=True).stdout.strip().rsplit(":", 1)[1]
+        origin = "http://127.0.0.1:" + port
+        for attempt in range(30):
+            try:
+                with urllib.request.urlopen(origin + "/", timeout=2) as response:
+                    html = response.read().decode()
+                break
+            except OSError:
+                if attempt == 29:
+                    raise
+                time.sleep(0.5)
+        import re
+        assets = re.findall(r'(?:src|href)="(/(?:assets|fonts)/[^"<>]+)"', html)
+        paths = ["/", "/sitemap.xml", "/robots.txt", "/googlecc6b6e16e288c986.html", "/fonts/NotoSansSC-Regular.woff2", *assets]
+        for path in paths:
+            with urllib.request.urlopen(origin + path, timeout=5) as response:
+                content = response.read()
+                if response.status != 200 or not content:
+                    raise AssertionError("Unreadable public file: " + path)
+                if path == "/googlecc6b6e16e288c986.html" and content != (ROOT / "frontend/public" / path[1:]).read_bytes():
+                    raise AssertionError("Google verification file changed")
+        for path in ["/app", "/app/workspace?test=1", "/login", "/pay?test=1"]:
+            with urllib.request.urlopen(origin + path, timeout=5) as response:
+                if "noindex" not in response.headers.get("X-Robots-Tag", ""):
+                    raise AssertionError("Private URL missing noindex: " + path)
+                if not response.headers.get("Content-Security-Policy"):
+                    raise AssertionError("Security headers lost")
+        print(json.dumps({"result": "passed", "runtime_uid": uid, "restrictive_context": "files 0600, directories 0700", "public_files_checked": paths, "private_headers_checked": 4}))
+    finally:
+        subprocess.run(["docker", "rm", "-f", NAME], check=False, timeout=30)
+
+if __name__ == "__main__":
+    main()

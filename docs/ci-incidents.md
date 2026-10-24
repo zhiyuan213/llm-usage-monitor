@@ -29,3 +29,10 @@
 - Root cause: the new descriptive synthetic fixture crossed the generic API-key entropy heuristic. The value is defined only in test source, not read from an environment or a deployed credential.
 - Fix: reuse the existing clearly synthetic integration-test fixture. Since CI scans Git history, allow only the exact historical finding fingerprint in `.gitleaksignore`, with its test-only provenance documented; no rule or source-path exclusions.
 - Prevention: run the same gitleaks v8.28.0 full-history scan locally, keeping all other findings blocking. Full CI, including Trivy and images, remains required.
+
+## 2026-10-24 non-root frontend image inherited restricted checkout modes
+
+- Commit `4ebf867` passed build-only CI, but the production web container restarted with `open() /etc/nginx/nginx.conf failed (13: Permission denied)`; the previous web image was restored and public HTTP 200 confirmed. API and Worker remained healthy.
+- Root cause: the remote deployment inherited umask 077. Git wrote newly changed Nginx configuration and public verification files with mode 0600. Docker COPY preserved the mode with root ownership, while runtime USER nginx could not read them. Existing local Nginx checks ran as root and did not reproduce this boundary.
+- Fix: COPY both Nginx configuration files with explicit 0644 permissions; normalize public output directories to 0755 and files to 0644 before switching to USER nginx. Do not weaken the runtime user or operator backup permissions.
+- Prevention: `scripts/check-web-image.py` creates a real build context with 0600 files / 0700 directories, builds the production Dockerfile, starts its default non-root user, checks nginx configuration and serves HTML, JS/CSS, font, verification, robots and sitemap files over HTTP. It also checks private-page noindex and retained CSP headers. The images CI job now requires this check before uploading artifacts.

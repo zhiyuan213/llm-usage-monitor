@@ -1,0 +1,15 @@
+{
+  "result": "passed",
+  "runtime_uid": "101",
+  "restrictive_context": "files 0600, directories 0700",
+  "public_files_checked": [
+    "/",
+    "/sitemap.xml",
+    "/robots.txt",
+    "/googlecc6b6e16e288c986.html",
+    "/fonts/NotoSansSC-Regular.woff2",
+    "/assets/index-D_Yw8Mt3.js",
+    "/assets/index-BCNmapXr.css"
+  ],
+  "private_headers_checked": 4
+}
