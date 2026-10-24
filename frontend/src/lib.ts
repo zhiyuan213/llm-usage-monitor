@@ -63,8 +63,8 @@ export const date = (v: string) =>
 const errors: Record<string, [string, string]> = {
   ADMIN_REQUIRED: ["Administrator access is required.", "仅管理员可以访问。"],
   MESSAGE_NOT_FOUND: ["This conversation was not found.", "消息会话不存在或无权访问。"],
-  INVALID_TITLE: ["Enter a title up to 240 UTF-8 bytes.", "请输入标题，最多 240 个 UTF-8 字节（约 80 个汉字）。"],
-  INVALID_BODY: ["Enter a message up to 8,000 UTF-8 bytes.", "请输入消息，最多 8,000 个 UTF-8 字节（约 2,600 个汉字）。"],
+  INVALID_TITLE: ["Enter a subject, or shorten it if it is too long.", "请填写标题；如果标题太长，请精简后再发送。"],
+  INVALID_BODY: ["Enter a message, or shorten it or send it in parts if it is too long.", "请填写消息内容；如果内容太长，请精简或分条发送。"],
   MESSAGE_THREAD_LIMIT: ["The conversation limit has been reached. Add to an existing conversation.", "已达到会话数量上限，请在现有会话中补充。"],
   MESSAGE_REPLY_LIMIT: ["This conversation has reached 200 replies. Start a new one.", "此会话已达到 200 条回复，请新建会话。"],
   MESSAGE_RETRY_CONFLICT: ["This submission ID was used for different content. Refresh before sending again.", "此提交标识已用于其他内容，请刷新后重新发送。"],

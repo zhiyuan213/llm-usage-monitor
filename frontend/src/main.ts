@@ -4,6 +4,7 @@ import App from "./App.vue";
 import { consoleRoutes } from "./console-routes";
 import Public from "./Public.vue";
 import Console from "./Console.vue";
+import { hasAnalytics, publicPage, trackPage } from './analytics';
 import "./style.css";
 import "./console-v2.css";
 import "./public-v2.css";
@@ -11,7 +12,13 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     ...consoleRoutes(Console),
+    { path: '/tutorials/:tutorial', component: Public, meta: { tutorial: true } },
     { path: "/:page?", component: Public },
   ],
 });
+// Unload Google's script before entering any authenticated, payment or unknown route.
+router.beforeEach((to) => {
+  if (hasAnalytics() && !publicPage(to.path)) { window.location.assign(to.fullPath); return false; }
+});
+router.afterEach((to, _from, failure) => { if (!failure) trackPage(to.path); });
 createApp(App).use(router).mount("#app");

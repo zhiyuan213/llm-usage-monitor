@@ -1,0 +1,9 @@
+// Fictional local fixtures. They never come from a customer account or call a live API.
+export const demoCalls = [
+  { id: 'demo-01', name: 'Answer a support question', zh: '回答客服问题', feature: 'Support', status: 'success', duration: 1840, input: 2400, output: 320, cost: 0.008, model: 'Example small model', steps: [{ name: 'Retrieve knowledge', zh: '检索知识库', duration: 180 }, { name: 'Generate answer', zh: '生成回答', duration: 1590 }] },
+  { id: 'demo-02', name: 'Summarize a document', zh: '总结文档', feature: 'Documents', status: 'success', duration: 6320, input: 18000, output: 1100, cost: 0.096, model: 'Example large model', steps: [{ name: 'Extract document', zh: '提取文档', duration: 320 }, { name: 'Generate summary', zh: '生成摘要', duration: 5800 }] },
+  { id: 'demo-03', name: 'Classify a message', zh: '分类消息', feature: 'Support', status: 'success', duration: 420, input: 180, output: 12, cost: 0.0004, model: 'Example small model', steps: [{ name: 'Classify message', zh: '分类消息', duration: 390 }] },
+  { id: 'demo-04', name: 'Generate a report', zh: '生成报告', feature: 'Reports', status: 'error', duration: 12000, input: 4000, output: 0, cost: null, model: 'Example large model', steps: [{ name: 'Fetch report data', zh: '读取报告数据', duration: 260 }, { name: 'Model request timed out', zh: '模型请求超时', duration: 11600 }] },
+  { id: 'demo-05', name: 'Answer a product question', zh: '回答产品问题', feature: 'Support', status: 'success', duration: 2100, input: 3100, output: 420, cost: 0.0104, model: 'Example small model', steps: [{ name: 'Retrieve knowledge', zh: '检索知识库', duration: 210 }, { name: 'Generate answer', zh: '生成回答', duration: 1800 }] },
+  { id: 'demo-06', name: 'Compare two documents', zh: '对比两份文档', feature: 'Documents', status: 'success', duration: 4800, input: 12000, output: 800, cost: 0.0672, model: 'Example large model', steps: [{ name: 'Read documents', zh: '读取文档', duration: 450 }, { name: 'Compare content', zh: '对比内容', duration: 4200 }] },
+];

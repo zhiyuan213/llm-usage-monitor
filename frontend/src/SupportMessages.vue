@@ -104,9 +104,9 @@ async function older() {
         <div class="support-heading"><h2>{{ t('New message', '新建消息') }}</h2><button class="text-button" :disabled="busy" @click="composing=false">{{ t('Cancel', '取消') }}</button></div>
         <form @submit.prevent="create">
           <label>{{ t('Subject', '标题') }}<input v-model="draft.title" required maxlength="240" :disabled="busy" /></label>
-          <small class="muted">{{ bytes(draft.title) }} / 240 {{ t('UTF-8 bytes', 'UTF-8 字节') }}</small>
+          <small v-if="bytes(draft.title) > 240" class="muted" role="status">{{ t('The subject is too long. Please shorten it.', '标题太长，请精简后再发送。') }}</small>
           <label>{{ t('Message', '消息内容') }}<textarea v-model="draft.body" required maxlength="8000" rows="8" :disabled="busy"></textarea></label>
-          <small class="muted">{{ bytes(draft.body) }} / 8000 {{ t('UTF-8 bytes', 'UTF-8 字节') }}</small>
+          <small v-if="bytes(draft.body) > 8000" class="muted" role="status">{{ t('The message is too long. Please shorten it or send it in parts.', '消息太长，请精简或分条发送。') }}</small>
           <button class="btn primary" :disabled="busy || !draftValid">{{ busy ? t('Sending…', '正在发送…') : t('Send message', '发送消息') }}</button>
         </form>
       </section>
@@ -127,7 +127,7 @@ async function older() {
         </ol>
         <form v-if="detail.thread.reply_count<200" @submit.prevent="sendReply">
           <label>{{ t('Reply to this conversation', '回复此会话') }}<textarea v-model="reply" required maxlength="8000" rows="4" :disabled="busy || loading"></textarea></label>
-          <small class="muted">{{ bytes(reply) }} / 8000 {{ t('UTF-8 bytes', 'UTF-8 字节') }}</small>
+          <small v-if="bytes(reply) > 8000" class="muted" role="status">{{ t('The reply is too long. Please shorten it or send it in parts.', '回复太长，请精简或分条发送。') }}</small>
           <button class="btn primary" :disabled="busy || loading || !replyValid">{{ busy ? t('Sending…', '正在发送…') : t('Send reply', '发送回复') }}</button>
         </form>
         <p v-else class="muted">{{ t('Reply limit reached. Start a new conversation.', '已达到回复上限，请新建会话。') }}</p>

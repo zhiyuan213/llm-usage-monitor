@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import PerformanceReference from "./PerformanceReference.vue";
+import PublicDemo from './PublicDemo.vue';
+import Tutorials from './Tutorials.vue';
+import { tutorials } from './tutorial-content';
+import { publicPage, trackAction } from './analytics';
 import Checkout from "./Checkout.vue";
 import PlanFeatures from "./PlanFeatures.vue";
 import DocsExamples from "./DocsExamples.vue";
@@ -22,10 +26,22 @@ import {
   ShieldCheck,
   ArrowUpRight,
 } from "lucide-vue-next";
-import { api, t, errorText, loadSession, session, ApiError } from "./lib";
+import { api, t, errorText, loadSession, session, ApiError, language } from "./lib";
 const route = useRoute(),
   router = useRouter(),
-  page = computed(() => String(route.params.page || "home"));
+  page = computed(() => route.meta.tutorial ? 'tutorials' : String(route.params.page || "home"));
+watch([() => route.path, language], () => {
+  const guide = tutorials.find(item => route.path === `/tutorials/${item.slug}`);
+  const info = publicPage(route.path);
+  document.title = guide ? `${t(guide.en, guide.zh)} | MeterTrail` : info?.page_title || 'MeterTrail';
+  const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+  if (description && info) description.content = guide ? t(guide.summary[0], guide.summary[1]) : route.path === '/' ? t('Track AI requests, token usage and estimated model costs. Explore a demo or start with a runnable integration tutorial.', '查看 AI 请求、Token 用量与模型估算费用。无需登录体验演示，或通过可运行教程开始接入。') : info.page_title;
+  let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+  if (info) {
+    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
+    canonical.href = info.page_location;
+  } else canonical?.remove();
+}, { immediate: true });
 const docSections = [
   { id: "quickstart", en: "Quickstart", zh: "快速开始" },
   { id: "protocol", en: "REST integration", zh: "Rest接入" },
@@ -191,6 +207,8 @@ async function copy() {
         ><RouterLink to="/docs">{{
           t("Documentation", "开发文档")
         }}</RouterLink>
+        <RouterLink to="/demo">{{ t('Demo', '在线演示') }}</RouterLink>
+        <RouterLink to="/tutorials">{{ t('Tutorials', '接入教程') }}</RouterLink>
       </nav>
       <div class="header-actions">
         <RouterLink v-if="session" class="btn primary" to="/app/workspace"
@@ -198,7 +216,7 @@ async function copy() {
         /></RouterLink>
         <template v-else-if="sessionChecked"
           ><RouterLink to="/login">{{ t("Sign in", "登录") }}</RouterLink
-          ><RouterLink class="btn primary" to="/register"
+          ><RouterLink class="btn primary" to="/register" @click="trackAction('start_free',route.path)"
             >{{ t("Start free", "免费开始") }}
             <ArrowUpRight :size="14" /></RouterLink
         ></template>
@@ -210,19 +228,19 @@ async function copy() {
           <div class="eyebrow">
             <span class="live-dot"></span>
             {{
-              t("OBSERVABILITY FOR YOUR AI STACK", "为 AI 应用打造的可观测平台")
+              t("FOR DEVELOPERS BUILDING AI APPLICATIONS", "为 AI 应用开发者打造")
             }}
           </div>
           <h1>
-            {{ t("Every call,", "追踪每次调用，") }}<br /><span>{{
-              t("a clearer picture.", "看清每一笔成本。")
+            {{ t("Track AI calls.", "看清 AI 调用，") }}<br /><span>{{
+              t("Understand the cost.", "掌握用量与成本。")
             }}</span>
           </h1>
           <p>
             {{
               t(
-                "Follow your traces. Understand your tokens. Turn model usage into answers your team can act on.",
-                "追踪调用链路，掌握 Token 消耗。将模型使用数据转化为团队可以采取行动的洞察。",
+                "See which requests are slow, where tokens are spent, and how model costs add up. Send data from your backend with Node.js, Python, Java or REST.",
+                "查看哪些请求慢、Token 花在哪里，以及模型费用如何产生。通过 Node.js、Python、Java 或 REST 从服务端接入。",
               )
             }}
           </p>
@@ -231,6 +249,7 @@ async function copy() {
               v-if="sessionChecked"
               :to="session ? '/app/workspace' : '/register'"
               class="btn primary large auth-cta"
+              @click="!session && trackAction('start_free', '/')"
               >{{
                 session
                   ? t("Open console", "进入控制台")
@@ -238,8 +257,8 @@ async function copy() {
               }}<ArrowRight :size="17"
             /></RouterLink>
             <span v-else class="auth-cta-placeholder" aria-hidden="true"></span>
-            <RouterLink to="/docs" class="btn large">{{
-              t("Read the docs", "阅读接入文档")
+            <RouterLink to="/demo" class="btn large" @click="trackAction('open_demo','/')">{{
+              t("Explore the demo", "无需登录，查看演示")
             }}</RouterLink>
           </div>
           <small
@@ -255,7 +274,7 @@ async function copy() {
         <div class="hero-console">
           <div class="mock-top">
             <div><i></i><i></i><i></i></div>
-            <span>app.metertrail.com</span
+            <span>metertrail.com</span
             ><span class="badge">{{
               t("Illustrative preview", "界面示意")
             }}</span>
@@ -358,6 +377,10 @@ async function copy() {
           <p>{{ item[1] }}</p>
         </article>
       </section>
+      <section class="home-learning">
+        <div class="page-intro"><span class="eyebrow">{{ t('YOUR FIRST REQUEST, STEP BY STEP', '从第一条请求开始') }}</span><h2>{{ t('Choose your integration guide', '选择适合你的接入教程') }}</h2><p>{{ t('Runnable examples, expected results and troubleshooting. No prompt content required.', '提供可运行示例、预期结果与排错步骤，无需上报提示词正文。') }}</p></div>
+        <div class="tutorial-grid"><article v-for="item in tutorials" :key="item.slug" class="panel"><h3>{{ t(item.en,item.zh) }}</h3><p>{{ t(item.summary[0],item.summary[1]) }}</p><RouterLink :to="`/tutorials/${item.slug}`" @click="trackAction('open_tutorial','/')">{{ t('View tutorial →', '查看教程 →') }}</RouterLink></article></div>
+      </section>
       <div class="home-performance"><PerformanceReference compact /></div>
       <section class="bottom-cta">
         <div>
@@ -386,6 +409,8 @@ async function copy() {
         <span v-else class="auth-cta-placeholder" aria-hidden="true"></span>
       </section>
     </main>
+    <PublicDemo v-else-if="page === 'demo'" />
+    <Tutorials v-else-if="page === 'tutorials'" />
     <main v-else-if="page === 'pricing'" class="public-content">
       <div class="page-intro">
         <div class="eyebrow">
@@ -802,6 +827,11 @@ async function copy() {
           )
         }}
       </p>
+      <template v-if="page === 'privacy'">
+        <h2>{{ t('Optional website statistics', '可选的网站访问统计') }}</h2>
+        <p>{{ t('If you allow statistics, public pages load Google Analytics (GA4) to measure page visits and selected actions such as opening the demo or copying an example. Google may process browser/device information and your IP address in providing this service. Analytics cookies distinguish visits. We do not send email addresses, account IDs, API keys, message content, URL queries or hashes. We do not load the analytics tag on account, console or payment pages. Advertising features are disabled.', '你允许统计后，公开页面才会加载 Google Analytics（GA4），用于统计页面访问、打开演示或复制示例等操作。Google 在提供服务时可能处理浏览器、设备信息及 IP 地址，并通过统计 Cookie 区分访问。我们不会发送邮箱、账号 ID、API 密钥、消息内容、网址查询参数或片段；账号、控制台与支付页面不加载统计代码，广告功能关闭。') }}</p>
+        <p>{{ t('Declining does not affect the service. Use Statistics preferences on a public page to change your choice or withdraw permission. Measurement covers consenting visitors and can be blocked by the browser; it is not a complete count of all users.', '拒绝不影响正常使用。你可以随时通过公开页面的“统计偏好”修改选择或撤回许可。统计仅覆盖同意的访客，也可能被浏览器拦截，不代表全部用户数量。') }} <a href="https://policies.google.com/privacy" rel="noopener noreferrer">{{ t('Google privacy policy', 'Google 隐私政策') }}</a></p>
+      </template>
       <h2>{{ t("Billing and cancellation", "计费与取消") }}</h2>
       <p>
         {{

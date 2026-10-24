@@ -56,7 +56,7 @@ def main():
                 time.sleep(0.5)
         import re
         assets = re.findall(r'(?:src|href)="(/(?:assets|fonts)/[^"<>]+)"', html)
-        paths = ["/", "/sitemap.xml", "/robots.txt", "/googlecc6b6e16e288c986.html", "/fonts/NotoSansSC-Regular.woff2", *assets]
+        paths = ["/", "/demo", "/tutorials", "/tutorials/nodejs", "/tutorials/python", "/tutorials/rest", "/sitemap.xml", "/robots.txt", "/googlecc6b6e16e288c986.html", "/fonts/NotoSansSC-Regular.woff2", *assets]
         for path in paths:
             with urllib.request.urlopen(origin + path, timeout=5) as response:
                 content = response.read()
@@ -64,6 +64,8 @@ def main():
                     raise AssertionError("Unreadable public file: " + path)
                 if path == "/googlecc6b6e16e288c986.html" and content != (ROOT / "frontend/public" / path[1:]).read_bytes():
                     raise AssertionError("Google verification file changed")
+                if path.startswith('/tutorials/') and b'Example request' not in content:
+                    raise AssertionError("Tutorial initial HTML has no executable example")
         for path in ["/app", "/app/workspace?test=1", "/login", "/pay?test=1"]:
             with urllib.request.urlopen(origin + path, timeout=5) as response:
                 if "noindex" not in response.headers.get("X-Robots-Tag", ""):

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { language, setLanguage } from "./lib";
+import AnalyticsConsent from './AnalyticsConsent.vue';
 </script>
 <template>
   <RouterView />
+  <AnalyticsConsent />
   <div
     class="language-floating"
     :class="{
