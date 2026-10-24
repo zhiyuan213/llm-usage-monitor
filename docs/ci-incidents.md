@@ -22,3 +22,10 @@
 - Root cause: Windows REST source files contained CRLF. Generation embedded those characters into JSON strings; Git normalized the source files to LF, so Linux generated different documentation.
 - Fix: normalize source and generated-file line endings to LF in the synchronization script, regenerate examples, and retain the mandatory CI check.
 - Prevention: regression test generates from CRLF fixtures, changes them to LF, and requires the same output and a passing check.
+
+## 2026-10-24 synthetic integration-test secret flagged
+
+- Commit `f65ece8`, run `40070402589`: gitleaks flagged the literal Spring test-only `metertrail.secret` fixture in `DurableIngestIntegrationTest.java:30`.
+- Root cause: the new descriptive synthetic fixture crossed the generic API-key entropy heuristic. The value is defined only in test source, not read from an environment or a deployed credential.
+- Fix: reuse the existing clearly synthetic integration-test fixture. Since CI scans Git history, allow only the exact historical finding fingerprint in `.gitleaksignore`, with its test-only provenance documented; no rule or source-path exclusions.
+- Prevention: run the same gitleaks v8.28.0 full-history scan locally, keeping all other findings blocking. Full CI, including Trivy and images, remains required.

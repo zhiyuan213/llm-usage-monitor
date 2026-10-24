@@ -1,0 +1,2 @@
+# Confirmed synthetic Spring test fixture; never a deployed credential.
+f65ece88a93ea375c3925f13888afa90754f763c:backend/src/test/java/com/metertrail/DurableIngestIntegrationTest.java:generic-api-key:30

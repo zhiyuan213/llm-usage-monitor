@@ -27,7 +27,7 @@ import org.testcontainers.junit.jupiter.*;
 
 @SpringBootTest(
     properties = {
-      "metertrail.secret=durable-ingest-test-secret-at-least-32-characters",
+      "metertrail.secret=test-secret-at-least-32-characters-long",
       "metertrail.worker-enabled=false",
       "metertrail.ingest.pipeline.enabled=true",
       "metertrail.ingest.pipeline.acceptor-enabled=false",
