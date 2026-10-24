@@ -165,6 +165,8 @@ class AuthController {
         u.get("csrf"),
         "expiresAt",
         ((java.sql.Timestamp) u.get("session_expires_at")).toInstant().toString(),
+        "isAdmin",
+        Boolean.TRUE.equals(u.get("is_admin")),
         "githubConnected",
         u.get("github_id") != null,
         "workspace",

@@ -1062,3 +1062,28 @@
 }
 .ui-v2 .usage-pack-form { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
 .ui-v2 .usage-pack-form .check-label { flex:1; min-width:220px; }
+
+/* Account feedback and administrator inbox share the same threaded layout. */
+.ui-v2 .support-layout { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(0, 2fr); gap: 24px; align-items: start; }
+.ui-v2 .support-list, .ui-v2 .support-conversation { padding: 24px; min-width: 0; }
+.ui-v2 .support-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.ui-v2 .support-heading h2 { margin: 0; }
+.ui-v2 .support-thread { display: flex; flex-direction: column; gap: 6px; padding: 16px 12px; border-bottom: 1px solid var(--line); color: inherit; overflow-wrap: anywhere; }
+.ui-v2 .support-thread.selected { background: #eef2ff; border-radius: 6px; }
+.ui-v2 .support-thread span, .ui-v2 .support-thread small { color: #63738d; font-size: 12px; }
+.ui-v2 .support-list .query-pages { flex-wrap: wrap; gap: 10px; }
+.ui-v2 .support-list .query-controls { margin-top: 20px; }
+.ui-v2 .support-messages form { display: flex; flex-direction: column; gap: 12px; }
+.ui-v2 .support-messages label { display: flex; flex-direction: column; gap: 8px; }
+.ui-v2 .support-messages textarea { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid var(--line); border-radius: 6px; padding: 12px; font: inherit; min-height: 110px; }
+.ui-v2 .support-messages form .btn { align-self: flex-end; }
+.ui-v2 .support-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ui-v2 .support-original { padding: 20px; border: 1px solid var(--line); border-left: 3px solid var(--blue); border-radius: 8px; margin-bottom: 24px; overflow-wrap: anywhere; }
+.ui-v2 .support-original h2 { margin-top: 0; }
+.ui-v2 .support-replies { list-style: none; padding: 0 0 0 20px; margin: 16px 0 24px; border-left: 1px solid var(--line); }
+.ui-v2 .support-replies li { background: #f5f7fb; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+.ui-v2 .support-replies li.support-admin-reply { background: #eef2ff; }
+.ui-v2 .support-reply-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 0; }
+.ui-v2 .support-reply-meta time { color: #63738d; font-size: 12px; }
+@media (max-width: 1000px) { .ui-v2 .support-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .ui-v2 .support-list, .ui-v2 .support-conversation { padding: 16px; } .ui-v2 .support-original { padding: 14px; } .ui-v2 .support-replies { padding-left: 12px; } }

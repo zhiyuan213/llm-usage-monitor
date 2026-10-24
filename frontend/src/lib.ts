@@ -61,6 +61,13 @@ export const money = (v: any) =>
 export const date = (v: string) =>
   v ? new Date(v).toISOString().replace("T", " ").slice(0, 19) + " UTC" : "—";
 const errors: Record<string, [string, string]> = {
+  ADMIN_REQUIRED: ["Administrator access is required.", "仅管理员可以访问。"],
+  MESSAGE_NOT_FOUND: ["This conversation was not found.", "消息会话不存在或无权访问。"],
+  INVALID_TITLE: ["Enter a title up to 240 UTF-8 bytes.", "请输入标题，最多 240 个 UTF-8 字节（约 80 个汉字）。"],
+  INVALID_BODY: ["Enter a message up to 8,000 UTF-8 bytes.", "请输入消息，最多 8,000 个 UTF-8 字节（约 2,600 个汉字）。"],
+  MESSAGE_THREAD_LIMIT: ["The conversation limit has been reached. Add to an existing conversation.", "已达到会话数量上限，请在现有会话中补充。"],
+  MESSAGE_REPLY_LIMIT: ["This conversation has reached 200 replies. Start a new one.", "此会话已达到 200 条回复，请新建会话。"],
+  MESSAGE_RETRY_CONFLICT: ["This submission ID was used for different content. Refresh before sending again.", "此提交标识已用于其他内容，请刷新后重新发送。"],
   USAGE_COLLECTION_NOT_CONFIGURED: ["Additional billing is not enabled yet.", "尚未启用加购及超额扣款。"],
   ADDON_UNAVAILABLE: ["An active paid subscription with at least 15 minutes left is required.", "需要活跃的付费订阅，且距离账期结束至少15分钟。"],
   CHARGE_PENDING_REVIEW: ["The payment result is being reconciled. Do not purchase again.", "付款结果正在核对，请勿重复购买。"],

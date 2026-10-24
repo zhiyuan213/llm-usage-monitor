@@ -1,0 +1,8 @@
+{
+  "command": "mvn -B -o verify; real PostgreSQL Testcontainers",
+  "tests": 135,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "jar_sha256": "485c2ef1ebceb443ca6f39e4c58dec8b18451cfe2be4d61695a396967d3855be"
+}

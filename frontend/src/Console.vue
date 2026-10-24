@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SupportMessages from "./SupportMessages.vue";
 import UsageCharges from "./UsageCharges.vue";
 import BillingSubscription from "./BillingSubscription.vue";
 import PlanFeatures from "./PlanFeatures.vue";
@@ -17,6 +18,8 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
+  MessageSquare,
+  Inbox,
   Activity,
   LayoutDashboard,
   FolderKanban,
@@ -68,23 +71,26 @@ const nav = [
   ["settings", "Project settings", "项目设置", Settings],
   ["account", "Account security", "账号安全", ShieldCheck],
   ["audit", "Audit logs", "审计日志", ScrollText],
+  ["messages", "Messages & feedback", "消息反馈", MessageSquare],
+  ["admin-messages", "User messages", "用户消息", Inbox],
 ] as const;
-const navGroups = [
+const navGroups = computed(() => [
   {
     en: "Projects",
     zh: "项目",
     items: nav.filter(
-      (item) => !["account", "billing", "audit"].includes(item[0]),
+      (item) => !["account", "billing", "audit", "messages", "admin-messages"].includes(item[0]),
     ),
   },
   {
     en: "Account",
     zh: "账号",
-    items: ["account", "billing", "audit"].map((id) =>
+    items: ["account", "billing", "audit", "messages"].map((id) =>
       nav.find((item) => item[0] === id)!,
     ),
   },
-];
+  ...(session.value?.isAdmin ? [{en: "Administrator", zh: "管理员", items: nav.filter((item) => item[0] === "admin-messages")}] : []),
+]);
 const title = computed(() => {
   const item = nav.find((v) => v[0] === page.value);
   return item ? t(item[1], item[2]) : t("Trace detail", "调用详情");
@@ -228,7 +234,7 @@ async function refresh(force = true) {
       data.value = await request(
         "/reports/audit?page=" + reportPage.value + "&size=" + reportSize.value,
       );
-    else if (page.value === "account") {
+    else if (["account", "messages", "admin-messages"].includes(page.value)) {
       /* Account is included in context. */
     } else if (selected.value) {
       if (page.value === "overview") {
@@ -536,7 +542,7 @@ const usagePercent = computed(() =>
           <div class="toolbar">
             <select
               v-if="
-                !['billing', 'audit', 'account', 'workspace'].includes(page) &&
+                !['billing', 'audit', 'account', 'workspace', 'messages', 'admin-messages'].includes(page) &&
                 projects.length
               "
               v-model="selected"
@@ -576,7 +582,7 @@ const usagePercent = computed(() =>
           v-if="
             !loading &&
             !selected &&
-            !['billing', 'audit', 'account', 'workspace'].includes(page)
+            !['billing', 'audit', 'account', 'workspace', 'messages', 'admin-messages'].includes(page)
           "
           class="panel empty"
         >
@@ -1708,6 +1714,7 @@ const usagePercent = computed(() =>
         />
 
         <BatchHistory v-if="page === 'keys' && selected" :project="selected" />
+        <SupportMessages v-if="accountReady && ['messages', 'admin-messages'].includes(page)" :key="page" :admin="page === 'admin-messages'" :refresh-token="loading" />
         <AccountSecurity v-if="page === 'account'" :disabled="!accountReady || signingOut" />
         <template v-if="page === 'audit'"
           ><div class="audit-toolbar query-export trace-export">
