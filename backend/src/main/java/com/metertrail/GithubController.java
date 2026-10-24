@@ -167,7 +167,7 @@ class GithubController {
         tx.execute(
             s -> {
               var existing =
-                  store.db.queryForList("SELECT id FROM users WHERE github_id=?", github);
+                  store.queries().queryForList("SELECT id FROM users WHERE github_id=?", github);
               if (!intent.equals("login") && !intent.equals("login:remember")) {
                 UUID uid = Support.uuid(intent);
                 if (!existing.isEmpty() && !uid.equals(existing.get(0).get("id")))
@@ -178,9 +178,7 @@ class GithubController {
               }
               if (!existing.isEmpty()) return (UUID) existing.get(0).get("id");
               if (verifiedEmail == null) throw new ApiError(403, "GITHUB_VERIFIED_EMAIL_REQUIRED");
-              if (!store
-                  .db
-                  .queryForList("SELECT id FROM users WHERE email=?", verifiedEmail)
+              if (!store.queries().queryForList("SELECT id FROM users WHERE email=?", verifiedEmail)
                   .isEmpty()) throw new ApiError(409, "LOGIN_AND_LINK_EXISTING_ACCOUNT");
               UUID uid = UUID.randomUUID();
               store.db.update(

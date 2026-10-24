@@ -205,20 +205,20 @@ class PaymentsController {
             ? d.path("id").asText()
             : d.path("subscription_id").asText();
     var workspaces =
-        store.db.queryForList("SELECT * FROM workspaces WHERE subscription_id=? FOR UPDATE", sub);
+        store.queries().queryForList("SELECT * FROM workspaces WHERE subscription_id=? FOR UPDATE", sub);
     UUID charge = type.startsWith("transaction.") ? ChargeLedger.reference(d) : null;
-    if (charge != null) workspaces = store.db.queryForList("SELECT w.* FROM workspaces w JOIN usage_charges c ON c.workspace_id=w.id WHERE c.id=? FOR UPDATE OF w",charge);
+    if (charge != null) workspaces = store.queries().queryForList("SELECT w.* FROM workspaces w JOIN usage_charges c ON c.workspace_id=w.id WHERE c.id=? FOR UPDATE OF w",charge);
     if (workspaces.isEmpty() && d.path("custom_data").hasNonNull("metertrail_intent")) {
       UUID intent = Support.uuid(d.path("custom_data").path("metertrail_intent").asText());
       workspaces =
-          store.db.queryForList(
+          store.queries().queryForList(
               "SELECT w.* FROM workspaces w JOIN checkout_intents c ON c.workspace_id=w.id WHERE"
                   + " c.id=? FOR UPDATE OF w",
               intent);
     }
     if (workspaces.isEmpty() && type.startsWith("adjustment."))
       workspaces =
-          store.db.queryForList(
+          store.queries().queryForList(
               "SELECT w.* FROM workspaces w JOIN payments p ON p.workspace_id=w.id WHERE p.id=? FOR"
                   + " UPDATE OF w",
               d.path("transaction_id").asText());

@@ -110,6 +110,20 @@ class Errors {
   ResponseEntity<?> known(ApiError e) {
     var b = ResponseEntity.status(e.status);
     if (e.status == 429 && !e.code.equals("QUOTA_EXCEEDED")) b.header("Retry-After", "60");
+    if (e.status == 503
+        && Set.of(
+                "INGEST_BUSY",
+                "INGEST_BACKLOG_FULL",
+                "RATE_LIMIT_UNAVAILABLE",
+                "INGEST_QUEUE_FULL",
+                "INGEST_QUEUE_UNAVAILABLE",
+                "INGEST_ACCEPTANCE_UNCERTAIN",
+                "INGEST_PROCESSING_FAILED",
+                "INGEST_SHUTTING_DOWN",
+                "COUNT_QUERY_BUSY",
+                "COUNT_QUERY_UNAVAILABLE",
+                "COUNT_QUERY_TIMEOUT")
+            .contains(e.code)) b.header("Retry-After", "1");
     return b.body(Map.of("code", e.code));
   }
 

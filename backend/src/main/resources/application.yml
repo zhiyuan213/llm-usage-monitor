@@ -5,6 +5,10 @@ spring:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/metertrail}
     username: ${DATABASE_USER:metertrail}
     password: ${DATABASE_PASSWORD:local-development-only}
+    hikari:
+      maximum-pool-size: ${DATABASE_WRITE_POOL_SIZE:8}
+      minimum-idle: 1
+      connection-timeout: ${DATABASE_WRITE_CONNECTION_TIMEOUT_MS:1000}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -34,6 +38,35 @@ management:
   endpoint.health.probes.enabled: true
   metrics.distribution.percentiles-histogram.http.server.requests: true
 metertrail:
+  database:
+    read-pool-size: ${DATABASE_READ_POOL_SIZE:8}
+    read-connection-timeout-ms: ${DATABASE_READ_CONNECTION_TIMEOUT_MS:1000}
+  ingest:
+    max-inflight: ${INGEST_MAX_INFLIGHT:4}
+    pipeline:
+      enabled: ${INGEST_PIPELINE_ENABLED:true}
+      acceptor-enabled: ${INGEST_ACCEPTOR_ENABLED:true}
+      max-inflight: ${INGEST_PIPELINE_MAX_INFLIGHT:2048}
+      max-buffered-bytes: ${INGEST_PIPELINE_BUFFER_BYTES:33554432}
+      write-batch-requests: ${INGEST_PIPELINE_BATCH_REQUESTS:200}
+      group-events: ${INGEST_PIPELINE_GROUP_EVENTS:500}
+      flush-bytes: ${INGEST_PIPELINE_FLUSH_BYTES:2097152}
+      coalesce-millis: ${INGEST_PIPELINE_COALESCE_MS:20}
+      receipt-poll-millis: ${INGEST_PIPELINE_RECEIPT_POLL_MS:20}
+      wait-millis: ${INGEST_PIPELINE_WAIT_MS:5000}
+      max-queued-requests: ${INGEST_QUEUE_MAX_REQUESTS:20000}
+      max-queued-events: ${INGEST_QUEUE_MAX_EVENTS:50000}
+      max-queued-bytes: ${INGEST_QUEUE_MAX_BYTES:134217728}
+      max-attempts: ${INGEST_QUEUE_MAX_ATTEMPTS:10}
+      terminal-retention-seconds: ${INGEST_QUEUE_RECEIPT_SECONDS:600}
+  worker:
+    group-batches: ${WORKER_GROUP_BATCHES:100}
+    group-events: ${WORKER_GROUP_EVENTS:500}
+    busy-poll-ms: ${WORKER_BUSY_POLL_MS:10}
+    idle-poll-ms: ${WORKER_IDLE_POLL_MS:300}
+    slice-ms: ${WORKER_SLICE_MS:250}
+    max-batches-per-slice: ${WORKER_MAX_BATCHES_PER_SLICE:1000}
+    failure-backoff-ms: ${WORKER_FAILURE_BACKOFF_MS:1000}
   mail:
     provider: ${MAIL_PROVIDER:smtp}
     region: ${TENCENT_SES_REGION:ap-hongkong}

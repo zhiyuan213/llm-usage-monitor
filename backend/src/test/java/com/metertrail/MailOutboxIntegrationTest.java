@@ -14,7 +14,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.*;
 
-@SpringBootTest(properties={"metertrail.secret=mail-fault-test-secret-at-least-32-characters", "metertrail.worker-enabled=false"})
+@SpringBootTest(properties={"metertrail.secret=mail-fault-test-secret-at-least-32-characters", "metertrail.worker-enabled=false", "metertrail.ingest.pipeline.enabled=false"})
 @Testcontainers
 @org.springframework.test.annotation.DirtiesContext(classMode = org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS)
 class MailOutboxIntegrationTest {

@@ -48,7 +48,7 @@ class AuthController {
     rates.check("register:" + req.getRemoteAddr(), 10);
     String e = email(b);
     String p = password(b);
-    if (!store.db.queryForList("SELECT id FROM users WHERE email=?", e).isEmpty())
+    if (!store.queries().queryForList("SELECT id FROM users WHERE email=?", e).isEmpty())
       throw new ApiError(409, "EMAIL_UNAVAILABLE");
     UUID user = UUID.randomUUID(), workspace = UUID.randomUUID();
     store.db.update(
@@ -66,7 +66,7 @@ class AuthController {
     String e = email(b);
     rates.check("login-ip:" + req.getRemoteAddr(), 30);
     rates.check("login:" + Support.hash(e), 10);
-    var rows = store.db.queryForList("SELECT * FROM users WHERE email=?", e);
+    var rows = store.queries().queryForList("SELECT * FROM users WHERE email=?", e);
     String dummy = "$2a$12$Q7w1cT3gwZILMJxQjggUyeYCbxA5FpkpwpZV3OQYiFvN55fjQg11e";
     String hash =
         rows.isEmpty() || rows.get(0).get("password_hash") == null
@@ -114,7 +114,7 @@ class AuthController {
     rates.check("challenge:" + req.getRemoteAddr(), 10);
     String e = email(b), action = b.path("action").asText();
     Support.require(Set.of("verify-email", "reset-password").contains(action), "INVALID_ACTION");
-    var rows = store.db.queryForList("SELECT id FROM users WHERE email=?", e);
+    var rows = store.queries().queryForList("SELECT id FROM users WHERE email=?", e);
     UUID id = UUID.randomUUID();
     if (!rows.isEmpty()) id = challenges.issue((UUID) rows.get(0).get("id"), action, e, req);
     return Map.of("challengeId", id, "message", "IF_ACCOUNT_EXISTS_EMAIL_SENT");
@@ -125,7 +125,7 @@ class AuthController {
   Map<String, Object> verify(@RequestBody JsonNode b, HttpServletRequest req) {
     rates.check("verify:" + req.getRemoteAddr(), 30);
     String e = email(b);
-    var rows = store.db.queryForList("SELECT id FROM users WHERE email=?", e);
+    var rows = store.queries().queryForList("SELECT id FROM users WHERE email=?", e);
     if (rows.isEmpty()) throw new ApiError(400, "INVALID_VERIFICATION");
     UUID user = (UUID) rows.get(0).get("id");
     challenges.consume(
@@ -139,7 +139,7 @@ class AuthController {
   Map<String, Object> reset(@RequestBody JsonNode b, HttpServletRequest req) {
     rates.check("reset:" + req.getRemoteAddr(), 20);
     String e = email(b), p = password(b);
-    var rows = store.db.queryForList("SELECT id FROM users WHERE email=?", e);
+    var rows = store.queries().queryForList("SELECT id FROM users WHERE email=?", e);
     if (rows.isEmpty()) throw new ApiError(400, "INVALID_VERIFICATION");
     UUID user = (UUID) rows.get(0).get("id");
     challenges.consume(

@@ -23,7 +23,7 @@ class AccountController {
     String email = AuthController.email(b), action = b.path("action").asText();
     Support.require(Set.of("email.old", "email.new").contains(action), "INVALID_ACTION");
     rates.check("email-change:" + req.getRemoteAddr(), 10);
-    if (!store.db.queryForList("SELECT id FROM users WHERE email=?", email).isEmpty())
+    if (!store.queries().queryForList("SELECT id FROM users WHERE email=?", email).isEmpty())
       throw new ApiError(409, "EMAIL_UNAVAILABLE");
     return Map.of("challengeId", challenges.issue(SessionFilter.uid(req), action, email, req));
   }
@@ -33,7 +33,7 @@ class AccountController {
   Map<String, String> email(@RequestBody JsonNode b, HttpServletRequest req) {
     UUID user = SessionFilter.uid(req);
     String email = AuthController.email(b);
-    if (!store.db.queryForList("SELECT id FROM users WHERE email=?", email).isEmpty())
+    if (!store.queries().queryForList("SELECT id FROM users WHERE email=?", email).isEmpty())
       throw new ApiError(409, "EMAIL_UNAVAILABLE");
     challenges.consume(
         user,

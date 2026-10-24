@@ -24,6 +24,7 @@ import org.testcontainers.junit.jupiter.*;
     properties = {
       "metertrail.secret=test-secret-at-least-32-characters-long",
       "metertrail.worker-enabled=false",
+      "metertrail.ingest.pipeline.enabled=false",
       "metertrail.usage-collection-enabled=true",
       "metertrail.secure-cookies=false",
       "metertrail.paddle-secret=local-webhook-test-secret",
@@ -1298,6 +1299,135 @@ class IngestIntegrationTest {
     assertEquals(500, result(ingest.accept(project,payload)).get("accepted"));
     assertEquals(500, result(ingest.accept(project,payload)).get("duplicates"));
     assertEquals(500, units());
+  }
+
+  @Test
+  void preparedMixedBatchPreservesIndicesConflictsAndRevisionBilling() {
+    var original = event("trace", "prepared-existing", 1);
+    ingest.accept(project, batch(original));
+    var conflict = original.deepCopy();
+    conflict.withObject("data").put("name", "different content");
+    var invalid = event("trace", "prepared-invalid", 1);
+    invalid.put("revision", 0);
+    var revision = event("trace", "prepared-existing", 2);
+    var fresh = event("trace", "prepared-new", 1);
+    var receipt = ingest.accept(project, batch(original, invalid, conflict, revision, fresh));
+    var row = result(receipt);
+    assertEquals(2, row.get("accepted"));
+    assertEquals(1, row.get("duplicates"));
+    assertEquals(2, row.get("rejected"));
+    JsonNode errors = Support.parse(row.get("errors").toString());
+    assertEquals(1, errors.get(0).path("index").asInt());
+    assertEquals("INVALID_REVISION", errors.get(0).path("code").asText());
+    assertEquals(2, errors.get(1).path("index").asInt());
+    assertEquals("EVENT_ID_CONFLICT", errors.get(1).path("code").asText());
+    assertEquals(2, units());
+    assertEquals(2, store.db.queryForObject(
+        "SELECT count(*) FROM usage_ledger WHERE project_id=?", Integer.class, project));
+    assertEquals(3, store.db.queryForObject(
+        "SELECT event_index FROM ingest_events WHERE project_id=? AND event_id=?", Integer.class,
+        project, UUID.fromString(revision.path("eventId").asText())));
+  }
+
+  @Test
+  void fallbackDoesNotRewriteUnconsumedAddonPacks() {
+    UUID id = pack();
+    packEvent(id, "completed", "800");
+    var original = event("trace", "addon-unchanged", 1);
+    ingest.accept(project, batch(original));
+    String version = store.db.queryForObject(
+        "SELECT xmin::text FROM usage_charges WHERE id=?", String.class, id);
+    var receipt = ingest.accept(project, batch(original, event("trace", "addon-base-only", 1)));
+    assertEquals(1, result(receipt).get("accepted"));
+    assertEquals(1, result(receipt).get("duplicates"));
+    assertEquals(version, store.db.queryForObject(
+        "SELECT xmin::text FROM usage_charges WHERE id=?", String.class, id));
+    assertEquals(0L, store.db.queryForObject(
+        "SELECT consumed_units FROM usage_charges WHERE id=?", Long.class, id));
+  }
+
+  @Test
+  void inactivePaidSubscriptionCannotUseFreshBatchShortcut() {
+    pack();
+    store.db.update("UPDATE workspaces SET subscription_status='canceled' WHERE id=?", workspace);
+    long batches = store.db.queryForObject(
+        "SELECT count(*) FROM ingest_batches WHERE project_id=?", Long.class, project);
+    ApiError failure = assertThrows(ApiError.class,
+        () -> ingest.accept(project, batch(event("trace", "canceled-fresh", 1))));
+    assertEquals("QUOTA_EXCEEDED", failure.code);
+    assertEquals(0, units());
+    assertEquals(batches, store.db.queryForObject(
+        "SELECT count(*) FROM ingest_batches WHERE project_id=?", Long.class, project));
+    assertEquals(0L, store.db.queryForObject(
+        "SELECT count(*) FROM ingest_events WHERE project_id=?", Long.class, project));
+  }
+
+  @Test
+  void replayAndUnchargedRevisionDoNotRewriteWorkspaceUsage() {
+    var original = event("trace", "workspace-unchanged", 1);
+    ingest.accept(project, batch(original));
+    String version = store.db.queryForObject(
+        "SELECT xmin::text FROM workspaces WHERE id=?", String.class, workspace);
+    assertEquals(1, result(ingest.accept(project, batch(original))).get("duplicates"));
+    assertEquals(1, result(ingest.accept(project,
+        batch(event("trace", "workspace-unchanged", 2)))).get("accepted"));
+    assertEquals(version, store.db.queryForObject(
+        "SELECT xmin::text FROM workspaces WHERE id=?", String.class, workspace));
+    assertEquals(1, units());
+  }
+
+  @Autowired IngestAdmission admission;
+
+  @Test
+  void saturatedWriteAdmissionLeavesQuotaReadsAvailableAndNeverReserves() throws Exception {
+    var leases = new ArrayList<IngestAdmission.Lease>();
+    long batches = store.db.queryForObject(
+        "SELECT count(*) FROM ingest_batches WHERE project_id=?", Long.class, project);
+    try {
+      for (int i = 0; i < admission.limit; i++) leases.add(admission.enter());
+      mvc.perform(post("/v1/events/batch").header("Authorization", "Bearer " + key)
+              .contentType("application/json").content(batch(event("trace", "admission-full", 1)).toString()))
+          .andExpect(status().isServiceUnavailable())
+          .andExpect(header().string("Retry-After", "1"))
+          .andExpect(jsonPath("$.code").value("INGEST_BUSY"));
+      mvc.perform(get("/v1/quota").header("Authorization", "Bearer " + key))
+          .andExpect(status().isOk());
+      assertEquals(0, units());
+      assertEquals(batches, store.db.queryForObject(
+          "SELECT count(*) FROM ingest_batches WHERE project_id=?", Long.class, project));
+    } finally {
+      leases.forEach(IngestAdmission.Lease::close);
+    }
+    mvc.perform(post("/v1/events/batch").header("Authorization", "Bearer " + key)
+            .contentType("application/json").content(batch(event("trace", "admission-recovered", 1)).toString()))
+        .andExpect(status().isOk());
+    assertEquals(1, units());
+  }
+
+  @Test
+  void malformedRequestsReleaseTheirWriteAdmission() throws Exception {
+    for (int i = 0; i <= admission.limit; i++)
+      mvc.perform(post("/v1/events/batch").header("Authorization", "Bearer " + key)
+              .contentType("application/json").content("{"))
+          .andExpect(status().isBadRequest());
+    assertEquals(admission.limit, admission.permits.availablePermits());
+    assertEquals(0, units());
+  }
+
+  @Test
+  void busyWorkerSliceDrainsMoreThanTenBatchesWithoutRebilling() {
+    var receipts = new ArrayList<Map<String,Object>>();
+    for (int i = 0; i < 25; i++)
+      receipts.add(ingest.accept(project, batch(event("trace", "busy-slice-" + i, 1))));
+    var worker = new Worker(store, tx, mail, true, "test@test.local");
+    assertFalse(worker.drain(1000, TimeUnit.SECONDS.toNanos(10)));
+    for (var receipt : receipts) assertEquals("completed", result(receipt).get("status"));
+    assertFalse(worker.drain(1000, TimeUnit.SECONDS.toNanos(10)));
+    assertEquals(25, units());
+    assertEquals(25, store.db.queryForObject(
+        "SELECT count(*) FROM objects WHERE project_id=?", Integer.class, project));
+    assertEquals(25L, store.db.queryForObject(
+        "SELECT sum(units) FROM usage_ledger WHERE project_id=?", Long.class, project));
   }
 
   @Test void emailChangeRevokesAllOldSessionsAndOnlyNewEmailCanLogIn() throws Exception {

@@ -59,7 +59,7 @@ class SubscriptionChanges {
   @PostMapping("/api/billing/change-preview")
   Map<String, Object> preview(@RequestBody JsonNode input, HttpServletRequest request) {
     var workspace = store.workspace(SessionFilter.uid(request));
-    if (!store.db.queryForList("SELECT id FROM subscription_change_quotes WHERE workspace_id=? AND status IN ('processing','submitted')", workspace.get("id")).isEmpty())
+    if (!store.queries().queryForList("SELECT id FROM subscription_change_quotes WHERE workspace_id=? AND status IN ('processing','submitted')", workspace.get("id")).isEmpty())
       throw new ApiError(409, "PLAN_CHANGE_PENDING");
     String plan = input.path("plan").asText();
     body(plan);
@@ -78,14 +78,14 @@ class SubscriptionChanges {
   Map<String, String> change(@RequestBody JsonNode input, HttpServletRequest request) {
     var workspace = store.workspace(SessionFilter.uid(request));
     UUID id = Support.uuid(input.path("quoteId").asText());
-    var quotes = store.db.queryForList("SELECT * FROM subscription_change_quotes WHERE id=? AND workspace_id=?", id, workspace.get("id"));
+    var quotes = store.queries().queryForList("SELECT * FROM subscription_change_quotes WHERE id=? AND workspace_id=?", id, workspace.get("id"));
     if (quotes.isEmpty()) throw new ApiError(404, "PLAN_QUOTE_NOT_FOUND");
     var quote = quotes.get(0);
     if (!quote.get("status").equals("ready") || !((Timestamp) quote.get("expires_at")).toInstant().isAfter(Instant.now()))
       throw new ApiError(409, "PLAN_QUOTE_EXPIRED");
     // Claim once before network I/O. Ambiguous timeouts remain pending; never blindly bill twice.
     synchronized (this) {
-      if (!store.db.queryForList("SELECT id FROM subscription_change_quotes WHERE workspace_id=? AND status IN ('processing','submitted')", workspace.get("id")).isEmpty())
+      if (!store.queries().queryForList("SELECT id FROM subscription_change_quotes WHERE workspace_id=? AND status IN ('processing','submitted')", workspace.get("id")).isEmpty())
         throw new ApiError(409, "PLAN_CHANGE_PENDING");
       if (store.db.update("UPDATE subscription_change_quotes SET status='processing' WHERE id=? AND status='ready'", id) != 1)
         throw new ApiError(409, "PLAN_CHANGE_PENDING");

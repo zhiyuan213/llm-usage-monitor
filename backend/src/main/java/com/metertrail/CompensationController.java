@@ -27,10 +27,10 @@ class CompensationController {
     UUID user = SessionFilter.uid(req);
     var p = store.project(user, project);
     var w =
-        store.db.queryForMap(
+        store.queries().queryForMap(
             "SELECT * FROM workspaces WHERE id=? FOR UPDATE", p.get("workspace_id"));
     var rows =
-        store.db.queryForList(
+        store.queries().queryForList(
             "SELECT * FROM ingest_batches WHERE id=? AND project_id=? FOR UPDATE", batch, project);
     if (rows.isEmpty()) throw new ApiError(404, "BATCH_NOT_FOUND");
     if (rows.get(0).get("status").equals("failed"))
@@ -47,7 +47,7 @@ class CompensationController {
     // Only release an unmaterialized identity with no surviving update in another batch.
     // This single snapshot sees either another worker's pending event or its committed object.
     var refundable =
-        store.db.queryForList(
+        store.queries().queryForList(
             "SELECT b.* FROM billable_objects b WHERE b.project_id=? AND b.reservation_batch=? AND"
                 + " b.charged AND NOT EXISTS(SELECT 1 FROM objects o WHERE"
                 + " o.project_id=b.project_id AND o.type=b.type AND o.object_id=b.object_id) AND"
@@ -62,7 +62,7 @@ class CompensationController {
       int generation = ((Number) object.get("charge_generation")).intValue();
       String accepted = generation == 1 ? "accepted" : "accepted:" + generation;
       var ledger =
-          store.db.queryForMap(
+          store.queries().queryForMap(
               "SELECT period_start,overage,addon_charge_id FROM usage_ledger WHERE project_id=? AND type=? AND object_id=?"
                   + " AND reason=?",
               project,
@@ -71,7 +71,7 @@ class CompensationController {
               accepted);
       Support.require(
           ledger.get("period_start").equals(w.get("period_start"))
-              && store.db.queryForList("SELECT id FROM usage_charges WHERE workspace_id=? AND period_start=? AND kind='overage'",w.get("id"),w.get("period_start")).isEmpty(),
+              && store.queries().queryForList("SELECT id FROM usage_charges WHERE workspace_id=? AND period_start=? AND kind='overage'",w.get("id"),w.get("period_start")).isEmpty(),
           "CLOSED_PERIOD_REQUIRES_REVIEW");
       int change =
           store.db.update(

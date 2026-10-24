@@ -21,7 +21,7 @@ class WorkspaceController {
         "workspace",
         store.workspace(user),
         "projects",
-        store.db.queryForList(
+        store.queries().queryForList(
             "SELECT p.id,p.name,p.environment,p.created_at,count(o.object_id) AS"
                 + " objects,count(o.object_id) FILTER(WHERE o.type='trace') AS traces,sum(o.cost)"
                 + " AS cost,count(o.object_id) FILTER(WHERE o.data->>'observationType'='generation'"

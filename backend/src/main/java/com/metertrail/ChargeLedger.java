@@ -32,7 +32,7 @@ final class ChargeLedger {
   }
   static void transaction(Store store,Map<String,Object> w,JsonNode d,Instant occurred) {
     UUID reference=reference(d);if(reference==null)return;
-    var rows=store.db.queryForList("SELECT * FROM usage_charges WHERE id=? AND workspace_id=? FOR UPDATE",reference,w.get("id"));
+    var rows=store.queries().queryForList("SELECT * FROM usage_charges WHERE id=? AND workspace_id=? FOR UPDATE",reference,w.get("id"));
     if(rows.isEmpty())throw new ApiError(400,"UNKNOWN_USAGE_CHARGE");
     var c=rows.get(0);
     if(c.get("transaction_id")!=null && !c.get("transaction_id").equals(d.path("id").asText()))throw new ApiError(409,"CHARGE_TRANSACTION_CONFLICT");
@@ -58,7 +58,7 @@ final class ChargeLedger {
   }
   static void refund(Store store,Map<String,Object> w,JsonNode d) {
     if(!"refund".equals(d.path("action").asText()) || !Set.of("approved","issued").contains(d.path("status").asText()))return;
-    for(var c:store.db.queryForList("SELECT * FROM usage_charges WHERE transaction_id=? AND workspace_id=? FOR UPDATE",d.path("transaction_id").asText(),w.get("id"))) {
+    for(var c:store.queries().queryForList("SELECT * FROM usage_charges WHERE transaction_id=? AND workspace_id=? FOR UPDATE",d.path("transaction_id").asText(),w.get("id"))) {
       if("addon".equals(c.get("kind")) && !(boolean)c.get("revoked")) {
         if((boolean)c.get("credited") && c.get("period_start").equals(w.get("period_start")))store.db.update("UPDATE workspaces SET addon_units=greatest(0,addon_units-?) WHERE id=?",c.get("units"),w.get("id"));
         store.db.update("UPDATE usage_charges SET revoked=true,status='refunded' WHERE id=?",c.get("id"));

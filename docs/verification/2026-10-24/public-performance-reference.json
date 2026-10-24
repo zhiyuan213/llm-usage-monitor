@@ -1,0 +1,412 @@
+{
+  "date": "2026-10-24",
+  "scope": "Historical local warmed-up short test; not a production guarantee or latest-build capacity certification",
+  "hardware": {
+    "docker_cpus": 16,
+    "docker_memory_bytes": 42018406400,
+    "api_cpus": 4,
+    "api_memory_gb": 6,
+    "worker_cpus": 4,
+    "worker_memory_gb": 6,
+    "db_cpus": 4,
+    "db_memory_gb": 8,
+    "redis_cpus": 1,
+    "load_cpus": 3,
+    "ingest_preallocated_vus": 300
+  },
+  "case": {
+    "name": "single-300-b1",
+    "target": {
+      "eps": 300,
+      "batch": 1,
+      "seconds": 60,
+      "query_qps": 20
+    },
+    "exit_code": 0,
+    "metrics": {
+      "http_req_failed": {
+        "passes": 0,
+        "fails": 19201,
+        "thresholds": {
+          "rate<0.01": false
+        },
+        "value": 0
+      },
+      "events_attempted": {
+        "count": 18000,
+        "rate": 299.943588474529
+      },
+      "events_http200": {
+        "rate": 299.943588474529,
+        "count": 18000
+      },
+      "http_reqs": {
+        "count": 19201,
+        "rate": 319.9564912388573
+      },
+      "http_req_duration{scenario:ingest}": {
+        "max": 79.074983,
+        "p(90)": 24.21693,
+        "p(95)": 27.181105499999994,
+        "avg": 19.99926303344461,
+        "min": 12.650332,
+        "med": 19.375006499999998,
+        "thresholds": {
+          "p(95)<200": false
+        }
+      },
+      "dropped_iterations": {
+        "count": 0,
+        "rate": 0,
+        "thresholds": {
+          "count==0": false
+        }
+      },
+      "http_req_duration{scenario:trace_queries}": {
+        "min": 1.772894,
+        "med": 2.171417,
+        "max": 18.86649,
+        "p(90)": 3.185872,
+        "p(95)": 5.608225,
+        "avg": 2.5927699000832654,
+        "thresholds": {
+          "p(95)<300": false
+        }
+      },
+      "checks": {
+        "passes": 19201,
+        "fails": 0,
+        "thresholds": {
+          "rate==1": false
+        },
+        "value": 1
+      }
+    },
+    "phase_timings": {
+      "event_identity_lookup": {
+        "count": 6825.0,
+        "mean_ms": 0.13994814871794872,
+        "p95_bucket_upper_ms": 1.0
+      },
+      "event_insert": {
+        "count": 6825.0,
+        "mean_ms": 0.2964802882051282,
+        "p95_bucket_upper_ms": 1.0
+      },
+      "identity_insert": {
+        "count": 6825.0,
+        "mean_ms": 0.296623673992674,
+        "p95_bucket_upper_ms": 1.0
+      },
+      "ledger_insert": {
+        "count": 6825.0,
+        "mean_ms": 0.40639274974358974,
+        "p95_bucket_upper_ms": 1.0
+      },
+      "object_identity_lookup": {
+        "count": 6825.0,
+        "mean_ms": 0.16646937743589743,
+        "p95_bucket_upper_ms": 1.0
+      },
+      "quota_lookup": {
+        "count": 6825.0,
+        "mean_ms": 0.1335727860805861,
+        "p95_bucket_upper_ms": 1.0
+      },
+      "workspace_lock_acquire": {
+        "count": 6825.0,
+        "mean_ms": 0.14498595619047616,
+        "p95_bucket_upper_ms": 1.0
+      },
+      "workspace_lock_held": {
+        "count": 6825.0,
+        "mean_ms": 7.061411600732601,
+        "p95_bucket_upper_ms": 9.786707999999999
+      }
+    },
+    "before": {
+      "events": 34550,
+      "objects": 34550,
+      "identities": 34550,
+      "ledger": 34550,
+      "used": 34550,
+      "pending": 0,
+      "failed": 0,
+      "accepted": 34550,
+      "rejected": 0,
+      "duplicates": 0,
+      "unprocessed": 0,
+      "raw_pending": 0,
+      "raw_quarantined": 0,
+      "queue_budget": 0,
+      "quota_blocks": 686,
+      "unsettled_blocks": 0,
+      "allocated_units": 34550
+    },
+    "after": {
+      "events": 52550,
+      "objects": 52550,
+      "identities": 52550,
+      "ledger": 52550,
+      "used": 52550,
+      "pending": 0,
+      "failed": 0,
+      "accepted": 52550,
+      "rejected": 0,
+      "duplicates": 0,
+      "unprocessed": 0,
+      "raw_pending": 0,
+      "raw_quarantined": 0,
+      "queue_budget": 0,
+      "quota_blocks": 7511,
+      "unsettled_blocks": 0,
+      "allocated_units": 52550
+    },
+    "delta": {
+      "events": 18000,
+      "objects": 18000,
+      "identities": 18000,
+      "ledger": 18000,
+      "used": 18000,
+      "pending": 0,
+      "failed": 0,
+      "accepted": 18000,
+      "rejected": 0,
+      "duplicates": 0,
+      "unprocessed": 0,
+      "raw_pending": 0,
+      "raw_quarantined": 0,
+      "queue_budget": 0,
+      "quota_blocks": 6825,
+      "unsettled_blocks": 0,
+      "allocated_units": 18000
+    },
+    "resources": [
+      {
+        "elapsed_s": 7,
+        "containers": [
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "157.83%",
+            "Container": "mt-durable-130600-api",
+            "ID": "b22d5fb72e6c",
+            "MemPerc": "5.58%",
+            "MemUsage": "342.9MiB / 6GiB",
+            "Name": "mt-durable-130600-api",
+            "NetIO": "44.9MB / 76.7MB",
+            "PIDs": "93"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "2.34%",
+            "Container": "mt-durable-130600-worker",
+            "ID": "8e162688f378",
+            "MemPerc": "4.70%",
+            "MemUsage": "288.8MiB / 6GiB",
+            "Name": "mt-durable-130600-worker",
+            "NetIO": "18MB / 10.5MB",
+            "PIDs": "63"
+          },
+          {
+            "BlockIO": "0B / 448MB",
+            "CPUPerc": "88.11%",
+            "Container": "mt-durable-130600-db",
+            "ID": "62226d0055e0",
+            "MemPerc": "2.45%",
+            "MemUsage": "200.3MiB / 8GiB",
+            "Name": "mt-durable-130600-db",
+            "NetIO": "63.8MB / 49.1MB",
+            "PIDs": "18"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "3.20%",
+            "Container": "mt-durable-130600-redis",
+            "ID": "2105e66f38e2",
+            "MemPerc": "0.50%",
+            "MemUsage": "5.121MiB / 1GiB",
+            "Name": "mt-durable-130600-redis",
+            "NetIO": "564kB / 197kB",
+            "PIDs": "6"
+          }
+        ],
+        "db_activity": {
+          "lock_waiters": 0,
+          "active": 1,
+          "worker_pending": 92,
+          "raw_pending": 4,
+          "queue_budget": 4
+        }
+      },
+      {
+        "elapsed_s": 24,
+        "containers": [
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "108.34%",
+            "Container": "mt-durable-130600-api",
+            "ID": "b22d5fb72e6c",
+            "MemPerc": "5.32%",
+            "MemUsage": "326.9MiB / 6GiB",
+            "Name": "mt-durable-130600-api",
+            "NetIO": "66.8MB / 108MB",
+            "PIDs": "92"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "1.77%",
+            "Container": "mt-durable-130600-worker",
+            "ID": "8e162688f378",
+            "MemPerc": "4.72%",
+            "MemUsage": "289.7MiB / 6GiB",
+            "Name": "mt-durable-130600-worker",
+            "NetIO": "21.1MB / 12.6MB",
+            "PIDs": "63"
+          },
+          {
+            "BlockIO": "0B / 585MB",
+            "CPUPerc": "80.05%",
+            "Container": "mt-durable-130600-db",
+            "ID": "62226d0055e0",
+            "MemPerc": "2.71%",
+            "MemUsage": "222.3MiB / 8GiB",
+            "Name": "mt-durable-130600-db",
+            "NetIO": "88.8MB / 70.2MB",
+            "PIDs": "18"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "2.79%",
+            "Container": "mt-durable-130600-redis",
+            "ID": "2105e66f38e2",
+            "MemPerc": "0.50%",
+            "MemUsage": "5.121MiB / 1GiB",
+            "Name": "mt-durable-130600-redis",
+            "NetIO": "1.53MB / 566kB",
+            "PIDs": "6"
+          }
+        ],
+        "db_activity": {
+          "lock_waiters": 0,
+          "active": 2,
+          "worker_pending": 32,
+          "raw_pending": 7,
+          "queue_budget": 7
+        }
+      },
+      {
+        "elapsed_s": 42,
+        "containers": [
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "71.14%",
+            "Container": "mt-durable-130600-api",
+            "ID": "b22d5fb72e6c",
+            "MemPerc": "5.32%",
+            "MemUsage": "326.9MiB / 6GiB",
+            "Name": "mt-durable-130600-api",
+            "NetIO": "89.7MB / 142MB",
+            "PIDs": "92"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "1.90%",
+            "Container": "mt-durable-130600-worker",
+            "ID": "8e162688f378",
+            "MemPerc": "4.70%",
+            "MemUsage": "289MiB / 6GiB",
+            "Name": "mt-durable-130600-worker",
+            "NetIO": "23.8MB / 14.5MB",
+            "PIDs": "63"
+          },
+          {
+            "BlockIO": "0B / 721MB",
+            "CPUPerc": "83.28%",
+            "Container": "mt-durable-130600-db",
+            "ID": "62226d0055e0",
+            "MemPerc": "2.82%",
+            "MemUsage": "231.1MiB / 8GiB",
+            "Name": "mt-durable-130600-db",
+            "NetIO": "113MB / 91.1MB",
+            "PIDs": "18"
+          },
+          {
+            "BlockIO": "0B / 4.1kB",
+            "CPUPerc": "2.83%",
+            "Container": "mt-durable-130600-redis",
+            "ID": "2105e66f38e2",
+            "MemPerc": "0.38%",
+            "MemUsage": "3.887MiB / 1GiB",
+            "Name": "mt-durable-130600-redis",
+            "NetIO": "2.52MB / 949kB",
+            "PIDs": "6"
+          }
+        ],
+        "db_activity": {
+          "lock_waiters": 0,
+          "active": 2,
+          "worker_pending": 14,
+          "raw_pending": 4,
+          "queue_budget": 4
+        }
+      },
+      {
+        "elapsed_s": 59,
+        "containers": [
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "79.07%",
+            "Container": "mt-durable-130600-api",
+            "ID": "b22d5fb72e6c",
+            "MemPerc": "5.32%",
+            "MemUsage": "326.8MiB / 6GiB",
+            "Name": "mt-durable-130600-api",
+            "NetIO": "113MB / 175MB",
+            "PIDs": "92"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "3.95%",
+            "Container": "mt-durable-130600-worker",
+            "ID": "8e162688f378",
+            "MemPerc": "4.72%",
+            "MemUsage": "290.3MiB / 6GiB",
+            "Name": "mt-durable-130600-worker",
+            "NetIO": "26.7MB / 16.4MB",
+            "PIDs": "63"
+          },
+          {
+            "BlockIO": "0B / 856MB",
+            "CPUPerc": "82.95%",
+            "Container": "mt-durable-130600-db",
+            "ID": "62226d0055e0",
+            "MemPerc": "3.02%",
+            "MemUsage": "247.6MiB / 8GiB",
+            "Name": "mt-durable-130600-db",
+            "NetIO": "138MB / 112MB",
+            "PIDs": "18"
+          },
+          {
+            "BlockIO": "0B / 4.1kB",
+            "CPUPerc": "2.89%",
+            "Container": "mt-durable-130600-redis",
+            "ID": "2105e66f38e2",
+            "MemPerc": "0.48%",
+            "MemUsage": "4.867MiB / 1GiB",
+            "Name": "mt-durable-130600-redis",
+            "NetIO": "3.51MB / 1.33MB",
+            "PIDs": "6"
+          }
+        ],
+        "db_activity": {
+          "lock_waiters": 0,
+          "active": 3,
+          "worker_pending": 77,
+          "raw_pending": 3,
+          "queue_budget": 3
+        }
+      }
+    ],
+    "consistent": true
+  }
+}

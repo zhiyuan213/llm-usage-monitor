@@ -132,7 +132,7 @@ class QueryReportsController {
   }
 
   @GetMapping("/api/reports/{kind}")
-  @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+  @Transactional(transactionManager = "readTransactionManager", readOnly = true, isolation = Isolation.REPEATABLE_READ)
   Map<String, Object> page(
       @PathVariable String kind,
       @RequestParam(required = false) UUID project,
@@ -146,13 +146,13 @@ class QueryReportsController {
     Support.require(Set.of(5, 10, 50, 100).contains(size), "INVALID_PAGE_SIZE");
     var r = report(kind, project, dimension, search, status, false, req);
     long total =
-        store.db.queryForObject(
+        store.queries().queryForObject(
             "SELECT count(*) FROM (" + r.sql() + ") report_count", Long.class, r.args());
     var args = new ArrayList<>(Arrays.asList(r.args()));
     args.add(size);
     args.add((long) page * size);
     var items =
-        store.db.queryForList(
+        store.queries().queryForList(
             "SELECT * FROM ("
                 + r.sql()
                 + ") report_rows ORDER BY "
@@ -164,7 +164,7 @@ class QueryReportsController {
   }
 
   @GetMapping("/api/reports/{kind}/export")
-  @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+  @Transactional(transactionManager = "readTransactionManager", readOnly = true, isolation = Isolation.REPEATABLE_READ)
   void export(
       @PathVariable String kind,
       @RequestParam(required = false) UUID project,
@@ -189,7 +189,7 @@ class QueryReportsController {
         format.equals("xlsx") ? new ActivityExport.Excel(res.getOutputStream(), r.headers()) : null;
     var pdf = format.equals("pdf") ? new ActivityExport.Pdf(r.headers(), r.widths()) : null;
     try {
-      store.db.query(
+      store.queries().query(
           con -> {
             var stmt =
                 con.prepareStatement(

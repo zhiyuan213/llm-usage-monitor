@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,10 +15,12 @@ class ConsoleController {
   List<Map<String, Object>> batches(@PathVariable UUID project, HttpServletRequest req) {
     store.project(uid(req), project);
     var rows =
-        store.db.queryForList(
-            "SELECT id,status,received,accepted,duplicates,rejected,errors,attempts,created_at FROM"
-                + " ingest_batches WHERE project_id=? ORDER BY created_at DESC LIMIT 50",
-            project);
+        store
+            .queries()
+            .queryForList(
+                "SELECT id,status,received,accepted,duplicates,rejected,errors,attempts,created_at"
+                    + " FROM ingest_batches WHERE project_id=? ORDER BY created_at DESC LIMIT 50",
+                project);
     for (var r : rows) r.put("errors", Support.parse(r.get("errors").toString()));
     return rows;
   }
@@ -41,19 +42,31 @@ class ConsoleController {
     return Map.of("status", "pending");
   }
 
-  @org.springframework.beans.factory.annotation.Value("${metertrail.usage-collection-enabled:false}")
+  @org.springframework.beans.factory.annotation.Value(
+      "${metertrail.usage-collection-enabled:false}")
   boolean collectionEnabled;
+
   final Store store;
   final Challenges challenges;
   final RateLimits limits;
-  final Map<UUID, CachedCount> traceCounts = new ConcurrentHashMap<>();
+  final TraceCountCache traceCounts;
+  final org.springframework.transaction.support.TransactionTemplate countTransactions;
 
-  record CachedCount(long value, long expiresAt) {}
-
-  ConsoleController(Store store, Challenges challenges, RateLimits limits) {
+  ConsoleController(
+      Store store,
+      Challenges challenges,
+      RateLimits limits,
+      TraceCountCache traceCounts,
+      @org.springframework.beans.factory.annotation.Qualifier("readTransactionManager")
+          org.springframework.transaction.PlatformTransactionManager readTransactions) {
     this.store = store;
     this.challenges = challenges;
     this.limits = limits;
+    this.traceCounts = traceCounts;
+    this.countTransactions =
+        new org.springframework.transaction.support.TransactionTemplate(readTransactions);
+    this.countTransactions.setReadOnly(true);
+    this.countTransactions.setTimeout(3);
   }
 
   UUID uid(HttpServletRequest req) {
@@ -62,11 +75,13 @@ class ConsoleController {
 
   @GetMapping("/api/projects")
   List<Map<String, Object>> projects(HttpServletRequest req) {
-    return store.db.queryForList(
-        "SELECT p.*,(SELECT count(*) FROM objects o WHERE o.project_id=p.id) AS object_count FROM"
-            + " projects p JOIN workspaces w ON w.id=p.workspace_id WHERE w.owner_id=? AND"
-            + " p.deleted_at IS NULL ORDER BY p.created_at",
-        uid(req));
+    return store
+        .queries()
+        .queryForList(
+            "SELECT p.*,(SELECT count(*) FROM objects o WHERE o.project_id=p.id) AS object_count"
+                + " FROM projects p JOIN workspaces w ON w.id=p.workspace_id WHERE w.owner_id=? AND"
+                + " p.deleted_at IS NULL ORDER BY p.created_at",
+            uid(req));
   }
 
   @PostMapping("/api/projects")
@@ -107,10 +122,12 @@ class ConsoleController {
   @GetMapping("/api/projects/{project}/keys")
   List<Map<String, Object>> keys(@PathVariable UUID project, HttpServletRequest req) {
     store.project(uid(req), project);
-    return store.db.queryForList(
-        "SELECT id,name,prefix,created_at,revoked_at FROM api_keys WHERE project_id=? AND"
-            + " deleted_at IS NULL ORDER BY created_at DESC",
-        project);
+    return store
+        .queries()
+        .queryForList(
+            "SELECT id,name,prefix,created_at,revoked_at FROM api_keys WHERE project_id=? AND"
+                + " deleted_at IS NULL ORDER BY created_at DESC",
+            project);
   }
 
   @PostMapping("/api/projects/{project}/keys")
@@ -159,11 +176,13 @@ class ConsoleController {
       @PathVariable UUID project, @PathVariable UUID key, HttpServletRequest req) {
     var p = store.project(uid(req), project);
     var keys =
-        store.db.queryForList(
-            "SELECT revoked_at FROM api_keys WHERE id=? AND project_id=? AND deleted_at IS NULL FOR"
-                + " UPDATE",
-            key,
-            project);
+        store
+            .queries()
+            .queryForList(
+                "SELECT revoked_at FROM api_keys WHERE id=? AND project_id=? AND deleted_at IS NULL"
+                    + " FOR UPDATE",
+                key,
+                project);
     if (keys.isEmpty()) throw new ApiError(404, "KEY_NOT_FOUND");
     if (keys.get(0).get("revoked_at") == null) throw new ApiError(409, "KEY_MUST_BE_REVOKED");
     store.db.update("UPDATE api_keys SET deleted_at=now() WHERE id=?", key);
@@ -223,32 +242,39 @@ class ConsoleController {
     store.project(uid(req), project);
     String q = source();
     var summary =
-        store.db.queryForMap(
-            "SELECT count(*) AS objects,count(*) FILTER(WHERE o.type='trace') AS traces,count(*)"
-                + " FILTER(WHERE o.data->>'observationType'='generation') AS calls,count(*)"
-                + " FILTER(WHERE o.data->>'status'='error') AS errors,sum(o.cost) AS cost,count(*)"
-                + " FILTER(WHERE o.data->>'observationType'='generation' AND o.cost IS NULL) AS"
-                + " unknown_costs,sum((o.data->'usage'->>'inputTokens')::numeric+(o.data->'usage'->>'outputTokens')::numeric)"
-                + " AS tokens,percentile_cont(0.95) WITHIN GROUP(ORDER BY"
-                + " (o.data->>'durationMs')::numeric) AS p95"
-                + q,
-            project,
-            uid(req));
+        store
+            .queries()
+            .queryForMap(
+                "SELECT count(*) AS objects,count(*) FILTER(WHERE o.type='trace') AS"
+                    + " traces,count(*) FILTER(WHERE o.data->>'observationType'='generation') AS"
+                    + " calls,count(*) FILTER(WHERE o.data->>'status'='error') AS"
+                    + " errors,sum(o.cost) AS cost,count(*) FILTER(WHERE"
+                    + " o.data->>'observationType'='generation' AND o.cost IS NULL) AS"
+                    + " unknown_costs,sum((o.data->'usage'->>'inputTokens')::numeric+(o.data->'usage'->>'outputTokens')::numeric)"
+                    + " AS tokens,percentile_cont(0.95) WITHIN GROUP(ORDER BY"
+                    + " (o.data->>'durationMs')::numeric) AS p95"
+                    + q,
+                project,
+                uid(req));
     var daily =
-        store.db.queryForList(
-            "SELECT (o.started_at AT TIME ZONE 'UTC')::date AS day,count(*) AS calls,sum(o.cost) AS"
-                + " cost"
-                + q
-                + " GROUP BY 1 ORDER BY 1 DESC LIMIT 30",
-            project,
-            uid(req));
+        store
+            .queries()
+            .queryForList(
+                "SELECT (o.started_at AT TIME ZONE 'UTC')::date AS day,count(*) AS"
+                    + " calls,sum(o.cost) AS cost"
+                    + q
+                    + " GROUP BY 1 ORDER BY 1 DESC LIMIT 30",
+                project,
+                uid(req));
     var models =
-        store.db.queryForList(
-            "SELECT o.data->>'model' AS model,count(*) AS calls,sum(o.cost) AS cost"
-                + q
-                + " AND o.data->>'model' IS NOT NULL GROUP BY 1 ORDER BY calls DESC LIMIT 20",
-            project,
-            uid(req));
+        store
+            .queries()
+            .queryForList(
+                "SELECT o.data->>'model' AS model,count(*) AS calls,sum(o.cost) AS cost"
+                    + q
+                    + " AND o.data->>'model' IS NOT NULL GROUP BY 1 ORDER BY calls DESC LIMIT 20",
+                project,
+                uid(req));
     return Map.of("summary", summary, "daily", daily, "models", models);
   }
 
@@ -276,22 +302,50 @@ class ConsoleController {
     params.add(page * 50);
     var rows =
         decode(
-            store.db.queryForList(
-                "SELECT o.*" + where + " ORDER BY o.started_at DESC LIMIT 50 OFFSET ?",
-                params.toArray()));
+            store
+                .queries()
+                .queryForList(
+                    "SELECT o.*" + where + " ORDER BY o.started_at DESC LIMIT 50 OFFSET ?",
+                    params.toArray()));
     long count;
     if (search.isEmpty() && status.isEmpty()) {
-      long now = System.nanoTime();
-      var cached = traceCounts.get(project);
-      if (cached != null && cached.expiresAt() > now) count = cached.value();
-      else {
-        count = store.db.queryForObject("SELECT count(*)" + where, Long.class, args.toArray());
-        traceCounts.put(project, new CachedCount(count, now + 1_000_000_000L));
-      }
+      count = countTraces(project, uid(req));
     } else {
-      count = store.db.queryForObject("SELECT count(*)" + where, Long.class, args.toArray());
+      count = store.queries().queryForObject("SELECT count(*)" + where, Long.class, args.toArray());
     }
     return Map.of("items", rows, "total", count, "page", page);
+  }
+
+  long countTraces(UUID project, UUID owner) {
+    return traceCounts.get(
+        project,
+        owner,
+        () ->
+            countTransactions.execute(
+                status -> {
+                  // One exact count must not consume parallel DB workers needed by ingestion.
+                  store.read.execute("SET LOCAL max_parallel_workers_per_gather=0");
+                  return store.read.query(
+                      con -> {
+                        var stmt =
+                            con.prepareStatement(
+                                "SELECT count(*) FROM objects o WHERE o.project_id=? AND"
+                                    + " o.type='trace' AND o.started_at>(SELECT"
+                                    + " now()-make_interval(days=>CASE w.plan WHEN 'Pro' THEN 1096"
+                                    + " WHEN 'Core' THEN 90 ELSE 30 END) FROM projects p JOIN"
+                                    + " workspaces w ON w.id=p.workspace_id WHERE p.id=? AND"
+                                    + " w.owner_id=? AND p.deleted_at IS NULL)");
+                        stmt.setObject(1, project);
+                        stmt.setObject(2, project);
+                        stmt.setObject(3, owner);
+                        stmt.setQueryTimeout(3);
+                        return stmt;
+                      },
+                      rs -> {
+                        rs.next();
+                        return rs.getLong(1);
+                      });
+                }));
   }
 
   @GetMapping("/api/projects/{project}/traces/{trace}")
@@ -302,41 +356,47 @@ class ConsoleController {
     return Map.of(
         "objects",
         decode(
-            store.db.queryForList(
-                "SELECT o.*,CASE WHEN o.type='observation' THEN NOT EXISTS(SELECT 1 FROM objects t"
-                    + " WHERE t.project_id=o.project_id AND t.type='trace' AND"
-                    + " t.trace_id=o.trace_id) WHEN o.type='score' THEN NOT EXISTS(SELECT 1 FROM"
-                    + " objects t WHERE t.project_id=o.project_id AND t.type=o.data->>'targetType'"
-                    + " AND t.object_id=o.data->>'targetId') ELSE false END AS unmatched"
-                    + source()
-                    + " AND (o.trace_id=? OR (o.type='score' AND EXISTS (SELECT 1 FROM objects t"
-                    + " WHERE t.project_id=o.project_id AND t.trace_id=? AND"
-                    + " t.type=o.data->>'targetType' AND t.object_id=o.data->>'targetId'))) ORDER"
-                    + " BY o.started_at",
-                project,
-                uid(req),
-                trace,
-                trace)));
+            store
+                .queries()
+                .queryForList(
+                    "SELECT o.*,CASE WHEN o.type='observation' THEN NOT EXISTS(SELECT 1 FROM"
+                        + " objects t WHERE t.project_id=o.project_id AND t.type='trace' AND"
+                        + " t.trace_id=o.trace_id) WHEN o.type='score' THEN NOT EXISTS(SELECT 1"
+                        + " FROM objects t WHERE t.project_id=o.project_id AND"
+                        + " t.type=o.data->>'targetType' AND t.object_id=o.data->>'targetId') ELSE"
+                        + " false END AS unmatched"
+                        + source()
+                        + " AND (o.trace_id=? OR (o.type='score' AND EXISTS (SELECT 1 FROM objects"
+                        + " t WHERE t.project_id=o.project_id AND t.trace_id=? AND"
+                        + " t.type=o.data->>'targetType' AND t.object_id=o.data->>'targetId')))"
+                        + " ORDER BY o.started_at",
+                    project,
+                    uid(req),
+                    trace,
+                    trace)));
   }
 
   @GetMapping("/api/projects/{project}/objects")
   List<Map<String, Object>> objects(@PathVariable UUID project, HttpServletRequest req) {
     store.project(uid(req), project);
     return decode(
-        store.db.queryForList(
-            "SELECT o.*,CASE WHEN o.type='observation' THEN NOT EXISTS(SELECT 1 FROM objects t"
-                + " WHERE t.project_id=o.project_id AND t.type='trace' AND t.trace_id=o.trace_id)"
-                + " WHEN o.type='score' THEN NOT EXISTS(SELECT 1 FROM objects t WHERE"
-                + " t.project_id=o.project_id AND t.type=o.data->>'targetType' AND"
-                + " t.object_id=o.data->>'targetId') ELSE false END AS unmatched"
-                + source()
-                + " ORDER BY o.started_at DESC LIMIT 100",
-            project,
-            uid(req)));
+        store
+            .queries()
+            .queryForList(
+                "SELECT o.*,CASE WHEN o.type='observation' THEN NOT EXISTS(SELECT 1 FROM objects t"
+                    + " WHERE t.project_id=o.project_id AND t.type='trace' AND"
+                    + " t.trace_id=o.trace_id) WHEN o.type='score' THEN NOT EXISTS(SELECT 1 FROM"
+                    + " objects t WHERE t.project_id=o.project_id AND t.type=o.data->>'targetType'"
+                    + " AND t.object_id=o.data->>'targetId') ELSE false END AS unmatched"
+                    + source()
+                    + " ORDER BY o.started_at DESC LIMIT 100",
+                project,
+                uid(req)));
   }
 
   @GetMapping("/api/projects/{project}/activity")
   @Transactional(
+      transactionManager = "readTransactionManager",
       readOnly = true,
       isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
   Map<String, Object> activity(
@@ -347,22 +407,25 @@ class ConsoleController {
     store.project(uid(req), project);
     Support.require(page >= 0 && size >= 1 && size <= 100, "INVALID_PAGE");
     long total =
-        store.db.queryForObject("SELECT count(*)" + source(), Long.class, project, uid(req));
+        store.queries().queryForObject("SELECT count(*)" + source(), Long.class, project, uid(req));
     var rows =
         decode(
-            store.db.queryForList(
-                "SELECT o.*"
-                    + source()
-                    + " ORDER BY o.started_at DESC,o.type,o.object_id LIMIT ? OFFSET ?",
-                project,
-                uid(req),
-                size,
-                (long) page * size));
+            store
+                .queries()
+                .queryForList(
+                    "SELECT o.*"
+                        + source()
+                        + " ORDER BY o.started_at DESC,o.type,o.object_id LIMIT ? OFFSET ?",
+                    project,
+                    uid(req),
+                    size,
+                    (long) page * size));
     return Map.of("items", rows, "total", total, "page", page, "size", size);
   }
 
   @GetMapping("/api/projects/{project}/activity/export")
   @Transactional(
+      transactionManager = "readTransactionManager",
       readOnly = true,
       isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
   void exportActivity(
@@ -386,31 +449,33 @@ class ConsoleController {
     var excel = format.equals("xlsx") ? new ActivityExport.Excel(res.getOutputStream(), zh) : null;
     var pdf = format.equals("pdf") ? new ActivityExport.Pdf(zh) : null;
     try {
-      store.db.query(
-          con -> {
-            var stmt =
-                con.prepareStatement(
-                    "SELECT o.started_at,o.object_id,o.type,o.data,o.cost"
-                        + source()
-                        + " ORDER BY o.started_at DESC,o.type,o.object_id");
-            stmt.setObject(1, project);
-            stmt.setObject(2, uid(req));
-            stmt.setFetchSize(500);
-            return stmt;
-          },
-          (org.springframework.jdbc.core.RowCallbackHandler)
-              rs -> {
-                Map<String, Object> row = new HashMap<>();
-                for (String key : List.of("started_at", "object_id", "type", "data", "cost"))
-                  row.put(key, rs.getObject(key));
-                try {
-                  var values = ActivityExport.row(row, zh);
-                  if (excel != null) excel.add(values);
-                  else pdf.add(values);
-                } catch (java.io.IOException e) {
-                  throw new java.io.UncheckedIOException(e);
-                }
-              });
+      store
+          .queries()
+          .query(
+              con -> {
+                var stmt =
+                    con.prepareStatement(
+                        "SELECT o.started_at,o.object_id,o.type,o.data,o.cost"
+                            + source()
+                            + " ORDER BY o.started_at DESC,o.type,o.object_id");
+                stmt.setObject(1, project);
+                stmt.setObject(2, uid(req));
+                stmt.setFetchSize(500);
+                return stmt;
+              },
+              (org.springframework.jdbc.core.RowCallbackHandler)
+                  rs -> {
+                    Map<String, Object> row = new HashMap<>();
+                    for (String key : List.of("started_at", "object_id", "type", "data", "cost"))
+                      row.put(key, rs.getObject(key));
+                    try {
+                      var values = ActivityExport.row(row, zh);
+                      if (excel != null) excel.add(values);
+                      else pdf.add(values);
+                    } catch (java.io.IOException e) {
+                      throw new java.io.UncheckedIOException(e);
+                    }
+                  });
       if (pdf != null) pdf.save(res.getOutputStream());
     } finally {
       if (excel != null) excel.close();
@@ -426,23 +491,27 @@ class ConsoleController {
     store.project(uid(req), project);
     Support.require(
         Set.of("userId", "customerId", "feature").contains(dimension), "INVALID_DIMENSION");
-    return store.db.queryForList(
-        "SELECT o.data->>? AS dimension,count(*) AS objects,sum(o.cost) AS cost,count(*)"
-            + " FILTER(WHERE o.data->>'observationType'='generation' AND o.cost IS NULL) AS"
-            + " unknown_costs,sum((o.data->'usage'->>'inputTokens')::numeric+(o.data->'usage'->>'outputTokens')::numeric)"
-            + " AS tokens"
-            + source()
-            + " GROUP BY 1 ORDER BY objects DESC LIMIT 100",
-        dimension,
-        project,
-        uid(req));
+    return store
+        .queries()
+        .queryForList(
+            "SELECT o.data->>? AS dimension,count(*) AS objects,sum(o.cost) AS cost,count(*)"
+                + " FILTER(WHERE o.data->>'observationType'='generation' AND o.cost IS NULL) AS"
+                + " unknown_costs,sum((o.data->'usage'->>'inputTokens')::numeric+(o.data->'usage'->>'outputTokens')::numeric)"
+                + " AS tokens"
+                + source()
+                + " GROUP BY 1 ORDER BY objects DESC LIMIT 100",
+            dimension,
+            project,
+            uid(req));
   }
 
   @GetMapping("/api/projects/{project}/prices")
   List<Map<String, Object>> prices(@PathVariable UUID project, HttpServletRequest req) {
     store.project(uid(req), project);
-    return store.db.queryForList(
-        "SELECT * FROM price_versions WHERE project_id=? ORDER BY effective_at DESC", project);
+    return store
+        .queries()
+        .queryForList(
+            "SELECT * FROM price_versions WHERE project_id=? ORDER BY effective_at DESC", project);
   }
 
   @PostMapping("/api/projects/{project}/prices")
@@ -492,7 +561,8 @@ class ConsoleController {
   @GetMapping("/api/billing")
   Map<String, Object> billing(HttpServletRequest req) {
     var w = store.workspace(uid(req));
-    if (w.get("scheduled_change") != null) w.put("scheduled_change", Support.parse(w.get("scheduled_change").toString()));
+    if (w.get("scheduled_change") != null)
+      w.put("scheduled_change", Support.parse(w.get("scheduled_change").toString()));
     return Map.of(
         "workspace",
         w,
@@ -501,35 +571,46 @@ class ConsoleController {
         "included",
         ChargeLedger.included(w),
         "payments",
-        store.db.queryForList(
-            "SELECT * FROM payments WHERE workspace_id=? ORDER BY created_at DESC LIMIT 100",
-            w.get("id")),
+        store
+            .queries()
+            .queryForList(
+                "SELECT * FROM payments WHERE workspace_id=? ORDER BY created_at DESC LIMIT 100",
+                w.get("id")),
         "adjustments",
-        store.db.queryForList("SELECT id,transaction_id,action,status,amount,currency,updated_at FROM payment_adjustments WHERE workspace_id=? ORDER BY updated_at DESC LIMIT 100", w.get("id")),
+        store
+            .queries()
+            .queryForList(
+                "SELECT id,transaction_id,action,status,amount,currency,updated_at FROM"
+                    + " payment_adjustments WHERE workspace_id=? ORDER BY updated_at DESC LIMIT"
+                    + " 100",
+                w.get("id")),
         "ledger",
-        store.db.queryForList(
-            "SELECT project_id,sum(units) AS units FROM usage_ledger WHERE workspace_id=? AND"
-                + " period_start=? GROUP BY project_id",
-            w.get("id"),
-            w.get("period_start")));
+        store
+            .queries()
+            .queryForList(
+                "SELECT project_id,sum(units) AS units FROM usage_ledger WHERE workspace_id=? AND"
+                    + " period_start=? GROUP BY project_id",
+                w.get("id"),
+                w.get("period_start")));
   }
 
   @PostMapping("/api/billing/overage")
   @Transactional
   Map<String, String> overage(@RequestBody JsonNode b, HttpServletRequest req) {
     var base = store.workspace(uid(req));
-    var w = store.db.queryForMap("SELECT * FROM workspaces WHERE id=? FOR UPDATE", base.get("id"));
+    var w =
+        store
+            .queries()
+            .queryForMap("SELECT * FROM workspaces WHERE id=? FOR UPDATE", base.get("id"));
     boolean enabled = b.path("enabled").asBoolean();
-    if(enabled && !collectionEnabled) throw new ApiError(503,"USAGE_COLLECTION_NOT_CONFIGURED");
+    if (enabled && !collectionEnabled) throw new ApiError(503, "USAGE_COLLECTION_NOT_CONFIGURED");
     BigDecimal cap = decimal(b, "cap");
     Support.require(
         !enabled || (!w.get("plan").equals("Free") && b.path("consent").asBoolean()),
         "BILLING_CONSENT_REQUIRED");
     String target = enabled + ":" + cap.stripTrailingZeros().toPlainString();
     verify(b, "billing.overage", target, req);
-    Support.require(
-        cap.compareTo(ChargeLedger.accrued(w)) >= 0,
-        "CAP_BELOW_ACCRUED");
+    Support.require(cap.compareTo(ChargeLedger.accrued(w)) >= 0, "CAP_BELOW_ACCRUED");
     store.db.update(
         "UPDATE workspaces SET auto_overage=?,overage_cap=? WHERE id=?", enabled, cap, w.get("id"));
     store.audit(uid(req), (UUID) w.get("id"), "billing.overage", target, true, req);
@@ -541,14 +622,18 @@ class ConsoleController {
     store.project(uid(req), project);
     return Map.of(
         "rules",
-        store.db.queryForList(
-            "SELECT * FROM alert_rules WHERE project_id=? AND deleted_at IS NULL ORDER BY name",
-            project),
+        store
+            .queries()
+            .queryForList(
+                "SELECT * FROM alert_rules WHERE project_id=? AND deleted_at IS NULL ORDER BY name",
+                project),
         "events",
-        store.db.queryForList(
-            "SELECT e.*,r.name FROM alert_events e JOIN alert_rules r ON r.id=e.rule_id WHERE"
-                + " r.project_id=? ORDER BY e.created_at DESC LIMIT 100",
-            project));
+        store
+            .queries()
+            .queryForList(
+                "SELECT e.*,r.name FROM alert_events e JOIN alert_rules r ON r.id=e.rule_id WHERE"
+                    + " r.project_id=? ORDER BY e.created_at DESC LIMIT 100",
+                project));
   }
 
   @PostMapping("/api/projects/{project}/alerts")
@@ -595,11 +680,13 @@ class ConsoleController {
   List<Map<String, Object>> audit(
       @RequestParam(defaultValue = "0") int page, HttpServletRequest req) {
     Support.require(page >= 0 && page <= 100000, "INVALID_PAGE");
-    return store.db.queryForList(
-        "SELECT a.* FROM audit_logs a WHERE a.user_id=? OR a.workspace_id IN(SELECT id FROM"
-            + " workspaces WHERE owner_id=?) ORDER BY a.id DESC LIMIT 100 OFFSET ?",
-        uid(req),
-        uid(req),
-        page * 100);
+    return store
+        .queries()
+        .queryForList(
+            "SELECT a.* FROM audit_logs a WHERE a.user_id=? OR a.workspace_id IN(SELECT id FROM"
+                + " workspaces WHERE owner_id=?) ORDER BY a.id DESC LIMIT 100 OFFSET ?",
+            uid(req),
+            uid(req),
+            page * 100);
   }
 }

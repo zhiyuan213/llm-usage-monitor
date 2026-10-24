@@ -28,10 +28,10 @@ class UsageCharges {
   Map<String,Object> list(HttpServletRequest req) {
     var w=store.workspace(SessionFilter.uid(req));
     long used=((Number)w.get("used_units")).longValue(), overage=((Number)w.get("overage_units")).longValue(), consumed=((Number)w.get("addon_consumed")).longValue();
-    Long remaining=store.db.queryForObject("SELECT coalesce(sum(units-consumed_units),0) FROM usage_charges WHERE workspace_id=? AND period_start=? AND kind='addon' AND credited AND NOT revoked AND status='paid'",Long.class,w.get("id"),w.get("period_start"));
+    Long remaining=store.queries().queryForObject("SELECT coalesce(sum(units-consumed_units),0) FROM usage_charges WHERE workspace_id=? AND period_start=? AND kind='addon' AND credited AND NOT revoked AND status='paid'",Long.class,w.get("id"),w.get("period_start"));
     long available=Math.max(0,Billing.included((String)w.get("plan"))-(used-overage-consumed))+remaining;
     if(!"Free".equals(w.get("plan")) && (!"active".equals(w.get("subscription_status")) || !((Timestamp)w.get("period_end")).toInstant().isAfter(Instant.now())))available=0;
-    return Map.of("availableUnits",available,"enabled",enabled,"packUnits",100000,"packAmount","8.00","currency","USD","charges",store.db.queryForList("SELECT id,kind,units,amount,currency,status,transaction_id,credited,revoked,period_start,period_end,created_at,checkout_url FROM usage_charges WHERE workspace_id=? ORDER BY created_at DESC LIMIT 100",w.get("id")));
+    return Map.of("availableUnits",available,"enabled",enabled,"packUnits",100000,"packAmount","8.00","currency","USD","charges",store.queries().queryForList("SELECT id,kind,units,amount,currency,status,transaction_id,credited,revoked,period_start,period_end,created_at,checkout_url FROM usage_charges WHERE workspace_id=? ORDER BY created_at DESC LIMIT 100",w.get("id")));
   }
   static void active(Map<String,Object> w) {
     if("Free".equals(w.get("plan")) || !"active".equals(w.get("subscription_status")) || w.get("subscription_id")==null || !((Timestamp)w.get("period_end")).toInstant().isAfter(Instant.now().plusSeconds(900)))
@@ -51,17 +51,17 @@ class UsageCharges {
     Support.require(b.path("consent").asBoolean(),"BILLING_CONSENT_REQUIRED");
     UUID workspace=(UUID)store.workspace(SessionFilter.uid(req)).get("id");
     var charge=tx.execute(status->{
-      var w=store.db.queryForMap("SELECT * FROM workspaces WHERE id=? FOR UPDATE",workspace); active(w);
-      var existing=store.db.queryForList("SELECT * FROM usage_charges WHERE workspace_id=? AND kind='addon' AND status IN ('ready','processing','submitted','unknown')",workspace);
+      var w=store.queries().queryForMap("SELECT * FROM workspaces WHERE id=? FOR UPDATE",workspace); active(w);
+      var existing=store.queries().queryForList("SELECT * FROM usage_charges WHERE workspace_id=? AND kind='addon' AND status IN ('ready','processing','submitted','unknown')",workspace);
       if(!existing.isEmpty()) return existing.get(0);
       UUID id=UUID.randomUUID();
       store.db.update("INSERT INTO usage_charges(id,workspace_id,subscription_id,period_start,period_end,kind,units,amount) VALUES(?,?,?,?,?,'addon',100000,8)",id,workspace,w.get("subscription_id"),w.get("period_start"),w.get("period_end"));
       store.audit(SessionFilter.uid(req),workspace,"billing.addon",id.toString(),true,req);
-      return store.db.queryForMap("SELECT * FROM usage_charges WHERE id=?",id);
+      return store.queries().queryForMap("SELECT * FROM usage_charges WHERE id=?",id);
     });
     if(charge.get("checkout_url")!=null) return Map.of("id",charge.get("id"),"url",charge.get("checkout_url"));
     submit(charge);
-    var result=store.db.queryForMap("SELECT status,checkout_url FROM usage_charges WHERE id=?",charge.get("id"));
+    var result=store.queries().queryForMap("SELECT status,checkout_url FROM usage_charges WHERE id=?",charge.get("id"));
     if(result.get("checkout_url")==null) throw new ApiError(409,"CHARGE_PENDING_REVIEW");
     return Map.of("id",charge.get("id"),"url",result.get("checkout_url"));
   }
@@ -121,11 +121,11 @@ class UsageCharges {
   void collect() {
     if(!enabled || !worker) return;
     // Cover expired periods even if the provider's renewal/cancellation webhook is delayed.
-    for(var row:store.db.queryForList("SELECT id FROM workspaces WHERE plan<>'Free' AND subscription_id IS NOT NULL AND period_end<=now()"))
-      tx.executeWithoutResult(status->{ var w=store.db.queryForMap("SELECT * FROM workspaces WHERE id=? FOR UPDATE",row.get("id")); ChargeLedger.close(store,w); });
-    for(var c:store.db.queryForList("SELECT * FROM usage_charges WHERE kind='overage' AND status='ready' ORDER BY created_at LIMIT 50")) submit(c);
+    for(var row:store.queries().queryForList("SELECT id FROM workspaces WHERE plan<>'Free' AND subscription_id IS NOT NULL AND period_end<=now()"))
+      tx.executeWithoutResult(status->{ var w=store.queries().queryForMap("SELECT * FROM workspaces WHERE id=? FOR UPDATE",row.get("id")); ChargeLedger.close(store,w); });
+    for(var c:store.queries().queryForList("SELECT * FROM usage_charges WHERE kind='overage' AND status='ready' ORDER BY created_at LIMIT 50")) submit(c);
     store.db.update("UPDATE usage_charges SET status='unknown' WHERE status='processing' AND created_at<now()-interval '5 minutes'");
-    for(var c:store.db.queryForList("SELECT * FROM usage_charges WHERE status IN ('submitted','unknown','failed') ORDER BY checked_at LIMIT 5")) {
+    for(var c:store.queries().queryForList("SELECT * FROM usage_charges WHERE status IN ('submitted','unknown','failed') ORDER BY checked_at LIMIT 5")) {
       try { reconcile(c); } catch(Exception e) { /* Remain unresolved; never infer success from missing evidence. */ }
       finally { store.db.update("UPDATE usage_charges SET checked_at=now() WHERE id=?",c.get("id")); }
     }

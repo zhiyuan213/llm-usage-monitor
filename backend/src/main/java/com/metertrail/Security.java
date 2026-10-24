@@ -35,7 +35,7 @@ class Security {
 class SessionFilter extends OncePerRequestFilter {
   final JdbcTemplate db;
 
-  SessionFilter(JdbcTemplate db) {
+  SessionFilter(@org.springframework.beans.factory.annotation.Qualifier("readJdbcTemplate") JdbcTemplate db) {
     this.db = db;
   }
 

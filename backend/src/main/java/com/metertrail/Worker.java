@@ -19,6 +19,12 @@ class Worker {
   final boolean enabled;
   final String from;
 
+  @Value("${metertrail.worker.group-batches:100}")
+  int groupBatches = 100;
+
+  @Value("${metertrail.worker.group-events:500}")
+  int groupEvents = 500;
+
   Worker(
       Store store,
       TransactionTemplate tx,
@@ -32,45 +38,83 @@ class Worker {
     this.from = from;
   }
 
-  @Scheduled(fixedDelay = 300)
   public void process() {
-    if (!enabled) return;
-    for (int i = 0; i < 10; i++) {
-      UUID[] claimed = {null};
-      Boolean found;
+    drain(10, Long.MAX_VALUE);
+  }
+
+  /** Materialize bounded same-project groups; authoritative billing is already committed. */
+  boolean drain(int maxBatches, long budgetNanos) {
+    if (!enabled) return false;
+    long sliceStarted = System.nanoTime();
+    for (int done = 0; done < maxBatches; ) {
+      if (Thread.currentThread().isInterrupted()) return false;
+      if (done > 0 && System.nanoTime() - sliceStarted >= budgetNanos) return true;
+      var claimed = new ArrayList<UUID>();
+      int remaining = maxBatches - done;
       try {
-        found =
+        Boolean found =
             tx.execute(
-                s -> {
-                  var batches =
-                      store.db.queryForList(
-                          "SELECT * FROM ingest_batches WHERE status='pending' AND (lease_until IS"
-                              + " NULL OR lease_until<now()) ORDER BY created_at FOR UPDATE SKIP"
-                              + " LOCKED LIMIT 1");
-                  if (batches.isEmpty()) return false;
-                  var b = batches.get(0);
-                  UUID batch = (UUID) b.get("id"), project = (UUID) b.get("project_id");
-                  claimed[0] = batch;
-                  // Transaction row lock is the lease: connection loss rolls back and immediately
-                  // releases it.
+                status -> {
+                  var heads =
+                      store
+                          .queries()
+                          .queryForList(
+                              "SELECT * FROM ingest_batches WHERE status='pending' AND (lease_until"
+                                  + " IS NULL OR lease_until<now()) ORDER BY created_at,id FOR"
+                                  + " UPDATE SKIP LOCKED LIMIT 1");
+                  if (heads.isEmpty()) return false;
+                  var first = heads.get(0);
+                  UUID batch = (UUID) first.get("id"), project = (UUID) first.get("project_id");
+                  claimed.add(batch);
+                  int eventsInGroup = ((Number) first.get("accepted")).intValue();
+                  int limit = Math.max(1, Math.min(groupBatches, remaining));
+                  if (((Number) first.get("attempts")).intValue() == 0 && limit > 1) {
+                    var extra =
+                        store
+                            .queries()
+                            .queryForList(
+                                "SELECT id,accepted FROM ingest_batches WHERE project_id=? AND"
+                                    + " id<>? AND status='pending' AND attempts=0 AND (lease_until"
+                                    + " IS NULL OR lease_until<now()) ORDER BY created_at,id FOR"
+                                    + " UPDATE SKIP LOCKED LIMIT ?",
+                                project,
+                                batch,
+                                limit - 1);
+                    for (var candidate : extra) {
+                      int count = ((Number) candidate.get("accepted")).intValue();
+                      if (eventsInGroup + count > groupEvents) break;
+                      claimed.add((UUID) candidate.get("id"));
+                      eventsInGroup += count;
+                    }
+                  }
+                  String placeholders = String.join(",", Collections.nCopies(claimed.size(), "?"));
+                  Object[] ids = claimed.toArray();
                   if (!store
-                      .db
+                      .queries()
                       .queryForList(
                           "SELECT id FROM projects WHERE id=? AND deleted_at IS NOT NULL", project)
                       .isEmpty()) {
                     store.db.update(
-                        "UPDATE ingest_events SET processed=true,payload='{}' WHERE batch_id=?",
-                        batch);
+                        "UPDATE ingest_events SET processed=true,payload='{}' WHERE batch_id IN ("
+                            + placeholders
+                            + ")",
+                        ids);
                     store.db.update(
-                        "UPDATE ingest_batches SET status='deleted',completed_at=now() WHERE id=?",
-                        batch);
+                        "UPDATE ingest_batches SET status='deleted',completed_at=now() WHERE id IN"
+                            + " ("
+                            + placeholders
+                            + ")",
+                        ids);
                     return true;
                   }
                   var events =
-                      store.db.queryForList(
-                          "SELECT * FROM ingest_events WHERE batch_id=? AND NOT processed ORDER BY"
-                              + " event_index",
-                          batch);
+                      store
+                          .queries()
+                          .queryForList(
+                              "SELECT * FROM ingest_events WHERE batch_id IN ("
+                                  + placeholders
+                                  + ") AND NOT processed ORDER BY batch_id,event_index",
+                              ids);
                   var objectArgs = new ArrayList<Object>();
                   var costArgs = new ArrayList<Object>();
                   int costCount = 0;
@@ -84,14 +128,16 @@ class Worker {
                     if (type.equals("observation")
                         && d.path("observationType").asText().equals("generation")) {
                       var prices =
-                          store.db.queryForList(
-                              "SELECT * FROM price_versions WHERE project_id=? AND provider=? AND"
-                                  + " model=? AND effective_at<=? ORDER BY effective_at DESC LIMIT"
-                                  + " 1",
-                              project,
-                              d.path("provider").asText(),
-                              d.path("model").asText(),
-                              Timestamp.from(started));
+                          store
+                              .queries()
+                              .queryForList(
+                                  "SELECT * FROM price_versions WHERE project_id=? AND provider=?"
+                                      + " AND model=? AND effective_at<=? ORDER BY effective_at"
+                                      + " DESC LIMIT 1",
+                                  project,
+                                  d.path("provider").asText(),
+                                  d.path("model").asText(),
+                                  Timestamp.from(started));
                       JsonNode u = d.path("usage");
                       if (!prices.isEmpty()
                           && u.path("inputTokens").isNumber()
@@ -113,65 +159,117 @@ class Worker {
                                 .divide(BigDecimal.valueOf(1_000_000));
                       }
                     }
-                    Collections.addAll(objectArgs, project, type, e.path("objectId").asText(),
-                        e.path("revision").asLong(), e.path("traceId").asText(null),
-                        e.path("spanId").asText(null), e.path("parentSpanId").asText(null),
-                        Timestamp.from(started), d.toString(), cost, price);
+                    Collections.addAll(
+                        objectArgs,
+                        project,
+                        type,
+                        e.path("objectId").asText(),
+                        e.path("revision").asLong(),
+                        e.path("traceId").asText(null),
+                        e.path("spanId").asText(null),
+                        e.path("parentSpanId").asText(null),
+                        Timestamp.from(started),
+                        d.toString(),
+                        cost,
+                        price);
                     if (type.equals("observation")) {
-                      Collections.addAll(costArgs, project, e.path("objectId").asText(),
-                          e.path("revision").asLong(), Timestamp.from(started),
-                          d.has("usage") ? d.path("usage").toString() : null, price, cost);
+                      Collections.addAll(
+                          costArgs,
+                          project,
+                          e.path("objectId").asText(),
+                          e.path("revision").asLong(),
+                          Timestamp.from(started),
+                          d.has("usage") ? d.path("usage").toString() : null,
+                          price,
+                          cost);
                       costCount++;
                     }
                   }
+
+                  // Multiple client batches may contain revisions of the same object. PostgreSQL
+                  // ON CONFLICT DO UPDATE must see that identity only once in each INSERT.
+                  var latest = new LinkedHashMap<List<Object>, List<Object>>();
+                  for (int offset = 0; offset < objectArgs.size(); offset += 11) {
+                    var values = new ArrayList<>(objectArgs.subList(offset, offset + 11));
+                    var key = List.of(values.get(1), values.get(2));
+                    var old = latest.get(key);
+                    if (old == null
+                        || ((Number) old.get(3)).longValue() < ((Number) values.get(3)).longValue())
+                      latest.put(key, values);
+                  }
+                  objectArgs.clear();
+                  latest.values().forEach(objectArgs::addAll);
                   if (!events.isEmpty()) {
                     store.db.update(
-                        "INSERT INTO objects(project_id,type,object_id,revision,trace_id,span_id,parent_span_id,started_at,data,cost,price_version) VALUES "
-                            + String.join(",", Collections.nCopies(events.size(), "(?,?,?,?,?,?,?,?,?::jsonb,?,?)"))
+                        "INSERT INTO"
+                            + " objects(project_id,type,object_id,revision,trace_id,span_id,parent_span_id,started_at,data,cost,price_version)"
+                            + " VALUES "
+                            + String.join(
+                                ",",
+                                Collections.nCopies(
+                                    latest.size(), "(?,?,?,?,?,?,?,?,?::jsonb,?,?)"))
                             + " ON CONFLICT(project_id,type,object_id) DO UPDATE SET"
                             + " revision=excluded.revision,trace_id=excluded.trace_id,span_id=excluded.span_id,parent_span_id=excluded.parent_span_id,started_at=excluded.started_at,data=excluded.data,cost=excluded.cost,price_version=excluded.price_version"
                             + " WHERE objects.revision<excluded.revision",
                         objectArgs.toArray());
                     if (costCount > 0)
                       store.db.update(
-                          "INSERT INTO cost_entries(project_id,object_id,revision,started_at,usage,price_version,estimated_cost) VALUES "
-                              + String.join(",", Collections.nCopies(costCount, "(?,?,?,?,?::jsonb,?,?)"))
+                          "INSERT INTO"
+                              + " cost_entries(project_id,object_id,revision,started_at,usage,price_version,estimated_cost)"
+                              + " VALUES "
+                              + String.join(
+                                  ",", Collections.nCopies(costCount, "(?,?,?,?,?::jsonb,?,?)"))
                               + " ON CONFLICT DO NOTHING",
                           costArgs.toArray());
-                    store.db.update("UPDATE ingest_events SET processed=true WHERE batch_id=?", batch);
+                    store.db.update(
+                        "UPDATE ingest_events SET processed=true WHERE batch_id IN ("
+                            + placeholders
+                            + ")",
+                        ids);
                   }
                   store.db.update(
-                      "UPDATE ingest_batches SET status='completed',completed_at=now() WHERE id=?",
-                      batch);
+                      "UPDATE ingest_batches SET status='completed',completed_at=now() WHERE id IN"
+                          + " ("
+                          + placeholders
+                          + ")",
+                      ids);
                   return true;
                 });
+        if (!Boolean.TRUE.equals(found)) return false;
       } catch (RuntimeException failure) {
-        if (claimed[0] == null) throw failure;
+        if (claimed.isEmpty()) throw failure;
+        // A failed group rolls back entirely. Retried batches run alone so one poison
+        // payload cannot repeatedly poison otherwise healthy members of the group.
         tx.executeWithoutResult(
-            s -> {
-              store.db.update(
-                  "UPDATE ingest_batches SET attempts=attempts+1,lease_until=now()+interval '30"
-                      + " seconds',status=CASE WHEN attempts>=9 THEN 'quarantined' ELSE status END"
-                      + " WHERE id=? AND status='pending'",
-                  claimed[0]);
-              var rows =
-                  store.db.queryForList(
-                      "SELECT b.status,p.workspace_id FROM ingest_batches b JOIN projects p ON"
-                          + " p.id=b.project_id WHERE b.id=?",
-                      claimed[0]);
-              if (!rows.isEmpty() && rows.get(0).get("status").equals("quarantined"))
-                store.audit(
-                    null,
-                    (UUID) rows.get(0).get("workspace_id"),
-                    "batch.quarantined",
-                    claimed[0].toString(),
-                    false,
-                    null);
+            status -> {
+              for (UUID batch : claimed) {
+                store.db.update(
+                    "UPDATE ingest_batches SET attempts=attempts+1,lease_until=CASE WHEN ? THEN"
+                        + " now() ELSE now()+interval '30 seconds' END,status=CASE WHEN attempts>=9"
+                        + " THEN 'quarantined' ELSE status END WHERE id=? AND status='pending'",
+                    claimed.size() > 1,
+                    batch);
+                var rows =
+                    store
+                        .queries()
+                        .queryForList(
+                            "SELECT b.status,p.workspace_id FROM ingest_batches b JOIN projects p"
+                                + " ON p.id=b.project_id WHERE b.id=?",
+                            batch);
+                if (!rows.isEmpty() && rows.get(0).get("status").equals("quarantined"))
+                  store.audit(
+                      null,
+                      (UUID) rows.get(0).get("workspace_id"),
+                      "batch.quarantined",
+                      batch.toString(),
+                      false,
+                      null);
+              }
             });
-        continue;
       }
-      if (!Boolean.TRUE.equals(found)) break;
+      done += claimed.size();
     }
+    return true;
   }
 
   @Scheduled(fixedDelay = 2000)
@@ -180,9 +278,11 @@ class Worker {
     tx.executeWithoutResult(
         s -> {
           var rows =
-              store.db.queryForList(
-                  "SELECT * FROM outbox WHERE sent_at IS NULL AND attempts<10 ORDER BY id FOR"
-                      + " UPDATE SKIP LOCKED LIMIT 5");
+              store
+                  .queries()
+                  .queryForList(
+                      "SELECT * FROM outbox WHERE sent_at IS NULL AND attempts<10 ORDER BY id FOR"
+                          + " UPDATE SKIP LOCKED LIMIT 5");
           for (var row : rows) {
             try {
               SimpleMailMessage m = new SimpleMailMessage();
@@ -205,13 +305,15 @@ class Worker {
     tx.executeWithoutResult(
         s -> {
           var rules =
-              store.db.queryForList(
-                  "SELECT r.*,u.email,(r.last_triggered_at IS NULL OR"
-                      + " r.last_triggered_at<now()-interval '1 hour') AS ready FROM alert_rules r"
-                      + " JOIN projects p ON p.id=r.project_id JOIN workspaces w ON"
-                      + " w.id=p.workspace_id JOIN users u ON u.id=w.owner_id WHERE r.enabled AND"
-                      + " r.deleted_at IS NULL AND p.deleted_at IS NULL FOR UPDATE OF r SKIP"
-                      + " LOCKED");
+              store
+                  .queries()
+                  .queryForList(
+                      "SELECT r.*,u.email,(r.last_triggered_at IS NULL OR"
+                          + " r.last_triggered_at<now()-interval '1 hour') AS ready FROM"
+                          + " alert_rules r JOIN projects p ON p.id=r.project_id JOIN workspaces w"
+                          + " ON w.id=p.workspace_id JOIN users u ON u.id=w.owner_id WHERE"
+                          + " r.enabled AND r.deleted_at IS NULL AND p.deleted_at IS NULL FOR"
+                          + " UPDATE OF r SKIP LOCKED");
           for (var r : rules) {
             String metric = (String) r.get("metric");
             String value =
@@ -235,10 +337,12 @@ class Worker {
                     + qualifies
                     + ")";
             BigDecimal actual =
-                store.db.queryForObject(
-                    "SELECT coalesce(" + aggregate + "(" + value + "),0)" + window,
-                    BigDecimal.class,
-                    r.get("project_id"));
+                store
+                    .queries()
+                    .queryForObject(
+                        "SELECT coalesce(" + aggregate + "(" + value + "),0)" + window,
+                        BigDecimal.class,
+                        r.get("project_id"));
             if (actual.compareTo((BigDecimal) r.get("threshold")) >= 0) {
               // Capture new evidence even during cooldown, so it survives expiry of the lookback
               // window.
@@ -258,12 +362,15 @@ class Worker {
             }
             if (!Boolean.TRUE.equals(r.get("ready"))) continue;
             var pending =
-                store.db.queryForMap(
-                    "SELECT max(window_value) AS window_value,count(*) AS count,"
-                        + aggregate
-                        + "(value) AS value,min(started_at) AS first_at,max(started_at) AS last_at"
-                        + " FROM alert_evidence WHERE rule_id=? AND notified_at IS NULL",
-                    r.get("id"));
+                store
+                    .queries()
+                    .queryForMap(
+                        "SELECT max(window_value) AS window_value,count(*) AS count,"
+                            + aggregate
+                            + "(value) AS value,min(started_at) AS first_at,max(started_at) AS"
+                            + " last_at FROM alert_evidence WHERE rule_id=? AND notified_at IS"
+                            + " NULL",
+                        r.get("id"));
             long count = ((Number) pending.get("count")).longValue();
             if (count == 0) continue;
             store.db.update(
@@ -345,10 +452,12 @@ class Worker {
     tx.executeWithoutResult(
         s -> {
           var rows =
-              store.db.queryForList(
-                  "UPDATE workspaces SET"
-                      + " used_units=0,period_start=date_trunc('month',now()),period_end=date_trunc('month',now())+interval"
-                      + " '1 month' WHERE plan='Free' AND period_end<=now() RETURNING id");
+              store
+                  .queries()
+                  .queryForList(
+                      "UPDATE workspaces SET"
+                          + " used_units=0,period_start=date_trunc('month',now()),period_end=date_trunc('month',now())+interval"
+                          + " '1 month' WHERE plan='Free' AND period_end<=now() RETURNING id");
           for (var row : rows)
             store.audit(
                 null,

@@ -15,9 +15,9 @@ class Challenges {
 
   @Transactional
   public UUID issue(UUID user, String action, String target, HttpServletRequest req) {
-    var u = store.db.queryForMap("SELECT * FROM users WHERE id=? FOR UPDATE", user);
+    var u = store.queries().queryForMap("SELECT * FROM users WHERE id=? FOR UPDATE", user);
     Integer recent =
-        store.db.queryForObject(
+        store.queries().queryForObject(
             "SELECT count(*) FROM verification_challenges WHERE user_id=? AND"
                 + " created_at>now()-interval '60 seconds'",
             Integer.class,
@@ -55,7 +55,7 @@ class Challenges {
   public void consume(
       UUID user, String action, String target, String id, String code, HttpServletRequest req) {
     var rows =
-        store.db.queryForList(
+        store.queries().queryForList(
             "SELECT * FROM verification_challenges WHERE id=? AND user_id=? FOR UPDATE",
             Support.uuid(id),
             user);

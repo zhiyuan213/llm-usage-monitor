@@ -26,23 +26,23 @@ class Metrics {
   @Scheduled(fixedDelay = 15000)
   void collect() {
     quarantined.set(
-        store.db.queryForObject(
+        store.queries().queryForObject(
             "SELECT count(*) FROM ingest_batches WHERE status='quarantined'", Long.class));
     backlog.set(
-        store.db.queryForObject(
+        store.queries().queryForObject(
             "SELECT count(*) FROM ingest_batches WHERE status='pending'", Long.class));
     oldest.set(
-        store.db.queryForObject(
+        store.queries().queryForObject(
             "SELECT coalesce(extract(epoch FROM now()-min(created_at)),0)::bigint FROM"
                 + " ingest_batches WHERE status='pending'",
             Long.class));
     difference.set(
-        store.db.queryForObject(
+        store.queries().queryForObject(
             "SELECT coalesce(sum(abs(w.used_units-coalesce(l.units,0))),0)::bigint FROM workspaces"
                 + " w LEFT JOIN LATERAL(SELECT sum(units) AS units FROM usage_ledger WHERE"
                 + " workspace_id=w.id AND period_start=w.period_start) l ON true",
             Long.class));
     outbox.set(
-        store.db.queryForObject("SELECT count(*) FROM outbox WHERE sent_at IS NULL", Long.class));
+        store.queries().queryForObject("SELECT count(*) FROM outbox WHERE sent_at IS NULL", Long.class));
   }
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PerformanceReference from "./PerformanceReference.vue";
 import Checkout from "./Checkout.vue";
 import PlanFeatures from "./PlanFeatures.vue";
 import DocsExamples from "./DocsExamples.vue";
@@ -33,6 +34,7 @@ const docSections = [
   { id: "batch-status", en: "Query status API", zh: "查询状态接口" },
   { id: "batch-fields", en: "Query status fields", zh: "查询状态字段" },
   { id: "retries", en: "Errors & retries", zh: "错误与重试" },
+  { id: "performance", en: "Performance & capacity", zh: "性能与容量" },
   { id: "security", en: "Security", zh: "安全" },
 ] as const;
 const activeDoc = computed(() => {
@@ -356,6 +358,7 @@ async function copy() {
           <p>{{ item[1] }}</p>
         </article>
       </section>
+      <div class="home-performance"><PerformanceReference compact /></div>
       <section class="bottom-cta">
         <div>
           <span class="eyebrow">{{
@@ -752,6 +755,9 @@ async function copy() {
             }}
           </p>
           <ErrorReference />
+        </section>
+        <section v-else-if="activeDoc === 'performance'" aria-label="Performance & capacity">
+          <PerformanceReference />
         </section>
         <section v-else aria-labelledby="security">
           <h2 id="security">

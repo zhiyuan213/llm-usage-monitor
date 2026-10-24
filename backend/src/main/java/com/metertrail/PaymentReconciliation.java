@@ -26,7 +26,7 @@ class PaymentReconciliation {
   void reconcile() {
     if (!payments.reconciliationEnabled()) return;
     for (var row :
-        store.db.queryForList(
+        store.queries().queryForList(
             "SELECT subscription_id FROM workspaces WHERE subscription_id IS NOT NULL")) {
       try {
         JsonNode response = payments.readSubscription((String) row.get("subscription_id"));
