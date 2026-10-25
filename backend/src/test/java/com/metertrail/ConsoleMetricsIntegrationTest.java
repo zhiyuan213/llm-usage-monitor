@@ -86,6 +86,22 @@ class ConsoleMetricsIntegrationTest {
     String url="/api/reports/traces";
     var result=json.readTree(mvc.perform(get(url).cookie(userCookie).param("project",project.toString()).param("sort","estimated_cost")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
     var row=result.path("items").get(0);assertEquals(120,row.path("tokens").asInt());assertEquals(0.25,row.path("estimated_cost").asDouble());assertEquals("demo",row.path("models").asText());assertEquals(1,row.path("priced_calls").asInt());
+    for(String reason:List.of("usage_missing","model_missing","pricing_evidence_missing")) {
+      String t=UUID.randomUUID().toString().replace("-","");
+      String details=reason.equals("usage_missing")?"{\"observationType\":\"generation\",\"provider\":\"demo\",\"model\":\"demo\"}":reason.equals("model_missing")?"{\"observationType\":\"generation\",\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0}}":"{\"observationType\":\"generation\",\"provider\":\"demo\",\"model\":\"demo\",\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0}}";
+      store.db.update("INSERT INTO objects(project_id,type,object_id,trace_id,revision,started_at,data) VALUES(?,'trace',?,?,1,?::timestamptz,'{}'::jsonb),(?,'observation',?,?,1,?::timestamptz,?::jsonb)",project,"trace-"+reason,t,start.toString(),project,reason,t,start.toString(),details);
+      mvc.perform(get(url).cookie(userCookie).param("project",project.toString()).param("cost","unknown").param("costReason",reason).param("from",start.minusSeconds(1).toString()).param("to",start.plusSeconds(1).toString())).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1));
+    }
+    mvc.perform(get(url).cookie(userCookie).param("project",project.toString()).param("cost","known")).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1));
+    mvc.perform(get(url).cookie(userCookie).param("project",project.toString()).param("costReason","unsafe")).andExpect(status().isBadRequest());
+    store.db.update("UPDATE workspaces SET plan='Core' WHERE id=?",workspace);
+    mvc.perform(get("/api/projects/"+project+"/insights/costs").cookie(userCookie).param("from",start.plusSeconds(1).toString()).param("to",start.plusSeconds(2).toString())).andExpect(status().isOk()).andExpect(jsonPath("$.data_state.kind").value("window_empty"));
+    mvc.perform(get("/api/projects/"+project+"/insights/costs").cookie(userCookie).param("from",start.minus(java.time.Duration.ofDays(121)).toString()).param("to",start.minus(java.time.Duration.ofDays(120)).toString())).andExpect(status().isOk()).andExpect(jsonPath("$.data_state.kind").value("outside_retention"));
+    store.db.update("UPDATE workspaces SET subscription_status='canceled' WHERE id=?",workspace);
+    mvc.perform(get("/api/ingestion-status")).andExpect(status().isUnauthorized());
+    mvc.perform(get("/api/ingestion-status").cookie(userCookie)).andExpect(status().isOk()).andExpect(jsonPath("$.reason").value("subscription_inactive"));
+    mvc.perform(get("/api/ingestion-status").cookie(otherCookie)).andExpect(status().isOk()).andExpect(jsonPath("$.reason").value("ready"));
+    mvc.perform(get("/api/workspace").cookie(userCookie)).andExpect(status().isOk()).andExpect(jsonPath("$.projects[0].last_activity_at").exists());
     mvc.perform(get(url).cookie(userCookie).param("project",project.toString()).param("sort","cost;DROP TABLE users")).andExpect(status().isBadRequest());
     mvc.perform(get(url).cookie(otherCookie).param("project",project.toString())).andExpect(status().isNotFound());
     var empty=json.readTree(mvc.perform(get(url).cookie(userCookie).param("project",project.toString()).param("from",start.plusSeconds(1).toString()).param("to",start.plusSeconds(2).toString())).andExpect(status().isOk()).andReturn().getResponse().getContentAsString());assertEquals(0,empty.path("total").asInt());

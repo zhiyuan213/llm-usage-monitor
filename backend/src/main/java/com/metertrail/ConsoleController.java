@@ -355,7 +355,7 @@ class ConsoleController {
             store
                 .queries()
                 .queryForList(
-                    "SELECT o.*,pv.effective_at AS price_effective_at,pv.input_rate,pv.output_rate,pv.cached_rate,CASE WHEN o.type='observation' THEN NOT EXISTS(SELECT 1 FROM"
+                    "SELECT o.*,"+CostEvidence.reason("o")+" AS cost_reason,pv.effective_at AS price_effective_at,pv.input_rate,pv.output_rate,pv.cached_rate,CASE WHEN o.type='observation' THEN NOT EXISTS(SELECT 1 FROM"
                         + " objects t WHERE t.project_id=o.project_id AND t.type='trace' AND"
                         + " t.trace_id=o.trace_id) WHEN o.type='score' THEN NOT EXISTS(SELECT 1"
                         + " FROM objects t WHERE t.project_id=o.project_id AND"

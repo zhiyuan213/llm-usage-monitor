@@ -1172,3 +1172,18 @@
 .ui-v2 .insight-metrics > .panel { padding: 20px; min-width: 0; }
 .ui-v2 .detail-card > p { margin: 12px 24px; overflow-wrap: anywhere; }
 .ui-v2 .detail-card > details { margin: 12px 24px; }
+
+.ui-v2 .ingestion-compact { font-size:12px; line-height:1.7; margin:12px 0; overflow-wrap:anywhere; }
+.ui-v2 .ingestion-compact a { display:block; }
+.ui-v2 .ingestion-notice strong { display:block; }
+.ui-v2 .ingestion-notice p { margin:8px 0; }
+.ui-v2 .notification-rules { margin-top:16px; }
+.ui-v2 .notification-rules summary { cursor:pointer; color:#3156e8; }
+.ui-v2 .project-row-actions select { min-width:90px; max-width:150px; }
+.ui-v2 .project-row-actions { flex-wrap:wrap; }
+
+.ui-v2 .trace-filters { flex-wrap: wrap; gap: 12px; }
+.ui-v2 .trace-filters .search-field { flex: 0 1 320px; width: 320px; max-width: 360px; min-width: 220px; }
+.ui-v2 .trace-filters .search-field input { min-width: 0; width: 100%; }
+.ui-v2 .trace-filters .trace-export { margin-left: auto; }
+@media (max-width: 700px) { .ui-v2 .trace-filters .search-field { flex:1 1 100%; width:100%; max-width:none; min-width:0; } .ui-v2 .trace-filters .trace-export { margin-left:0; flex-wrap:wrap; } }

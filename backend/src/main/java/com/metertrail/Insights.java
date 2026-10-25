@@ -110,6 +110,9 @@ class Insights {
     var before=summary(project,start,middle,cutoff);var after=summary(project,middle,end,cutoff);
     var result=new LinkedHashMap<String,Object>();
     result.put("before",before);result.put("after",after);result.put("comparison",comparison(before,after));
+    boolean retained=Boolean.TRUE.equals(store.queries().queryForObject("SELECT EXISTS(SELECT 1 FROM objects WHERE project_id=? AND started_at>?)",Boolean.class,project,Timestamp.from(cutoff)));
+    String state=!end.isAfter(cutoff)?"outside_retention":count(after,"requests")==0&&count(after,"generations")==0?(retained?"window_empty":"no_retained_data"):count(after,"generations")==0?"no_model_calls":!priced(after)?"partial_pricing":"ready";
+    result.put("data_state",Map.of("kind",state,"retention_cutoff",cutoff));
     result.put("dimension",dimension);result.put("contributors",contributors(project,start,middle,end,cutoff,dimension));
     result.put("samples",store.queries().queryForList("SELECT object_id,trace_id,data->>'name' AS name,cost,started_at FROM objects"
       +" WHERE project_id=? AND type='observation' AND data->>'observationType'='generation' AND cost IS NOT NULL"

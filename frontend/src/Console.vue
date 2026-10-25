@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import IngestionNotice from "./IngestionNotice.vue";
+import {readTraceView,traceViewKey} from "./trace-view-state";
 import DateRangeFilter from "./DateRangeFilter.vue";
 import SupportMessages from "./SupportMessages.vue";
 import AdminProjects from "./AdminProjects.vue";
@@ -120,13 +122,23 @@ const projects = ref<any[]>([]),
   recent = ref<any[]>([]);
 const reportWindow=ref({from:new Date(Date.now()-7*86400000).toISOString(),to:new Date().toISOString()});
 const reportWindowQuery=computed(()=>new URLSearchParams(reportWindow.value).toString());
-const traceSort=ref('started_at'),traceDirection=ref('desc');
+const traceSort=ref('started_at'),traceDirection=ref('desc'),costFilter=ref('all'),costReasonFilter=ref('');
+let restoreTrace=true;
+function restoreTraceView(){
+ const key=traceViewKey(session.value?.id||'',selected.value),saved=readTraceView(sessionStorage,key);
+ if(saved&&(saved.route===route.fullPath||Object.keys(route.query).every(k=>k==='project'))){search.value=saved.search;status.value=saved.status;costFilter.value=saved.cost;costReasonFilter.value=saved.reason;traceSort.value=saved.sort;traceDirection.value=saved.direction;tracePage.value=saved.page;reportSize.value=saved.size;reportWindow.value=saved.window;}
+ else {search.value='';status.value='';costFilter.value=['unknown','known'].includes(String(route.query.cost))?String(route.query.cost):'all';costReasonFilter.value=['usage_missing','model_missing','pricing_evidence_missing'].includes(String(route.query.costReason))?String(route.query.costReason):'';tracePage.value=0;if(typeof route.query.from==='string'&&typeof route.query.to==='string'&&Number.isFinite(Date.parse(route.query.from))&&Date.parse(route.query.from)<Date.parse(route.query.to))reportWindow.value={from:route.query.from,to:route.query.to};}
+ if(costReasonFilter.value)costFilter.value='unknown';
+ restoreTrace=false;
+}
+function saveTraceView(){try{sessionStorage.setItem(traceViewKey(session.value?.id||'',selected.value),JSON.stringify({search:search.value,status:status.value,cost:costFilter.value,reason:costReasonFilter.value,sort:traceSort.value,direction:traceDirection.value,page:tracePage.value,size:reportSize.value,window:reportWindow.value,route:route.fullPath}));}catch{}}
+
 function applyDates(value:{from:string;to:string}){reportWindow.value=value;tracePage.value=0;activityPage.value=0;refresh(false);}
 function sortTraces(value:string){traceDirection.value=traceSort.value===value&&traceDirection.value==='desc'?'asc':'desc';traceSort.value=value;tracePage.value=0;refresh(false);}
 const pageDescription=computed(()=>({overview:t('Request performance, known model cost and usage for the selected period.','查看所选时间内的请求表现、已知模型费用和用量。'),traces:t('Find requests by name or status, then compare latency and model usage.','检索请求，比较耗时、模型用量与已知费用。'),trace:t('Inspect request steps, model usage and pricing evidence.','查看请求步骤、模型用量与计费依据。'),analytics:t('Compare usage by customer, user or feature.','按客户、用户或功能比较用量。'),'cost-insights':t('Find cost drivers and compare equal-length periods.','定位费用来源，对比等长时间段的变化。'),releases:t('Mark releases and compare before and after.','记录发布时间，对比修改前后的表现。'),weekly:t('Manage weekly email summaries and delivery history.','管理每周邮件摘要与发送记录。'),billing:t('Manage your plan, quota and payment records.','管理套餐、额度和付款记录。'),keys:t('Create and revoke project API keys.','创建与撤销项目接入密钥。'),settings:t('Manage project details and model price versions.','管理项目资料与模型价格版本。'),account:t('Manage sign-in methods and account security.','管理登录方式与账号安全。'),messages:t('Send feedback and follow replies.','提交问题与建议，查看回复。'),workspace:t('Manage projects and shared workspace usage.','管理项目与工作空间共享用量。'),budgets:t('Set model spending reminders.','设置模型费用预算提醒。'),reliability:t('Investigate failed and slow requests.','排查失败请求与慢调用。'),alerts:t('Configure notifications for project activity.','配置项目用量与异常通知。'),audit:t('Review account and workspace actions.','查看账号与工作空间操作记录。') } as Record<string,string>)[page.value]||t('Review and manage this section.','查看与管理本栏目内容。'));
 function fieldLabel(key:string){return ({name:t('Name','名称'),status:t('Status','状态'),model:t('Model','模型'),provider:t('Provider','供应商'),usage:t('Token usage','Token 用量'),durationMs:t('Duration (ms)','耗时（毫秒）'),observationType:t('Step type','步骤类型'),userId:t('User','用户'),customerId:t('Customer','客户'),feature:t('Feature','功能'),metadata:t('Metadata','附加信息'),input:t('Input','输入'),output:t('Output','输出'),tags:t('Tags','标签'),error:t('Error','错误信息'),value:t('Value','评分值'),valueType:t('Value type','评分类型'),targetId:t('Target ID','关联对象 ID'),targetType:t('Target type','关联对象类型')} as Record<string,string>)[key]||key;}
 function objectLabel(value:string){return ({trace:t('Request','请求'),observation:t('Step','步骤'),score:t('Score','评分'),generation:t('Model generation','模型生成'),tool:t('Tool','工具'),retrieval:t('Retrieval','检索')} as Record<string,string>)[value]||value;}
-function costReason(o:any){if(o.type!=='observation'||o.data.observationType!=='generation')return t('Not a model generation call','非模型生成调用');const u=o.data.usage;if(!u||!['inputTokens','outputTokens','cachedInputTokens'].every(k=>typeof u[k]==='number'))return t('Missing input, output or cached token usage','缺少输入、输出或缓存 Token 用量');if(!o.data.provider||!o.data.model)return t('Missing model or provider','缺少模型或供应商');return t('No matching price at processing time','处理时未命中适用的价格版本');}
+function costReason(o:any){return ({usage_missing:t('Missing input, output or cached token usage; report zero cached tokens when there are none.','缺少输入、输出或缓存 Token 用量；没有缓存时请上报0。'),model_missing:t('Missing model or provider','缺少模型或供应商'),pricing_evidence_missing:t('No usable pricing evidence was recorded when this revision was processed. Check the model, provider and effective price date.','处理此修订时未记录可用计价证据，请核对模型、供应商与价格生效时间。')} as Record<string,string>)[o.cost_reason]||t('Unknown cost: reason needs confirmation','费用未知：原因待确认');}
 const traceSummary=computed(()=>{const calls=traceObjects.value.filter((o:any)=>o.type==='observation'&&o.data.observationType==='generation');const priced=calls.filter((o:any)=>o.cost!=null);const usage=calls.filter((o:any)=>o.data.usage?.inputTokens!=null&&o.data.usage?.outputTokens!=null);return {calls:calls.length,priced:priced.length,cost:priced.length?priced.reduce((n:number,o:any)=>n+Number(o.cost),0):null,tokens:usage.length?usage.reduce((n:number,o:any)=>n+Number(o.data.usage.inputTokens)+Number(o.data.usage.outputTokens),0):null,duration:traceObjects.value.find((o:any)=>o.type==='trace')?.data.durationMs};});
 const accountReady = computed(() => contextReady.value && !loading.value && !!session.value?.csrf);
 const activityPage = ref(0),
@@ -144,7 +156,7 @@ const reportExportUrl = computed(
       dimension: dimension.value,
       search: search.value,
       status: status.value,
-      ...reportWindow.value, sort:traceSort.value,direction:traceDirection.value,
+      ...reportWindow.value, sort:traceSort.value,direction:traceDirection.value,cost:costFilter.value,costReason:costReasonFilter.value,
     }),
 );
 async function reportTurn(next: number) {
@@ -219,7 +231,7 @@ async function run(fn: () => Promise<void>) {
 const navigate = (url: string) => window.location.assign(url);
 const path = (suffix: string) => "/projects/" + selected.value + suffix;
 const loadContext = contextLoader(() =>
-  Promise.all([api("/projects"), api("/me")]),
+  Promise.all([api("/projects"), api("/me"),api("/ingestion-status").catch(()=>null)]),
 );
 let refreshId = 0;
 async function refresh(force = true) {
@@ -237,11 +249,12 @@ async function refresh(force = true) {
   contextReady.value = false;
   error.value = "";
   try {
-    const [projectList, user] = await loadContext(
+    const [projectList, user, ingestion] = await loadContext(
       force || page.value === "account",
     );
     current();
     projects.value = projectList;
+    if(user.workspace)user.workspace.ingestion=ingestion;
     session.value = user;
     contextReady.value = true;
     if (typeof route.query.project === 'string' && projectList.some((p:any)=>p.id===route.query.project)) selected.value=route.query.project;
@@ -253,8 +266,10 @@ async function refresh(force = true) {
       if (session.value?.workspace) Object.assign(session.value.workspace, data.value.workspace);
       billing.enabled = data.value.workspace.auto_overage;
       billing.cap = String(data.value.workspace.overage_cap);
-    } else if (page.value === "workspace")
+    } else if (page.value === "workspace") {
       data.value = await request("/workspace");
+      data.value.workspace.ingestion=ingestion;
+    }
     else if (page.value === "audit")
       data.value = await request(
         "/reports/audit?page=" + reportPage.value + "&size=" + reportSize.value,
@@ -277,7 +292,9 @@ async function refresh(force = true) {
         overview.value = o;
         recent.value = r.items;
         activityTotal.value = r.total;
-      } else if (page.value === "traces")
+      } else if (page.value === "traces") {
+        if(restoreTrace)restoreTraceView();
+        saveTraceView();
         data.value = await request(
           "/reports/traces" +
             "?" +
@@ -287,10 +304,10 @@ async function refresh(force = true) {
               status: status.value,
               page: String(tracePage.value),
               size: String(reportSize.value),
-              ...reportWindow.value,sort:traceSort.value,direction:traceDirection.value,
+              ...reportWindow.value,sort:traceSort.value,direction:traceDirection.value,cost:costFilter.value,costReason:costReasonFilter.value,
             }),
         );
-      else if (page.value === "trace")
+      } else if (page.value === "trace")
         data.value = await request(path("/traces/" + route.params.detail));
       else if (page.value === "analytics") data.value = {};
       else if (page.value === "keys") data.value = await request(path("/keys"));
@@ -318,7 +335,7 @@ watch(
   () => route.fullPath,
   () => {
     reportPage.value = 0;
-    tracePage.value = 0;
+    restoreTrace=true;
     data.value = {};
     notice.value = "";
     createdKey.value = "";
@@ -326,6 +343,7 @@ watch(
   },
 );
 async function changeProject() {
+  restoreTrace=true;
   reportPage.value = 0;
   activityPage.value = 0;
   tracePage.value = 0;
@@ -503,8 +521,7 @@ const usagePercent = computed(() =>
         <div class="progress">
           <i :style="{ width: usagePercent + '%' }"></i>
         </div>
-        <small>{{ t("Stop at quota enabled", "默认额度保护已启用") }}</small
-        ><RouterLink to="/docs"
+        <IngestionNotice :state="session?.workspace?.ingestion" :pending="loading" compact /><RouterLink to="/docs"
           ><BookOpen :size="16" />{{ t("Documentation", "开发文档")
           }}<ArrowUpRight :size="14"
         /></RouterLink>
@@ -771,7 +788,7 @@ const usagePercent = computed(() =>
                       <RouterLink
                         v-if="o.trace_id"
                         :title="o.data.name || o.object_id"
-                        :to="'/app/trace/' + o.trace_id"
+                        :to="'/app/trace/' + o.trace_id + '?project='+selected"
                         >{{ o.data.name || o.object_id }}</RouterLink
                       ><span v-else>{{ o.data.name || o.object_id }}</span
                       ><small v-if="o.unmatched" class="amber">{{
@@ -827,7 +844,7 @@ const usagePercent = computed(() =>
         <template v-if="page === 'traces' && selected"
           ><DateRangeFilter :busy="loading" @change="applyDates" /><p class="muted">{{date(reportWindow.from)}} → {{date(reportWindow.to)}} · {{t("Known model usage is aggregated by trace; unknown costs are excluded from the subtotal.","模型用量按调用链汇总；已知费用不含未知费用部分。")}}</p><section class="panel">
             <form
-              class="filters"
+              class="filters trace-filters"
               @submit.prevent="
                 tracePage = 0;
                 refresh(false);
@@ -846,7 +863,7 @@ const usagePercent = computed(() =>
                 <option value="success">success</option>
                 <option value="error">error</option>
                 <option value="cancelled">cancelled</option></select
-              ><button class="btn primary">{{ t("Search", "搜索") }}</button>
+              ><select v-model="costFilter" :aria-label="t('Cost completeness','费用完整性')" @change="costFilter!=='unknown'&&(costReasonFilter='')"><option value="all">{{t('All costs','全部费用状态')}}</option><option value="unknown">{{t('Has unknown cost','含未知费用')}}</option><option value="known">{{t('Fully priced model calls','模型调用全部已定价')}}</option></select><select v-if="costFilter==='unknown'" v-model="costReasonFilter" :aria-label="t('Unknown cost reason','未知费用原因')"><option value="">{{t('All reasons','全部原因')}}</option><option value="usage_missing">{{t('Usage missing','缺少用量')}}</option><option value="model_missing">{{t('Model or provider missing','缺少模型或供应商')}}</option><option value="pricing_evidence_missing">{{t('Pricing evidence missing','缺少计价证据')}}</option></select><button class="btn primary">{{ t("Search", "搜索") }}</button>
               <div class="query-export trace-export">
                 <a
                   class="btn"
@@ -898,7 +915,7 @@ const usagePercent = computed(() =>
                     <td>
                       <RouterLink
                         class="btn"
-                        :to="'/app/trace/' + o.trace_id"
+                        :to="'/app/trace/' + o.trace_id + '?project='+selected"
                         >{{ t("View", "查看") }}</RouterLink
                       >
                     </td>
@@ -933,7 +950,7 @@ const usagePercent = computed(() =>
             /></section
         ></template>
         <template v-if="page === 'trace' && selected"
-          ><RouterLink class="back-link" to="/app/traces"
+          ><RouterLink class="back-link" :to="'/app/traces?project='+selected"
             ><ArrowLeft :size="16" />{{
               t("All traces", "全部调用")
             }}</RouterLink
@@ -1618,7 +1635,7 @@ const usagePercent = computed(() =>
           </section></template
         >
         <WorkspaceOverview
-          v-if="page === 'workspace'"
+          v-if="page === 'workspace' && !loading && data.workspace"
           :data="data"
           @create="showCreate = true"
           @select="openProject"

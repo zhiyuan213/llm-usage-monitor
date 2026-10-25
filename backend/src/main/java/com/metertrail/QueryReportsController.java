@@ -116,6 +116,12 @@ class QueryReportsController {
     Support.require(search.length() <= 128, "INVALID_FILTER");
     var traceArgs=new ArrayList<Object>(List.of(project,user,status,status,search,"%"+search+"%","%"+search+"%"));
     String traceWindow=ReportWindow.filter(req,traceArgs);
+    String cost=Optional.ofNullable(req.getParameter("cost")).orElse("all"),reason=Optional.ofNullable(req.getParameter("costReason")).orElse("");
+    Support.require(Set.of("all","unknown","known").contains(cost),"INVALID_FILTER");
+    Support.require(Set.of("","usage_missing","model_missing","pricing_evidence_missing").contains(reason),"INVALID_FILTER");
+    String costFilter=cost.equals("unknown")?" AND m.unknown_costs>0":cost.equals("known")?" AND m.priced_calls=m.generations AND m.generations>0":"";
+    if(!reason.isEmpty()) {costFilter+=" AND EXISTS(SELECT 1 FROM objects g WHERE g.project_id=o.project_id AND g.trace_id=o.trace_id AND g.started_at>workspace_retention_cutoff(w) AND ("+CostEvidence.reason("g")+")=?)";traceArgs.add(reason);}
+
     String sort=Optional.ofNullable(req.getParameter("sort")).orElse("started_at");
     Support.require(Set.of("started_at","duration","tokens","estimated_cost").contains(sort),"INVALID_SORT");
     String direction=Optional.ofNullable(req.getParameter("direction")).orElse("desc");
@@ -125,7 +131,7 @@ class QueryReportsController {
         "SELECT o.*,m.models,m.tokens,m.estimated_cost,m.generations,m.priced_calls,m.unknown_costs"
             + console.source().replace(" WHERE", " LEFT JOIN LATERAL (SELECT string_agg(DISTINCT g.data->>'model',', ' ORDER BY g.data->>'model') AS models,sum((g.data->'usage'->>'inputTokens')::numeric+(g.data->'usage'->>'outputTokens')::numeric) AS tokens,sum(g.cost) AS estimated_cost,count(*) AS generations,count(g.cost) AS priced_calls,count(*) FILTER(WHERE g.cost IS NULL) AS unknown_costs FROM objects g WHERE g.project_id=o.project_id AND g.trace_id=o.trace_id AND g.type='observation' AND g.data->>'observationType'='generation' AND g.started_at>workspace_retention_cutoff(w)) m ON true WHERE")
             + " AND o.type='trace' AND (?='' OR o.data->>'status'=?) AND (?='' OR o.object_id ILIKE"
-            + " ? OR o.data->>'name' ILIKE ?)"+traceWindow,
+            + " ? OR o.data->>'name' ILIKE ?)"+traceWindow+costFilter,
         order,
         traceArgs.toArray(),
         zh

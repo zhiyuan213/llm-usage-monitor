@@ -1,0 +1,8 @@
+package com.metertrail;
+import static org.junit.jupiter.api.Assertions.*;
+import java.time.*;import java.sql.Timestamp;import java.util.*;import java.math.BigDecimal;
+import org.junit.jupiter.api.Test;
+class IngestionStatusTest {
+ Map<String,Object> workspace(){var w=new HashMap<String,Object>();w.put("plan","Core");w.put("used_units",100000L);w.put("overage_units",0L);w.put("addon_consumed",0L);w.put("auto_overage",false);w.put("overage_cap",new BigDecimal("8"));w.put("subscription_status","active");w.put("period_end",Timestamp.from(Instant.now().plusSeconds(3600)));return w;}
+ @Test void quotaSubscriptionAndAuthorizedOverageBoundaries(){var w=workspace();var now=Instant.now();assertEquals("quota_exhausted",IngestionStatus.describe(w,0,false,false,now).get("reason"));assertEquals(true,IngestionStatus.describe(w,1,false,false,now).get("can_accept_new"));w.put("auto_overage",true);assertEquals("overage_ready",IngestionStatus.describe(w,0,true,false,now).get("reason"));assertEquals("payment_pending",IngestionStatus.describe(w,0,true,true,now).get("reason"));w.put("overage_cap",BigDecimal.ZERO);assertEquals("overage_cap",IngestionStatus.describe(w,0,true,false,now).get("reason"));w.put("subscription_status","canceled");assertEquals(false,IngestionStatus.describe(w,100,false,false,now).get("can_accept_new"));w.put("period_end",Timestamp.from(now.minusSeconds(1)));assertEquals("period_ended",IngestionStatus.describe(w,100,false,false,now).get("reason"));w.put("plan","Free");assertEquals(true,IngestionStatus.describe(w,0,false,false,now).get("can_accept_new"));assertEquals(50000L,IngestionStatus.describe(w,0,false,false,now).get("quota_remaining"));}
+}
