@@ -45,6 +45,10 @@ class WeeklyEmailTest {
     var r=capture.getValue();assertEquals(303L,r.getTemplate().getTemplateID());assertNull(r.getSimple());
     var data=Support.parse(r.getTemplate().getTemplateData());assertEquals("US$12.00",data.path("cost").asText());assertTrue(data.path("project").asText().contains("&lt;script&gt;"));
     assertFalse(data.has("message"));verifyNoInteractions(smtp);
+    assertFalse(data.has("console_url"));assertFalse(data.has("notice"));
+    assertEquals("测试邮件 / Test email",data.path("report_type").asText());
+    String html=WeeklyEmail.html(values());assertTrue(html.contains("https://metertrail.com/app/cost-insights?project="));
+    assertFalse(html.contains("{{console_url}}"));assertFalse(html.contains("{{notice}}"));
   }
   @Test void unconfiguredTemplatePreservesExistingDeliveryDuringRollout() throws Exception {
     var smtp=mock(JavaMailSender.class);var ses=mock(SesClient.class);var ack=new SendEmailResponse();ack.setMessageId("synthetic-fallback");when(ses.SendEmail(any())).thenReturn(ack);

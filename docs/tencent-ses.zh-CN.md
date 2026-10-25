@@ -23,6 +23,8 @@
 
 SMTP 本地验证使用同一份 HTML 模板，并提供纯文本替代内容；腾讯云使用独立模板 ID 与同一组字段。两者均显示费用、请求、失败、P95、模型调用、价格覆盖计数及费用变化，测试邮件明确标记模拟数据。周报只说明订阅来源和关闭入口，不使用额度/告警说明。
 
+模板 227254 首次审核拒绝：链接域名使用变量 `console_url`，且 `notice` 独占一行，取值范围过宽。修订模板固定使用实际域名 `https://metertrail.com`，仅项目 UUID 保留变量；来源和模拟数据说明固定在模板中，`report_type` 仅传“测试邮件 / Test email”或“正式周报 / Scheduled report”。SES 不再接收 `console_url`、`notice` 参数。重新上传此版本审核，审核通过后再启用 ID，不能将拒绝状态当作可发送。
+
 4. 在访问管理 CAM 创建仅用于程序调用的专用子用户，关联自定义策略 `ops/email/send-only-policy.json`，只授予 `ses:SendEmail`。SES 此接口使用操作级权限，资源填写 `*`。为该子用户创建 API 密钥，保存 SecretId 和 SecretKey；不要用主账号全权限密钥，不要把密钥提交到 Git 或发到聊天中。
 
 ## 服务器更新

@@ -31,13 +31,14 @@ final class WeeklyEmail {
     v.put("calls",number(after.get("generations")));v.put("priced",number(after.get("priced_generations")));
     v.put("change",comparison.get("cost_change_pct")==null?"—":number(comparison.get("cost_change_pct"))+"%");
     v.put("notice",Boolean.TRUE.equals(report.get("example"))?"测试邮件 · 模拟数据，非你的项目统计；不影响正式周报时间。 / Test email · Synthetic data, not your project statistics; schedule unchanged.":"本周摘要 · 来自你的项目上报数据。 / Weekly summary · Based on your reported project data.");
+    v.put("report_type",Boolean.TRUE.equals(report.get("example"))?"测试邮件 / Test email":"正式周报 / Scheduled report");
     v.put("console_url",base);v.put("project_id",project.toString());return v;
   }
   static String escape(String value) {
     return value.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;").replace("'","&#39;");
   }
   static Map<String,String> escaped(Map<String,String> values) {
-    var result=new LinkedHashMap<String,String>();values.forEach((k,v)->result.put(k,escape(v)));return result;
+    var result=new LinkedHashMap<String,String>();values.forEach((k,v)->{if(!Set.of("console_url","notice").contains(k))result.put(k,escape(v));});return result;
   }
   static String html(Map<String,String> values) throws java.io.IOException {
     String template=new ClassPathResource("mail/weekly-report.html").getContentAsString(StandardCharsets.UTF_8);

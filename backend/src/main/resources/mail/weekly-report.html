@@ -5,7 +5,7 @@
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:680px;background:#ffffff;border:1px solid #e1e6f0;border-radius:8px"><tr><td style="padding:28px 24px">
 <p style="margin:0;color:#3156e8;font-size:22px;font-weight:bold">MeterTrail</p>
 <h1 style="font-size:22px;margin:16px 0 8px">运营周报 / Weekly report</h1>
-<p style="margin:8px 0;padding:12px;background:#edf2ff;color:#3156e8;border-radius:6px">{{notice}}</p>
+<p style="margin:8px 0;padding:12px;background:#edf2ff;color:#3156e8;border-radius:6px">报告类型 / Report type: {{report_type}}<br>测试邮件使用模拟数据，非你的项目统计，不影响正式周报时间；正式周报使用项目已上报数据。<br>Test emails use synthetic data and leave your schedule unchanged. Scheduled reports use your reported project data.</p>
 <p style="margin:16px 0 4px;font-weight:bold;overflow-wrap:anywhere">{{project}}</p>
 <p style="margin:0 0 20px;color:#71809c;font-size:12px">统计区间 / Period (UTC, end exclusive)<br>{{period}}</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed">
@@ -16,6 +16,6 @@
 <p style="margin:8px 0">模型调用 / Model calls: {{calls}} &nbsp;·&nbsp; 已定价 / Priced: {{priced}}</p>
 <p style="margin:8px 0">较上周已知费用变化 / Known cost change: {{change}}</p>
 <p style="margin:16px 0;color:#71809c;font-size:12px">模型费用为估算值，不含 MeterTrail 订阅费。缺失价格不按零费用处理，已知费用可能只是部分费用。<br>Model costs are estimates, excluding MeterTrail charges. Missing prices are not zero cost; known cost may be a partial subtotal.</p>
-<p style="margin:20px 0"><a href="{{console_url}}/app/cost-insights?project={{project_id}}" style="color:#3156e8">查看费用诊断 / Cost diagnosis →</a><br><a href="{{console_url}}/app/reliability?project={{project_id}}" style="color:#3156e8">查看失败与慢调用 / Failures and slow calls →</a></p>
-<p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #e1e6f0;color:#71809c;font-size:12px">你收到本邮件，是因为你开启了周报或主动发送了测试邮件。<br>You enabled weekly reports or requested a test email.<br><a href="{{console_url}}/app/weekly?project={{project_id}}" style="color:#3156e8">管理周报订阅 / Manage weekly reports</a></p>
+<p style="margin:20px 0"><a href="https://metertrail.com/app/cost-insights?project={{project_id}}" style="color:#3156e8">查看费用诊断 / Cost diagnosis →</a><br><a href="https://metertrail.com/app/reliability?project={{project_id}}" style="color:#3156e8">查看失败与慢调用 / Failures and slow calls →</a></p>
+<p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #e1e6f0;color:#71809c;font-size:12px">你收到本邮件，是因为你开启了周报或主动发送了测试邮件。<br>You enabled weekly reports or requested a test email.<br><a href="https://metertrail.com/app/weekly?project={{project_id}}" style="color:#3156e8">管理周报订阅 / Manage weekly reports</a></p>
 </td></tr></table></td></tr></table></body></html>
