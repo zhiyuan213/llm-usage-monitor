@@ -84,7 +84,7 @@ class AdminProjectsIntegrationTest {
     for(String type:List.of("trace","observation"))store.db.update(
       "INSERT INTO objects(project_id,type,object_id,revision,started_at,data,cost) VALUES(?,?,?,1,?::timestamptz,?::jsonb,?)",
       project,type,type,at,type.equals("trace")?"{}":"{\"observationType\":\"generation\",\"usage\":{\"inputTokens\":100,\"outputTokens\":20}}",type.equals("trace")?null:new java.math.BigDecimal("0.25"));
-    var response=mvc.perform(get("/api/admin/projects").cookie(adminCookie).param("account",owner.toString()).param("year",String.valueOf(year)).param("month","6"))
+    var response=mvc.perform(get("/api/admin/projects").cookie(adminCookie).param("account",owner.toString()).param("year",String.valueOf(year)).param("month","6").param("sort","name"))
       .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
     var result=json.readTree(response);
     assertEquals(2,result.path("total").asInt());
@@ -100,7 +100,7 @@ class AdminProjectsIntegrationTest {
     mvc.perform(get("/api/admin/projects").cookie(adminCookie).param("sort","email; DROP TABLE users")).andExpect(status().isBadRequest());
     mvc.perform(get("/api/admin/projects").cookie(adminCookie).param("account",owner.toString()).param("sort","tokens").param("direction","desc"))
       .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].name").value("metrics"));
-    mvc.perform(get("/api/admin/projects").cookie(adminCookie).param("account",owner.toString()).param("year",String.valueOf(year)).param("month","7"))
+    mvc.perform(get("/api/admin/projects").cookie(adminCookie).param("account",owner.toString()).param("year",String.valueOf(year)).param("month","7").param("sort","name"))
       .andExpect(status().isOk()).andExpect(jsonPath("$.items[1].objects").value(0)).andExpect(jsonPath("$.items[1].tokens").doesNotExist());
     mvc.perform(get("/api/admin/projects").cookie(adminCookie).param("month","13")).andExpect(status().isBadRequest());
     mvc.perform(get("/api/admin/projects").cookie(adminCookie).param("account",other.toString())).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(0));

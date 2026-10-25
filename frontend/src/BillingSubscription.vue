@@ -22,7 +22,7 @@ watch(()=>props.checkoutId, id=>{
 },{immediate:true});
 watch(()=>props.data, data=>{
   const w=data.workspace;
-  const paid=props.checkoutId && data.payments?.some((p:any)=>p.id===props.checkoutId && p.status==='completed');
+  const paid=props.checkoutId && (data.payments?.some((p:any)=>p.id===props.checkoutId && p.status==='completed') || data.confirmedCheckouts?.some((c:any)=>c.transaction_id===props.checkoutId));
   if (w?.subscription_id && w.subscription_status==='active' && (paid || (pendingPlan.value && w.plan===pendingPlan.value))) {
     clearTimeout(timer); pendingPlan.value='';
     notice.value=t('Subscription confirmed. Your current plan is ','订阅已确认，当前套餐为 ')+w.plan;
@@ -78,7 +78,8 @@ async function confirm() {
     <p v-if="scheduled()">{{t('Scheduled change','计划变更')}}: {{status(scheduled().action)}} · {{date(scheduled().effective_at)}}</p>
     <p v-if="data.workspace.subscription_status !== 'active'" class="notice error">{{t('This subscription is not active. Review payment or cancellation details in Manage subscription.','此订阅当前未处于活跃状态，请在“管理订阅”查看付款或取消详情。')}}</p>
     <p v-if="data.workspace.plan !== 'Free' && data.workspace.retention_grace_until" class="notice" role="status">{{t('Renewal grace ends at','续费宽限期截止')}} {{date(data.workspace.retention_grace_until)}}. {{t('New ingestion is stopped. After this deadline, Free retention applies and analytics older than 30 days will be deleted.','当前停止新增接入。期满后按 Free 保留规则清理超过30天的调用数据。')}}</p>
-    <p class="muted">{{t('Core / Pro changes apply immediately with Paddle proration. Review the amount before confirming; failed payments prevent the change. Current-period usage is preserved.','Core / Pro 立即切换，由 Paddle 按剩余账期折算差价。确认前请核对金额；付款失败不变更套餐，当前账期已用额度不会清零。')}}</p>
+    <p v-if="data.workspace.payment_provider==='creem'" class="muted">{{t('Creem manages renewal and cancellation in the billing portal. Plan changes and additional usage billing are not enabled yet.','可在账单门户管理 Creem 续费与取消。套餐切换和额外用量计费暂未开放。')}}</p>
+    <p v-else class="muted">{{t('Core / Pro changes apply immediately with Paddle proration. Review the amount before confirming; failed payments prevent the change. Current-period usage is preserved.','Core / Pro 立即切换，由 Paddle 按剩余账期折算差价。确认前请核对金额；付款失败不变更套餐，当前账期已用额度不会清零。')}}</p>
   </section>
   <p v-if="notice" class="notice" role="status">{{notice}}</p>
   <section v-if="targetPlan" class="panel billing-subscription" aria-live="polite">

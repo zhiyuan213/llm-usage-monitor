@@ -32,9 +32,10 @@ class UsageCharges {
     Long remaining=store.queries().queryForObject("SELECT coalesce(sum(units-consumed_units),0) FROM usage_charges WHERE workspace_id=? AND period_start=? AND kind='addon' AND credited AND NOT revoked AND status='paid'",Long.class,w.get("id"),w.get("period_start"));
     long available=Math.max(0,Billing.included((String)w.get("plan"))-(used-overage-consumed))+remaining;
     if(!"Free".equals(w.get("plan")) && (!"active".equals(w.get("subscription_status")) || !((Timestamp)w.get("period_end")).toInstant().isAfter(Instant.now())))available=0;
-    return Map.of("availableUnits",available,"enabled",enabled,"packUnits",100000,"packAmount","8.00","currency","USD","total",store.queries().queryForObject("SELECT count(*) FROM usage_charges WHERE workspace_id=?",Long.class,w.get("id")),"charges",store.queries().queryForList("SELECT id,kind,units,amount,currency,status,transaction_id,credited,revoked,period_start,period_end,created_at,checkout_url FROM usage_charges WHERE workspace_id=? ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",w.get("id"),size,(long)page*size));
+    return Map.of("availableUnits",available,"enabled",enabled && !"creem".equals(w.get("payment_provider")),"packUnits",100000,"packAmount","8.00","currency","USD","total",store.queries().queryForObject("SELECT count(*) FROM usage_charges WHERE workspace_id=?",Long.class,w.get("id")),"charges",store.queries().queryForList("SELECT id,kind,units,amount,currency,status,transaction_id,credited,revoked,period_start,period_end,created_at,checkout_url FROM usage_charges WHERE workspace_id=? ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",w.get("id"),size,(long)page*size));
   }
   static void active(Map<String,Object> w) {
+    if("creem".equals(w.get("payment_provider")))throw new ApiError(503,"USAGE_COLLECTION_NOT_CONFIGURED");
     if("Free".equals(w.get("plan")) || !"active".equals(w.get("subscription_status")) || w.get("subscription_id")==null || !((Timestamp)w.get("period_end")).toInstant().isAfter(Instant.now().plusSeconds(900)))
       throw new ApiError(409,"ADDON_UNAVAILABLE");
   }
@@ -122,7 +123,7 @@ class UsageCharges {
   void collect() {
     if(!enabled || !worker) return;
     // Cover expired periods even if the provider's renewal/cancellation webhook is delayed.
-    for(var row:store.queries().queryForList("SELECT id FROM workspaces WHERE plan<>'Free' AND subscription_id IS NOT NULL AND period_end<=now()"))
+    for(var row:store.queries().queryForList("SELECT id FROM workspaces WHERE plan<>'Free' AND payment_provider='paddle' AND subscription_id IS NOT NULL AND period_end<=now()"))
       tx.executeWithoutResult(status->{ var w=store.queries().queryForMap("SELECT * FROM workspaces WHERE id=? FOR UPDATE",row.get("id")); ChargeLedger.close(store,w); });
     for(var c:store.queries().queryForList("SELECT * FROM usage_charges WHERE kind='overage' AND status='ready' ORDER BY created_at LIMIT 50")) submit(c);
     store.db.update("UPDATE usage_charges SET status='unknown' WHERE status='processing' AND created_at<now()-interval '5 minutes'");

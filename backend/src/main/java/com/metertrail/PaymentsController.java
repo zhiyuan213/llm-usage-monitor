@@ -30,6 +30,7 @@ class PaymentsController {
   final CheckoutConfiguration checkoutConfiguration;
   final String publicUrl;
   final RestClient paddleClient;
+  @org.springframework.beans.factory.annotation.Autowired(required=false) CreemPayments creem;
 
   PaymentsController(
       Store store,
@@ -102,6 +103,7 @@ class PaymentsController {
   Map<String, String> checkout(@RequestBody JsonNode b, HttpServletRequest req) {
     String plan = b.path("plan").asText();
     Support.require(Set.of("Core", "Pro").contains(plan), "INVALID_PLAN");
+    if(creem!=null && creem.enabled())return creem.checkout(plan,req);
     String price = plan.equals("Core") ? core : pro;
     if (apiKey.isBlank() || price.isBlank() || !checkoutConfiguration.enabled) throw new ApiError(503, "PAYMENTS_NOT_CONFIGURED");
     var w = store.workspace(SessionFilter.uid(req));
@@ -161,6 +163,7 @@ class PaymentsController {
   @PostMapping("/api/billing/portal")
   Map<String, String> portal(HttpServletRequest req) {
     var w = store.workspace(SessionFilter.uid(req));
+    if(creem!=null && creem.owns(w))return creem.portal(w);
     if (apiKey.isBlank() || w.get("customer_id") == null)
       throw new ApiError(503, "PAYMENTS_NOT_CONFIGURED");
     JsonNode result =
@@ -205,15 +208,15 @@ class PaymentsController {
             ? d.path("id").asText()
             : d.path("subscription_id").asText();
     var workspaces =
-        store.queries().queryForList("SELECT * FROM workspaces WHERE subscription_id=? FOR UPDATE", sub);
+        store.queries().queryForList("SELECT * FROM workspaces WHERE payment_provider='paddle' AND subscription_id=? FOR UPDATE", sub);
     UUID charge = type.startsWith("transaction.") ? ChargeLedger.reference(d) : null;
-    if (charge != null) workspaces = store.queries().queryForList("SELECT w.* FROM workspaces w JOIN usage_charges c ON c.workspace_id=w.id WHERE c.id=? FOR UPDATE OF w",charge);
+    if (charge != null) workspaces = store.queries().queryForList("SELECT w.* FROM workspaces w JOIN usage_charges c ON c.workspace_id=w.id WHERE c.id=? AND w.payment_provider='paddle' FOR UPDATE OF w",charge);
     if (workspaces.isEmpty() && d.path("custom_data").hasNonNull("metertrail_intent")) {
       UUID intent = Support.uuid(d.path("custom_data").path("metertrail_intent").asText());
       workspaces =
           store.queries().queryForList(
               "SELECT w.* FROM workspaces w JOIN checkout_intents c ON c.workspace_id=w.id WHERE"
-                  + " c.id=? FOR UPDATE OF w",
+                  + " c.id=? AND c.payment_provider='paddle' AND w.payment_provider='paddle' FOR UPDATE OF w",
               intent);
     }
     if (workspaces.isEmpty() && type.startsWith("adjustment."))

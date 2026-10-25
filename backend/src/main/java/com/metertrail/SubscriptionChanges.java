@@ -26,6 +26,7 @@ class SubscriptionChanges {
   }
 
   JsonNode subscription(Map<String, Object> workspace) {
+    if("creem".equals(workspace.get("payment_provider")))throw new ApiError(409,"USE_BILLING_PORTAL");
     Object id = workspace.get("subscription_id");
     if (id == null) throw new ApiError(409, "SUBSCRIPTION_REQUIRED");
     JsonNode response = payments.readSubscription(id.toString());

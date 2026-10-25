@@ -27,7 +27,7 @@ class PaymentReconciliation {
     if (!payments.reconciliationEnabled()) return;
     for (var row :
         store.queries().queryForList(
-            "SELECT subscription_id FROM workspaces WHERE subscription_id IS NOT NULL")) {
+            "SELECT subscription_id FROM workspaces WHERE payment_provider='paddle' AND subscription_id IS NOT NULL")) {
       try {
         JsonNode response = payments.readSubscription((String) row.get("subscription_id"));
         if (response == null) throw new IllegalStateException();

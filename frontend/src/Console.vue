@@ -1301,7 +1301,7 @@ const usagePercent = computed(() =>
               )
             }}
           </div>
-          <BillingSubscription v-model:target-plan="changeTargetPlan" :data="data" :checkout-id="String(route.query.checkout || '')" @refresh="refresh(false)" />
+          <BillingSubscription v-model:target-plan="changeTargetPlan" :data="data" :checkout-id="String(route.query.checkout || route.query.checkout_id || '')" @refresh="refresh(false)" />
           <div class="plans">
             <article
               v-for="(plan, i) in ['Free', 'Core', 'Pro']"
@@ -1317,7 +1317,10 @@ const usagePercent = computed(() =>
                 :disabled="data.workspace?.plan === plan || plan === 'Free'"
                 @click="
                   run(async () => {
-                    if (data.workspace?.subscription_id) changeTargetPlan = plan;
+                    if (data.workspace?.subscription_id) {
+                      if(data.workspace.payment_provider==='creem') { const r=await api('/billing/portal',{});navigate(r.url); }
+                      else changeTargetPlan = plan;
+                    }
                     else { const r = await api('/billing/checkout', { plan }); navigate(r.url); }
                   })
                 "

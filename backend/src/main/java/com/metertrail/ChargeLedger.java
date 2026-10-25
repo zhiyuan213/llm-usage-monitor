@@ -15,6 +15,7 @@ final class ChargeLedger {
     return Math.addExact(Billing.included((String)w.get("plan")),((Number)w.getOrDefault("addon_units",0L)).longValue());
   }
   static void close(Store store, Map<String,Object> w) {
+    if("creem".equals(w.get("payment_provider")))return;
     if("Free".equals(w.get("plan")) || w.get("subscription_id")==null) return;
     BigDecimal amount=accrued(w).setScale(2,RoundingMode.DOWN);
     store.db.update("INSERT INTO usage_charges(id,workspace_id,subscription_id,period_start,period_end,kind,units,amount,status) VALUES(?,?,?,?,?,'overage',?,?,?) ON CONFLICT DO NOTHING",UUID.randomUUID(),w.get("id"),w.get("subscription_id"),w.get("period_start"),w.get("period_end"),w.get("used_units"),amount,amount.signum()==0?"paid":"ready");

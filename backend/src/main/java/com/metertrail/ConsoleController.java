@@ -564,6 +564,7 @@ class ConsoleController {
     return Map.of(
         "workspace",
         w,
+        "confirmedCheckouts",store.queries().queryForList("SELECT transaction_id FROM checkout_intents WHERE workspace_id=? AND payment_provider='creem' AND confirmed ORDER BY created_at DESC LIMIT 100",w.get("id")),
         "overage",
         ChargeLedger.accrued(w),
         "included",
@@ -615,7 +616,7 @@ class ConsoleController {
             .queries()
             .queryForMap("SELECT * FROM workspaces WHERE id=? FOR UPDATE", base.get("id"));
     boolean enabled = b.path("enabled").asBoolean();
-    if (enabled && !collectionEnabled) throw new ApiError(503, "USAGE_COLLECTION_NOT_CONFIGURED");
+    if (enabled && (!collectionEnabled || "creem".equals(w.get("payment_provider")))) throw new ApiError(503, "USAGE_COLLECTION_NOT_CONFIGURED");
     BigDecimal cap = decimal(b, "cap");
     Support.require(
         !enabled || (!w.get("plan").equals("Free") && b.path("consent").asBoolean()),
