@@ -239,7 +239,8 @@ class ConsoleController {
   @GetMapping("/api/projects/{project}/overview")
   Map<String, Object> overview(@PathVariable UUID project, HttpServletRequest req) {
     store.project(uid(req), project);
-    String q = source();
+    var overviewArgs=new ArrayList<Object>(List.of(project,uid(req)));
+    String q = source()+ReportWindow.filter(req,overviewArgs);
     var summary =
         store
             .queries()
@@ -251,20 +252,18 @@ class ConsoleController {
                     + " o.data->>'observationType'='generation' AND o.cost IS NULL) AS"
                     + " unknown_costs,sum((o.data->'usage'->>'inputTokens')::numeric+(o.data->'usage'->>'outputTokens')::numeric)"
                     + " AS tokens,percentile_cont(0.95) WITHIN GROUP(ORDER BY"
-                    + " (o.data->>'durationMs')::numeric) AS p95"
+                    + " (o.data->>'durationMs')::numeric) FILTER(WHERE o.type='trace') AS p95"
                     + q,
-                project,
-                uid(req));
+                overviewArgs.toArray());
     var daily =
         store
             .queries()
             .queryForList(
-                "SELECT (o.started_at AT TIME ZONE 'UTC')::date AS day,count(*) AS"
+                "SELECT (o.started_at AT TIME ZONE 'UTC')::date AS day,count(*) FILTER(WHERE o.type='trace') AS"
                     + " calls,sum(o.cost) AS cost"
                     + q
-                    + " GROUP BY 1 ORDER BY 1 DESC LIMIT 30",
-                project,
-                uid(req));
+                    + " GROUP BY 1 ORDER BY 1 DESC LIMIT 366",
+                overviewArgs.toArray());
     var models =
         store
             .queries()
@@ -272,8 +271,7 @@ class ConsoleController {
                 "SELECT o.data->>'model' AS model,count(*) AS calls,sum(o.cost) AS cost"
                     + q
                     + " AND o.data->>'model' IS NOT NULL GROUP BY 1 ORDER BY calls DESC LIMIT 20",
-                project,
-                uid(req));
+                overviewArgs.toArray());
     return Map.of("summary", summary, "daily", daily, "models", models);
   }
 
@@ -357,13 +355,13 @@ class ConsoleController {
             store
                 .queries()
                 .queryForList(
-                    "SELECT o.*,CASE WHEN o.type='observation' THEN NOT EXISTS(SELECT 1 FROM"
+                    "SELECT o.*,pv.effective_at AS price_effective_at,pv.input_rate,pv.output_rate,pv.cached_rate,CASE WHEN o.type='observation' THEN NOT EXISTS(SELECT 1 FROM"
                         + " objects t WHERE t.project_id=o.project_id AND t.type='trace' AND"
                         + " t.trace_id=o.trace_id) WHEN o.type='score' THEN NOT EXISTS(SELECT 1"
                         + " FROM objects t WHERE t.project_id=o.project_id AND"
                         + " t.type=o.data->>'targetType' AND t.object_id=o.data->>'targetId') ELSE"
                         + " false END AS unmatched"
-                        + source()
+                        + source().replace(" WHERE", " LEFT JOIN price_versions pv ON pv.id=o.price_version WHERE")
                         + " AND (o.trace_id=? OR (o.type='score' AND EXISTS (SELECT 1 FROM objects"
                         + " t WHERE t.project_id=o.project_id AND t.trace_id=? AND"
                         + " t.type=o.data->>'targetType' AND t.object_id=o.data->>'targetId')))"
@@ -404,20 +402,20 @@ class ConsoleController {
       HttpServletRequest req) {
     store.project(uid(req), project);
     Support.require(page >= 0 && size >= 1 && size <= 100, "INVALID_PAGE");
+    var args=new ArrayList<Object>(List.of(project,uid(req)));
+    String activitySource=source()+ReportWindow.filter(req,args);
     long total =
-        store.queries().queryForObject("SELECT count(*)" + source(), Long.class, project, uid(req));
+        store.queries().queryForObject("SELECT count(*)" + activitySource, Long.class, args.toArray());
+    var rowArgs=new ArrayList<Object>(args);rowArgs.add(size);rowArgs.add((long)page*size);
     var rows =
         decode(
             store
                 .queries()
                 .queryForList(
                     "SELECT o.*"
-                        + source()
+                        + activitySource
                         + " ORDER BY o.started_at DESC,o.type,o.object_id LIMIT ? OFFSET ?",
-                    project,
-                    uid(req),
-                    size,
-                    (long) page * size));
+                    rowArgs.toArray()));
     return Map.of("items", rows, "total", total, "page", page, "size", size);
   }
 
@@ -443,6 +441,8 @@ class ConsoleController {
         "Content-Disposition",
         "attachment; filename=\"metertrail-activity-" + project + "." + format + "\"");
     res.setHeader("Cache-Control", "no-store");
+    var exportArgs=new ArrayList<Object>(List.of(project,uid(req)));
+    String exportSource=source()+ReportWindow.filter(req,exportArgs);
     boolean zh = lang.equals("zh-CN");
     var excel = format.equals("xlsx") ? new ActivityExport.Excel(res.getOutputStream(), zh) : null;
     var pdf = format.equals("pdf") ? new ActivityExport.Pdf(zh) : null;
@@ -454,10 +454,9 @@ class ConsoleController {
                 var stmt =
                     con.prepareStatement(
                         "SELECT o.started_at,o.object_id,o.type,o.data,o.cost"
-                            + source()
+                            + exportSource
                             + " ORDER BY o.started_at DESC,o.type,o.object_id");
-                stmt.setObject(1, project);
-                stmt.setObject(2, uid(req));
+                for(int i=0;i<exportArgs.size();i++)stmt.setObject(i+1,exportArgs.get(i));
                 stmt.setFetchSize(500);
                 return stmt;
               },

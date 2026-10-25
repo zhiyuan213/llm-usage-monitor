@@ -106,7 +106,7 @@ class Insights {
     var w=paid(user,project);
     Instant now=Instant.now(),cutoff=store.queries().queryForObject("SELECT workspace_retention_cutoff(w) FROM workspaces w WHERE id=?",Timestamp.class,w.get("id")).toInstant();
     Support.require(start.isBefore(middle) && middle.isBefore(end) && !end.isAfter(now.plusSeconds(1))
-      && Duration.between(start,end).compareTo(Duration.ofDays(28))<=0,"INVALID_INSIGHT_WINDOW");
+      && Duration.between(start,end).compareTo(Duration.ofDays(60))<=0,"INVALID_INSIGHT_WINDOW");
     var before=summary(project,start,middle,cutoff);var after=summary(project,middle,end,cutoff);
     var result=new LinkedHashMap<String,Object>();
     result.put("before",before);result.put("after",after);result.put("comparison",comparison(before,after));

@@ -20,10 +20,15 @@ class InsightsController {
   @GetMapping("/api/projects/{project}/insights/costs")
   Map<String,Object> costs(@PathVariable UUID project,@RequestParam(defaultValue="7") int days,
       @RequestParam(defaultValue="feature") String dimension,HttpServletRequest req) {
-    Support.require(Set.of(1,7,14).contains(days),"INVALID_INSIGHT_WINDOW");
+    Support.require(Set.of(1,7,14,30).contains(days),"INVALID_INSIGHT_WINDOW");
     limits.check("insight-read:"+SessionFilter.uid(req),30);
     Instant end=Instant.now(),middle=end.minus(Duration.ofDays(days));
-    return insights.analyze(SessionFilter.uid(req),project,middle.minus(Duration.ofDays(days)),middle,end,dimension);
+    if(req.getParameter("from")!=null || req.getParameter("to")!=null) {
+      try { middle=Instant.parse(req.getParameter("from"));end=Instant.parse(req.getParameter("to")); }
+      catch(Exception e){throw new ApiError(400,"INVALID_TIMESTAMP");}
+      Support.require(middle.isBefore(end) && Duration.between(middle,end).compareTo(Duration.ofDays(30))<=0,"INVALID_INSIGHT_WINDOW");
+    }
+    return insights.analyze(SessionFilter.uid(req),project,middle.minus(Duration.between(middle,end)),middle,end,dimension);
   }
 
   @GetMapping("/api/projects/{project}/insights/releases")

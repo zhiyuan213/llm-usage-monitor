@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { api, t, money, date, errorText } from './lib';
+import { api, t, money, date, errorText, n } from './lib';
 import QueryControls from './QueryControls.vue';
 const props=defineProps<{ workspace:any }>();
 const data=ref<any>(null), consent=ref(false), busy=ref(false), error=ref('');
@@ -26,7 +26,7 @@ function state(c:any){
   <label class="check-label"><input type="checkbox" v-model="consent" :disabled="!data?.enabled" />{{t('I agree to buy one pack for USD 8. Unused units expire at the period end.','我同意支付 8 美元购买一包，未用额度在账期结束时到期。')}}</label>
   <button class="btn primary" :disabled="busy || !consent || !data?.enabled || workspace?.plan==='Free' || workspace?.subscription_status!=='active'">{{t('Buy one pack','购买一包')}}</button>
  </form>
- <p>{{t('Pack units this period','本账期加购额度')}}: {{workspace?.addon_units || 0}} · {{t('Remaining units','剩余额度')}}: {{data?.availableUnits ?? '—'}}</p>
+ <dl class="quota-breakdown"><dt>{{t('Plan quota','套餐额度')}}</dt><dd>{{n(workspace?.plan==='Free'?50000:100000)}} units</dd><dt>{{t('Purchased quota this period','本期加购额度')}}</dt><dd>{{n(workspace?.addon_units||0)}} units</dd><dt>{{t('Total used this period','本期已用额度')}}</dt><dd>{{n(workspace?.used_units||0)}} units</dd><dt>{{t('Remaining plan + pack quota','套餐与加购总剩余额度')}}</dt><dd>{{n(data?.availableUnits)}} units</dd></dl>
  <p v-if="error" role="alert" class="error">{{error}}</p>
  <div v-if="data?.charges?.length" class="table-wrap"><table><thead><tr><th>{{t('Type','类型')}}</th><th>{{t('Amount','金额')}}</th><th>{{t('Status','状态')}}</th><th>{{t('Period end','账期结束')}}</th></tr></thead><tbody><tr v-for="c in data.charges" :key="c.id"><td>{{c.kind==='addon'?t('100,000-unit pack','10万 units 加购包'):t('Period overage','账期超额')}}</td><td>{{money(c.amount)}}</td><td>{{state(c)}} <a v-if="c.checkout_url && c.status==='submitted'" :href="c.checkout_url">{{t('Continue payment','继续付款')}}</a></td><td>{{date(c.period_end)}}</td></tr></tbody></table></div>
  <p v-else>{{t('No additional charges.','暂无加购或超额账单。')}}</p>

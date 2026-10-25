@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DateRangeFilter from "./DateRangeFilter.vue";
 import SupportMessages from "./SupportMessages.vue";
 import AdminProjects from "./AdminProjects.vue";
 import AnalyticsReport from "./AnalyticsReport.vue";
@@ -117,6 +118,15 @@ const projects = ref<any[]>([]),
   data = ref<any>({}),
   overview = ref<any>({}),
   recent = ref<any[]>([]);
+const reportWindow=ref({from:new Date(Date.now()-7*86400000).toISOString(),to:new Date().toISOString()});
+const reportWindowQuery=computed(()=>new URLSearchParams(reportWindow.value).toString());
+const traceSort=ref('started_at'),traceDirection=ref('desc');
+function applyDates(value:{from:string;to:string}){reportWindow.value=value;tracePage.value=0;activityPage.value=0;refresh(false);}
+function sortTraces(value:string){traceDirection.value=traceSort.value===value&&traceDirection.value==='desc'?'asc':'desc';traceSort.value=value;tracePage.value=0;refresh(false);}
+const pageDescription=computed(()=>({overview:t('Request performance, known model cost and usage for the selected period.','查看所选时间内的请求表现、已知模型费用和用量。'),traces:t('Find requests by name or status, then compare latency and model usage.','检索请求，比较耗时、模型用量与已知费用。'),trace:t('Inspect request steps, model usage and pricing evidence.','查看请求步骤、模型用量与计费依据。'),analytics:t('Compare usage by customer, user or feature.','按客户、用户或功能比较用量。'),'cost-insights':t('Find cost drivers and compare equal-length periods.','定位费用来源，对比等长时间段的变化。'),releases:t('Mark releases and compare before and after.','记录发布时间，对比修改前后的表现。'),weekly:t('Manage weekly email summaries and delivery history.','管理每周邮件摘要与发送记录。'),billing:t('Manage your plan, quota and payment records.','管理套餐、额度和付款记录。'),keys:t('Create and revoke project API keys.','创建与撤销项目接入密钥。'),settings:t('Manage project details and model price versions.','管理项目资料与模型价格版本。'),account:t('Manage sign-in methods and account security.','管理登录方式与账号安全。'),messages:t('Send feedback and follow replies.','提交问题与建议，查看回复。'),workspace:t('Manage projects and shared workspace usage.','管理项目与工作空间共享用量。'),budgets:t('Set model spending reminders.','设置模型费用预算提醒。'),reliability:t('Investigate failed and slow requests.','排查失败请求与慢调用。'),alerts:t('Configure notifications for project activity.','配置项目用量与异常通知。'),audit:t('Review account and workspace actions.','查看账号与工作空间操作记录。') } as Record<string,string>)[page.value]||t('Review and manage this section.','查看与管理本栏目内容。'));
+function fieldLabel(key:string){return ({name:t('Name','名称'),status:t('Status','状态'),model:t('Model','模型'),provider:t('Provider','供应商'),usage:t('Token usage','Token 用量'),durationMs:t('Duration (ms)','耗时（毫秒）'),observationType:t('Step type','步骤类型'),userId:t('User','用户'),customerId:t('Customer','客户'),feature:t('Feature','功能')} as Record<string,string>)[key]||key;}
+function costReason(o:any){if(o.type!=='observation'||o.data.observationType!=='generation')return t('Not a model generation call','非模型生成调用');const u=o.data.usage;if(!u||!['inputTokens','outputTokens','cachedInputTokens'].every(k=>typeof u[k]==='number'))return t('Missing input, output or cached token usage','缺少输入、输出或缓存 Token 用量');if(!o.data.provider||!o.data.model)return t('Missing model or provider','缺少模型或供应商');return t('No matching price at processing time','处理时未命中适用的价格版本');}
+const traceSummary=computed(()=>{const calls=traceObjects.value.filter((o:any)=>o.type==='observation'&&o.data.observationType==='generation');const priced=calls.filter((o:any)=>o.cost!=null);const usage=calls.filter((o:any)=>o.data.usage?.inputTokens!=null&&o.data.usage?.outputTokens!=null);return {calls:calls.length,priced:priced.length,cost:priced.length?priced.reduce((n:number,o:any)=>n+Number(o.cost),0):null,tokens:usage.length?usage.reduce((n:number,o:any)=>n+Number(o.data.usage.inputTokens)+Number(o.data.usage.outputTokens),0):null,duration:traceObjects.value.find((o:any)=>o.type==='trace')?.data.durationMs};});
 const accountReady = computed(() => contextReady.value && !loading.value && !!session.value?.csrf);
 const activityPage = ref(0),
   activitySize = ref(5),
@@ -133,6 +143,7 @@ const reportExportUrl = computed(
       dimension: dimension.value,
       search: search.value,
       status: status.value,
+      ...reportWindow.value, sort:traceSort.value,direction:traceDirection.value,
     }),
 );
 async function reportTurn(next: number) {
@@ -252,13 +263,13 @@ async function refresh(force = true) {
     } else if (selected.value) {
       if (page.value === "overview") {
         const [o, r] = await Promise.all([
-          request(path("/overview")),
+          request(path("/overview")+"?"+new URLSearchParams(reportWindow.value)),
           request(
             path("/activity") +
               "?page=" +
               activityPage.value +
               "&size=" +
-              activitySize.value,
+              activitySize.value + "&" + new URLSearchParams(reportWindow.value),
           ),
         ]);
         current();
@@ -275,6 +286,7 @@ async function refresh(force = true) {
               status: status.value,
               page: String(tracePage.value),
               size: String(reportSize.value),
+              ...reportWindow.value,sort:traceSort.value,direction:traceDirection.value,
             }),
         );
       else if (page.value === "trace")
@@ -532,19 +544,7 @@ const usagePercent = computed(() =>
           <div>
             <div class="eyebrow">METERTRAIL CONSOLE</div>
             <h1>{{ title }}</h1>
-            <p>
-              {{
-                page === "overview"
-                  ? t(
-                      "A clear view of performance, usage, and cost.",
-                      "清晰掌握性能、用量与成本。",
-                    )
-                  : t(
-                      "Manage your workspace with confidence.",
-                      "掌控工作空间的每一项配置。",
-                    )
-              }}
-            </p>
+            <p>{{ pageDescription }}</p>
           </div>
           <div class="toolbar">
             <select
@@ -608,7 +608,7 @@ const usagePercent = computed(() =>
           </button>
         </div>
         <template v-if="page === 'overview' && selected"
-          ><div class="project-caption">
+          ><DateRangeFilter :busy="loading" @change="applyDates" /><p class="muted">{{date(reportWindow.from)}} → {{date(reportWindow.to)}} · {{t("End exclusive; retained data only.","不含结束时刻；仅统计保留期内数据。")}}</p><div class="project-caption">
             <span class="badge success">{{ project?.environment }}</span
             ><strong>{{ project?.name }}</strong
             ><span class="muted">{{
@@ -630,16 +630,14 @@ const usagePercent = computed(() =>
                   t('Known input + output', '已知输入 + 输出'),
                 ],
                 [
-                  t('Estimated model cost', '模型估算成本'),
+                  t('Known estimated model cost', '已知模型估算费用'),
                   money(overview.summary?.cost),
-                  (overview.summary?.unknown_costs || 0) +
-                    ' ' +
-                    t('calls with unknown cost', '次调用成本未知'),
+                  `${n(Number(overview.summary?.calls||0)-Number(overview.summary?.unknown_costs||0))}/${n(overview.summary?.calls)} ` + t('model calls priced', '条模型调用已定价'),
                 ],
                 [
                   t('P95 latency', 'P95 延迟'),
                   n(overview.summary?.p95) + ' ms',
-                  t('Across retained objects', '保留期内所有对象'),
+                  t('Trace requests with reported duration', '已上报耗时的 Trace 请求'),
                 ],
               ]"
               :key="i"
@@ -660,7 +658,7 @@ const usagePercent = computed(() =>
               <div class="panel-heading">
                 <h2>{{ t("Activity over time", "调用趋势") }}</h2>
                 <span class="legend"
-                  ><i></i>{{ t("Objects per day", "每日对象数") }}</span
+                  ><i></i>{{ t("Requests per day (Trace)", "每日请求数（Trace）") }}</span
                 >
               </div>
               <div v-if="daily.length" class="real-chart">
@@ -735,7 +733,7 @@ const usagePercent = computed(() =>
                     '/api' +
                     path('/activity/export') +
                     '?format=xlsx&lang=' +
-                    language
+                    language + '&' + reportWindowQuery
                   "
                   >{{ t("Export Excel", "导出 Excel") }}</a
                 >
@@ -745,7 +743,7 @@ const usagePercent = computed(() =>
                     '/api' +
                     path('/activity/export') +
                     '?format=pdf&lang=' +
-                    language
+                    language + '&' + reportWindowQuery
                   "
                   >{{ t("Export PDF", "导出 PDF") }}</a
                 >
@@ -826,7 +824,7 @@ const usagePercent = computed(() =>
             /></section
         ></template>
         <template v-if="page === 'traces' && selected"
-          ><section class="panel">
+          ><DateRangeFilter :busy="loading" @change="applyDates" /><p class="muted">{{date(reportWindow.from)}} → {{date(reportWindow.to)}} · {{t("Known model usage is aggregated by trace; unknown costs are excluded from the subtotal.","模型用量按调用链汇总；已知费用不含未知费用部分。")}}</p><section class="panel">
             <form
               class="filters"
               @submit.prevent="
@@ -867,7 +865,8 @@ const usagePercent = computed(() =>
                   <tr>
                     <th>{{ t("Name", "名称") }}</th>
                     <th>{{ t("Object ID", "对象 ID") }}</th>
-                    <th>{{ t("Duration", "耗时") }}</th>
+                    <th><button type="button" class="sort-heading" @click="sortTraces('duration')">{{t("Duration", "耗时")}} {{traceSort==='duration'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th>
+                    <th>{{t("Models","模型")}}</th><th><button type="button" class="sort-heading" @click="sortTraces('tokens')">Token {{traceSort==='tokens'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th><th><button type="button" class="sort-heading" @click="sortTraces('estimated_cost')">{{t("Known estimated cost","已知估算费用")}} {{traceSort==='estimated_cost'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th>
                     <th>{{ t("User / Customer", "用户 / 客户") }}</th>
                     <th>{{ t("Status", "状态") }}</th>
                     <th>{{ t("Started at (UTC)", "开始时间 (UTC)") }}</th>
@@ -880,7 +879,7 @@ const usagePercent = computed(() =>
                       <strong>{{ o.data.name || "—" }}</strong>
                     </td>
                     <td class="mono">{{ o.object_id }}</td>
-                    <td>{{ n(o.data.durationMs) }} ms</td>
+                    <td>{{ n(o.data.durationMs) }} ms</td><td>{{o.models||"—"}}</td><td>{{o.tokens==null?t("Unknown","未知"):n(o.tokens)}}</td><td>{{money(o.estimated_cost)}}<small class="muted">{{n(o.priced_calls)}}/{{n(o.generations)}} {{t("priced","条已定价")}}</small></td>
                     <td>
                       {{ o.data.userId || "—" }} /
                       {{ o.data.customerId || "—" }}
@@ -904,7 +903,7 @@ const usagePercent = computed(() =>
                     </td>
                   </tr>
                   <tr v-if="!data.items?.length">
-                    <td colspan="7" class="empty-cell">
+                    <td colspan="10" class="empty-cell">
                       {{
                         t(
                           "No traces match these filters.",
@@ -953,6 +952,7 @@ const usagePercent = computed(() =>
               >{{ traceObjects.length }} {{ t("objects", "个对象") }}</span
             >
           </div>
+          <div class="insight-metrics"><article class="panel"><span>{{t('Request duration','请求总耗时')}}</span><strong>{{n(traceSummary.duration)}} ms</strong></article><article class="panel"><span>{{t('Model calls','模型调用数')}}</span><strong>{{n(traceSummary.calls)}}</strong></article><article class="panel"><span>{{t('Known tokens','已知 Token')}}</span><strong>{{n(traceSummary.tokens)}}</strong></article><article class="panel"><span>{{t('Known estimated cost','已知估算费用')}}</span><strong>{{money(traceSummary.cost)}}</strong><small>{{traceSummary.priced}}/{{traceSummary.calls}} {{t('model calls priced','条模型调用已定价')}}</small></article></div>
           <section class="panel">
             <div class="panel-heading">
               <h2>{{ t("Execution waterfall", "执行瀑布图") }}</h2>
@@ -1014,9 +1014,13 @@ const usagePercent = computed(() =>
               <h2>{{ o.data.name || o.data.model || o.type }}</h2>
               <span class="badge">revision {{ o.revision }}</span>
             </div>
-            <dl>
+            <p v-if="o.data.observationType==='generation'">{{t('Model','模型')}}: {{o.data.model||'—'}} · {{t('Known estimated cost','已知估算费用')}}: {{money(o.cost)}}</p>
+            <p v-if="o.data.observationType==='generation'" class="muted">{{t('Input / output / cached tokens','输入 / 输出 / 缓存 Token')}}: {{n(o.data.usage?.inputTokens)}} / {{n(o.data.usage?.outputTokens)}} / {{n(o.data.usage?.cachedInputTokens)}}</p>
+            <p v-if="o.data.observationType==='generation' && o.cost==null" class="notice">{{costReason(o)}}</p>
+            <p v-if="o.price_version" class="muted">{{t('Matched price version','命中价格版本')}}: {{o.price_version}} · {{t('Effective at','生效时间')}}: {{date(o.price_effective_at)}} · {{t('Input / output / cached USD per million tokens','输入 / 输出 / 缓存价格（美元/百万 Token）')}}: {{o.input_rate}} / {{o.output_rate}} / {{o.cached_rate}}</p>
+            <details><summary>{{t('Reported fields','查看上报字段')}}</summary><dl>
               <template v-for="(value, key) in o.data" :key="key"
-                ><dt>{{ key }}</dt>
+                ><dt :title="String(key)">{{ fieldLabel(String(key)) }}</dt>
                 <dd>
                   <code v-if="typeof value === 'object'">{{
                     JSON.stringify(value)
@@ -1026,7 +1030,7 @@ const usagePercent = computed(() =>
               >
               <dt>{{ t("Estimated cost", "估算成本") }}</dt>
               <dd>{{ o.type === "observation" ? money(o.cost) : "—" }}</dd>
-            </dl>
+            </dl></details>
           </section></template
         >
         <AdminProjects v-if="page === 'admin-projects' && accountReady" :refresh-token="loading" />
@@ -1407,8 +1411,8 @@ const usagePercent = computed(() =>
             <p>
               {{
                 t(
-                  "Rates are USD per million tokens. Unknown prices stay unknown. New versions apply when processing new events or revisions; existing cost evidence is preserved.",
-                  "费率为每百万 Token 的美元价格。缺失价格保持未知，新版本在处理新事件或新修订时使用，保留已有成本证据。",
+                  "Rates are USD per million tokens. Unknown prices stay unknown. New versions apply when processing new events or higher revisions; existing cost evidence is preserved. To correct an old call, report the same object with a higher revision and complete usage; exact retries do not recalculate costs.",
+                  "费率为每百万 Token 的美元价格。缺失价格保持未知；添加价格不会自动重算历史费用。需要修正历史调用时，以同一对象、更高 revision 和完整用量重新上报；原样重试不会重新计价。",
                 )
               }}
             </p>

@@ -75,8 +75,8 @@ class QueryReportsController {
       Support.require(year == null || (year>=2000 && year<=9998), "INVALID_FILTER");
       Support.require(month == null || (year != null && month>=1 && month<=12), "INVALID_FILTER");
       var analyticsArgs = new ArrayList<Object>(List.of(dimension,project,user));
-      String periodFilter="";
-      if(year!=null) {
+      String periodFilter=ReportWindow.filter(req,analyticsArgs);
+      if(year!=null && periodFilter.isEmpty()) {
         var start=java.time.LocalDate.of(year,month==null?1:month,1);
         var end=month==null?start.plusYears(1):start.plusMonths(1);
         periodFilter=" AND o.started_at>=? AND o.started_at<?";
@@ -114,21 +114,26 @@ class QueryReportsController {
               });
     }
     Support.require(search.length() <= 128, "INVALID_FILTER");
+    var traceArgs=new ArrayList<Object>(List.of(project,user,status,status,search,"%"+search+"%","%"+search+"%"));
+    String traceWindow=ReportWindow.filter(req,traceArgs);
+    String sort=Optional.ofNullable(req.getParameter("sort")).orElse("started_at");
+    Support.require(Set.of("started_at","duration","tokens","estimated_cost").contains(sort),"INVALID_SORT");
+    String direction=Optional.ofNullable(req.getParameter("direction")).orElse("desc");
+    Support.require(Set.of("asc","desc").contains(direction),"INVALID_SORT");
+    String order=(sort.equals("duration")?"(data->>'durationMs')::numeric":sort)+" "+direction+" NULLS LAST,object_id";
     return new Report(
-        "SELECT o.*"
-            + console.source()
+        "SELECT o.*,m.models,m.tokens,m.estimated_cost,m.generations,m.priced_calls,m.unknown_costs"
+            + console.source().replace(" WHERE", " LEFT JOIN LATERAL (SELECT string_agg(DISTINCT g.data->>'model',', ' ORDER BY g.data->>'model') AS models,sum((g.data->'usage'->>'inputTokens')::numeric+(g.data->'usage'->>'outputTokens')::numeric) AS tokens,sum(g.cost) AS estimated_cost,count(*) AS generations,count(g.cost) AS priced_calls,count(*) FILTER(WHERE g.cost IS NULL) AS unknown_costs FROM objects g WHERE g.project_id=o.project_id AND g.trace_id=o.trace_id AND g.type='observation' AND g.data->>'observationType'='generation' AND g.started_at>workspace_retention_cutoff(w)) m ON true WHERE")
             + " AND o.type='trace' AND (?='' OR o.data->>'status'=?) AND (?='' OR o.object_id ILIKE"
-            + " ? OR o.data->>'name' ILIKE ?)",
-        "started_at DESC,object_id",
-        new Object[] {
-          project, user, status, status, search, "%" + search + "%", "%" + search + "%"
-        },
+            + " ? OR o.data->>'name' ILIKE ?)"+traceWindow,
+        order,
+        traceArgs.toArray(),
         zh
-            ? new String[] {"名称", "对象 ID", "耗时 ms", "用户", "客户", "状态", "开始时间 UTC"}
+            ? new String[] {"名称", "对象 ID", "耗时 ms", "用户", "客户", "状态", "开始时间 UTC", "模型", "已知 Token", "已知估算费用 USD", "成本未知调用"}
             : new String[] {
-              "Name", "Object ID", "Duration ms", "User", "Customer", "Status", "Started UTC"
+              "Name", "Object ID", "Duration ms", "User", "Customer", "Status", "Started UTC", "Models", "Known tokens", "Known estimated cost USD", "Unknown cost calls"
             },
-        new float[] {140, 160, 75, 100, 100, 80, 115},
+        new float[] {120, 130, 65, 80, 80, 65, 100, 100, 80, 100, 75},
         r -> {
           var d = Support.parse(r.get("data").toString());
           return new String[] {
@@ -138,7 +143,7 @@ class QueryReportsController {
             d.path("userId").asText("—"),
             d.path("customerId").asText("—"),
             d.path("status").asText("—"),
-            utc(r.get("started_at"))
+            utc(r.get("started_at")),val(r.get("models"),"—"),val(r.get("tokens"),"—"),val(r.get("estimated_cost"),zh?"未知":"Unknown"),val(r.get("unknown_costs"),"0")
           };
         });
   }
