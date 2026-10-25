@@ -83,7 +83,7 @@ class InsightsController {
     Timestamp cutoff=Timestamp.from(Instant.now().minus(Duration.ofDays(Math.min(90,Billing.retention(w.get("plan").toString())))));
     return Map.of("available",!"Free".equals(w.get("plan")),"subscription",settings.isEmpty()?Map.of("enabled",false,"timezone","UTC"):settings.get(0),
       "total",store.queries().queryForObject("SELECT count(*)"+where,Long.class,project,cutoff),
-      "items",store.queries().queryForList("SELECT r.id,r.week_end,r.created_at,o.attempts,CASE WHEN r.cancelled_at IS NOT NULL THEN 'cancelled' WHEN o.sent_at IS NOT NULL THEN 'sent' WHEN o.attempts>=10 THEN 'failed' ELSE 'queued' END AS status"+where+" ORDER BY r.created_at DESC,r.id LIMIT ? OFFSET ?",project,cutoff,size,(long)page*size));
+      "items",store.queries().queryForList("SELECT r.id,r.week_end,r.created_at,r.test_email,o.attempts,CASE WHEN r.cancelled_at IS NOT NULL THEN 'cancelled' WHEN o.sent_at IS NOT NULL THEN 'sent' WHEN o.attempts>=10 THEN 'failed' ELSE 'queued' END AS status"+where+" ORDER BY r.created_at DESC,r.id LIMIT ? OFFSET ?",project,cutoff,size,(long)page*size));
   }
 
   @PostMapping("/api/projects/{project}/insights/weekly")
@@ -111,6 +111,22 @@ class InsightsController {
     ZoneId zone=WeeklyInsights.zone(timezone!=null?timezone:zones.isEmpty()?"UTC":zones.get(0).get("timezone").toString());
     var end=WeeklyInsights.weekEnd(Instant.now(),zone);
     return insights.analyze(user,project,end.atZone(zone).minusWeeks(2).toInstant(),end.atZone(zone).minusWeeks(1).toInstant(),end,"feature");
+  }
+
+  @GetMapping("/api/projects/{project}/insights/weekly/example")
+  Map<String,Object> example(@PathVariable UUID project,HttpServletRequest req) {
+    store.project(SessionFilter.uid(req),project);return WeeklyInsights.example();
+  }
+
+  @PostMapping("/api/projects/{project}/insights/weekly/test")
+  @Transactional
+  Map<String,String> test(@PathVariable UUID project,HttpServletRequest req) {
+    UUID user=SessionFilter.uid(req);var workspace=insights.paid(user,project);
+    Support.require(Boolean.TRUE.equals(SessionFilter.user(req).get("verified")),"EMAIL_NOT_VERIFIED");
+    limits.check("insight-send:"+user,3);
+    boolean queued=weekly.sendTest(project,Instant.now());
+    store.audit(user,(UUID)workspace.get("id"),"weekly.test",project.toString(),true,req);
+    return Map.of("status",queued?"queued":"cooldown");
   }
 
   @PostMapping("/api/projects/{project}/insights/weekly/send")

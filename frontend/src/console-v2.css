@@ -1117,3 +1117,5 @@
   .ui-v2 .insight-toolbar label { width: 100%; }
   .ui-v2 .insight-table table { min-width: 520px; }
 }
+.ui-v2 .weekly-summary .insight-metrics article { padding: 16px; background: var(--surface, #f5f7fc); border-radius: 8px; min-width: 0; }
+.ui-v2 .weekly-summary .insight-metrics strong { display: block; font-size: 24px; margin-top: 8px; overflow-wrap: anywhere; }

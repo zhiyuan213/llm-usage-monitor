@@ -62,6 +62,30 @@ class WeeklyInsights {
   boolean sendNow(UUID project,Instant now) {
     return generate(project,now,true);
   }
+  static Map<String,Object> example() {
+    return Map.of("example",true,
+      "before",Map.of("known_cost",10),
+      "after",Map.of("start","2026-10-12T00:00:00Z","end","2026-10-19T00:00:00Z",
+        "requests",1000,"errors",10,"generations",1200,"priced_generations",1200,
+        "known_cost",12,"average_model_cost",0.01,"p95_ms",850),
+      "comparison",Map.of("cost_change_pct",20,"findings",List.of("COST_GROWTH")),
+      "contributors",List.of(Map.of("label","Example assistant","current_cost",12)));
+  }
+  boolean sendTest(UUID project,Instant now) {
+    return Boolean.TRUE.equals(tx.execute(status->{
+      var rows=store.db.queryForList("SELECT s.*,u.email,u.language,u.verified,u.deleted_at AS user_deleted,p.deleted_at AS project_deleted,p.name,w.plan FROM insight_weekly_subscriptions s JOIN projects p ON p.id=s.project_id JOIN workspaces w ON w.id=p.workspace_id JOIN users u ON u.id=w.owner_id WHERE s.project_id=? AND s.enabled FOR UPDATE OF s",project);
+      if(rows.isEmpty())throw new ApiError(409,"WEEKLY_NOT_ENABLED");
+      var row=rows.get(0);
+      if(row.get("user_deleted")!=null||row.get("project_deleted")!=null||!Boolean.TRUE.equals(row.get("verified"))||!Set.of("Core","Pro").contains(row.get("plan")))throw new ApiError(403,"INSIGHTS_PLAN_REQUIRED");
+      if(Boolean.TRUE.equals(store.db.queryForObject("SELECT EXISTS(SELECT 1 FROM insight_weekly_reports WHERE project_id=? AND test_email AND created_at>?)",Boolean.class,project,Timestamp.from(now.minusSeconds(60)))))return false;
+      boolean zh="zh-CN".equals(row.get("language"));var report=example();
+      String body=(zh?"这是测试邮件。以下为模拟数据，不是你的项目统计，不影响正式周报或发送时间。\n\n":"This is a test email. The following data is synthetic, not your project statistics. Your weekly report and schedule are unchanged.\n\n")+render(row.get("name").toString(),report,project,zh,publicUrl);
+      Long outbox=store.db.queryForObject("INSERT INTO outbox(recipient,subject,body,insight_project_id) VALUES(?,?,?,?) RETURNING id",Long.class,row.get("email"),zh?"[TEST] MeterTrail 周报测试":"[TEST] MeterTrail weekly report test",store.secrets.seal(body),project);
+      try {store.db.update("INSERT INTO insight_weekly_reports(id,project_id,week_end,summary,outbox_id,test_email) VALUES(?,?,?,?::jsonb,?,true)",UUID.randomUUID(),project,Timestamp.from(now),json.writeValueAsString(report),outbox);}
+      catch(com.fasterxml.jackson.core.JsonProcessingException e){throw new IllegalStateException(e);}
+      return true;
+    }));
+  }
   private boolean generate(UUID project,Instant now,boolean manual) {
     return Boolean.TRUE.equals(tx.execute(status->{
       var rows=store.db.queryForList("SELECT s.*,u.id AS owner,u.email,u.language,u.verified,u.deleted_at AS user_deleted,p.deleted_at AS project_deleted,p.name,w.plan FROM insight_weekly_subscriptions s JOIN projects p ON p.id=s.project_id JOIN workspaces w ON w.id=p.workspace_id JOIN users u ON u.id=w.owner_id WHERE s.project_id=? AND s.enabled AND (? OR s.next_due<=?) FOR UPDATE OF s"+(manual?"":" SKIP LOCKED"),project,manual,Timestamp.from(now));
@@ -72,7 +96,7 @@ class WeeklyInsights {
         store.db.update("UPDATE insight_weekly_subscriptions SET enabled=false,updated_at=now() WHERE project_id=?",project);return false;
       }
       Instant end=weekEnd(now,zone);
-      boolean exists=Boolean.TRUE.equals(store.db.queryForObject("SELECT EXISTS(SELECT 1 FROM insight_weekly_reports WHERE project_id=? AND week_end=?)",Boolean.class,project,Timestamp.from(end)));
+      boolean exists=Boolean.TRUE.equals(store.db.queryForObject("SELECT EXISTS(SELECT 1 FROM insight_weekly_reports WHERE project_id=? AND week_end=? AND NOT test_email)",Boolean.class,project,Timestamp.from(end)));
       if(!exists) {
         var report=new LinkedHashMap<>(insights.analyze((UUID)row.get("owner"),project,end.atZone(zone).minusWeeks(2).toInstant(),end.atZone(zone).minusWeeks(1).toInstant(),end,"feature"));
         report.remove("samples");

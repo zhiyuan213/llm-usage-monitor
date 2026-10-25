@@ -67,6 +67,31 @@ class InsightsIntegrationTest {
   void budgetCalls(Instant at,int count,String cost) {
     for(int i=0;i<count;i++)object("observation",at,"{\"observationType\":\"generation\",\"status\":\"success\",\"durationMs\":100,\"provider\":\"test\",\"model\":\"small\",\"usage\":{\"inputTokens\":100,\"outputTokens\":10}}",cost);
   }
+  @Test void weeklyTestEmailIsSeparateThrottledAndCancelled() throws Exception {
+    mvc.perform(get(url("weekly/example")).cookie(otherCookie)).andExpect(status().isNotFound());
+    assertTrue(getJson(url("weekly/example")).path("example").asBoolean());
+    mvc.perform(post(url("weekly/test")).cookie(cookie)).andExpect(status().isForbidden());
+    mvc.perform(post(url("weekly/test")).cookie(otherCookie).header("X-CSRF-Token",csrf)).andExpect(status().isNotFound());
+    mvc.perform(post(url("weekly/test")).cookie(cookie).header("X-CSRF-Token",csrf)).andExpect(status().isConflict());
+    mvc.perform(post(url("weekly")).cookie(cookie).header("X-CSRF-Token",csrf).contentType("application/json").content("{\"enabled\":true,\"timezone\":\"UTC\"}")).andExpect(status().isOk());
+    Object due=store.db.queryForObject("SELECT next_due FROM insight_weekly_subscriptions WHERE project_id=?",Object.class,project);
+    for(String expected:List.of("queued","cooldown")) {
+      var response=mvc.perform(post(url("weekly/test")).cookie(cookie).header("X-CSRF-Token",csrf)).andExpect(status().isOk()).andReturn();
+      assertEquals(expected,json.readTree(response.getResponse().getContentAsString()).path("status").asText());
+    }
+    var row=store.db.queryForMap("SELECT o.* FROM outbox o JOIN insight_weekly_reports r ON r.outbox_id=o.id WHERE r.project_id=? AND r.test_email",project);
+    assertTrue(row.get("subject").toString().startsWith("[TEST]"));
+    assertTrue(WeeklyInsights.mailEligible(store,row.get("id")));
+    assertEquals(due,store.db.queryForObject("SELECT next_due FROM insight_weekly_subscriptions WHERE project_id=?",Object.class,project));
+    assertTrue(weekly.sendNow(project,Instant.now()));
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM insight_weekly_reports WHERE project_id=? AND NOT test_email",Integer.class,project));
+    assertTrue(getJson(url("weekly")).path("items").findValues("test_email").stream().anyMatch(JsonNode::asBoolean));
+    mvc.perform(post(url("weekly")).cookie(cookie).header("X-CSRF-Token",csrf).contentType("application/json").content("{\"enabled\":false,\"timezone\":\"UTC\"}")).andExpect(status().isOk());
+    assertFalse(WeeklyInsights.mailEligible(store,row.get("id")));
+    assertEquals(10,store.db.queryForObject("SELECT attempts FROM outbox WHERE id=?",Integer.class,row.get("id")));
+    store.db.update("UPDATE workspaces SET plan='Free' WHERE id=?",workspace);
+    mvc.perform(post(url("weekly/test")).cookie(cookie).header("X-CSRF-Token",csrf)).andExpect(status().isForbidden());
+  }
   @Test void reliabilityUsesSeparatePopulationsAndCorrectCoverageAndPaging() throws Exception {
     Instant at=Instant.now().minusSeconds(3600);
     for(int i=0;i<20;i++)object("trace",at,"{\"name\":\"request\",\"status\":\""+(i<5?"error":i==5?"cancelled":"success")+"\",\"feature\":\"support\",\"error\":\"upstream timeout <script>\""+(i<2?"":",\"durationMs\":"+(i<10?1000:5000))+"}","999");
