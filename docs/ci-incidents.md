@@ -1,5 +1,12 @@
 # CI failure records
 
+## 2026-10-25 trace export schema expanded with usage summaries
+
+- Commit `68ff940`, run `40199162437`: backend failed the retained-row export regression; frontend-sdk and security passed, images were skipped.
+- Root cause: trace exports now append model, known Token, known estimated cost and unknown-cost count columns, but the existing spreadsheet regression still expected seven columns instead of eleven.
+- Fix: retain the original seven columns and append the four summaries; update the regression to require all eleven headers, including their explicit Chinese names. Keep the existing all-row, pagination, PDF and ownership checks.
+- Prevention: include the complete export integration regression when changing list/report schemas, alongside targeted metric, date-boundary and sort-validation tests. Deployment remains blocked until the exact final commit passes every required CI job.
+
 ## 2026-10-22 npm audit service outage
 
 - Affected commit: `3dd58ae`, run `39739944051`, job `119694467787`.

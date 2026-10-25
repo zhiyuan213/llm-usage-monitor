@@ -124,7 +124,8 @@ const traceSort=ref('started_at'),traceDirection=ref('desc');
 function applyDates(value:{from:string;to:string}){reportWindow.value=value;tracePage.value=0;activityPage.value=0;refresh(false);}
 function sortTraces(value:string){traceDirection.value=traceSort.value===value&&traceDirection.value==='desc'?'asc':'desc';traceSort.value=value;tracePage.value=0;refresh(false);}
 const pageDescription=computed(()=>({overview:t('Request performance, known model cost and usage for the selected period.','查看所选时间内的请求表现、已知模型费用和用量。'),traces:t('Find requests by name or status, then compare latency and model usage.','检索请求，比较耗时、模型用量与已知费用。'),trace:t('Inspect request steps, model usage and pricing evidence.','查看请求步骤、模型用量与计费依据。'),analytics:t('Compare usage by customer, user or feature.','按客户、用户或功能比较用量。'),'cost-insights':t('Find cost drivers and compare equal-length periods.','定位费用来源，对比等长时间段的变化。'),releases:t('Mark releases and compare before and after.','记录发布时间，对比修改前后的表现。'),weekly:t('Manage weekly email summaries and delivery history.','管理每周邮件摘要与发送记录。'),billing:t('Manage your plan, quota and payment records.','管理套餐、额度和付款记录。'),keys:t('Create and revoke project API keys.','创建与撤销项目接入密钥。'),settings:t('Manage project details and model price versions.','管理项目资料与模型价格版本。'),account:t('Manage sign-in methods and account security.','管理登录方式与账号安全。'),messages:t('Send feedback and follow replies.','提交问题与建议，查看回复。'),workspace:t('Manage projects and shared workspace usage.','管理项目与工作空间共享用量。'),budgets:t('Set model spending reminders.','设置模型费用预算提醒。'),reliability:t('Investigate failed and slow requests.','排查失败请求与慢调用。'),alerts:t('Configure notifications for project activity.','配置项目用量与异常通知。'),audit:t('Review account and workspace actions.','查看账号与工作空间操作记录。') } as Record<string,string>)[page.value]||t('Review and manage this section.','查看与管理本栏目内容。'));
-function fieldLabel(key:string){return ({name:t('Name','名称'),status:t('Status','状态'),model:t('Model','模型'),provider:t('Provider','供应商'),usage:t('Token usage','Token 用量'),durationMs:t('Duration (ms)','耗时（毫秒）'),observationType:t('Step type','步骤类型'),userId:t('User','用户'),customerId:t('Customer','客户'),feature:t('Feature','功能')} as Record<string,string>)[key]||key;}
+function fieldLabel(key:string){return ({name:t('Name','名称'),status:t('Status','状态'),model:t('Model','模型'),provider:t('Provider','供应商'),usage:t('Token usage','Token 用量'),durationMs:t('Duration (ms)','耗时（毫秒）'),observationType:t('Step type','步骤类型'),userId:t('User','用户'),customerId:t('Customer','客户'),feature:t('Feature','功能'),metadata:t('Metadata','附加信息'),input:t('Input','输入'),output:t('Output','输出'),tags:t('Tags','标签'),error:t('Error','错误信息'),value:t('Value','评分值'),valueType:t('Value type','评分类型'),targetId:t('Target ID','关联对象 ID'),targetType:t('Target type','关联对象类型')} as Record<string,string>)[key]||key;}
+function objectLabel(value:string){return ({trace:t('Request','请求'),observation:t('Step','步骤'),score:t('Score','评分'),generation:t('Model generation','模型生成'),tool:t('Tool','工具'),retrieval:t('Retrieval','检索')} as Record<string,string>)[value]||value;}
 function costReason(o:any){if(o.type!=='observation'||o.data.observationType!=='generation')return t('Not a model generation call','非模型生成调用');const u=o.data.usage;if(!u||!['inputTokens','outputTokens','cachedInputTokens'].every(k=>typeof u[k]==='number'))return t('Missing input, output or cached token usage','缺少输入、输出或缓存 Token 用量');if(!o.data.provider||!o.data.model)return t('Missing model or provider','缺少模型或供应商');return t('No matching price at processing time','处理时未命中适用的价格版本');}
 const traceSummary=computed(()=>{const calls=traceObjects.value.filter((o:any)=>o.type==='observation'&&o.data.observationType==='generation');const priced=calls.filter((o:any)=>o.cost!=null);const usage=calls.filter((o:any)=>o.data.usage?.inputTokens!=null&&o.data.usage?.outputTokens!=null);return {calls:calls.length,priced:priced.length,cost:priced.length?priced.reduce((n:number,o:any)=>n+Number(o.cost),0):null,tokens:usage.length?usage.reduce((n:number,o:any)=>n+Number(o.data.usage.inputTokens)+Number(o.data.usage.outputTokens),0):null,duration:traceObjects.value.find((o:any)=>o.type==='trace')?.data.durationMs};});
 const accountReady = computed(() => contextReady.value && !loading.value && !!session.value?.csrf);
@@ -969,8 +970,8 @@ const usagePercent = computed(() =>
               <div>
                 <b>{{ o.data.name || o.data.model || o.object_id }}</b
                 ><small
-                  >{{ o.type }} ·
-                  {{ o.data.observationType || o.data.status }}</small
+                  >{{ objectLabel(o.type) }} ·
+                  {{ o.data.observationType ? objectLabel(o.data.observationType) : o.data.status }}</small
                 >
               </div>
               <div class="waterfall-track">
@@ -1011,8 +1012,8 @@ const usagePercent = computed(() =>
             class="panel detail-card"
           >
             <div class="panel-heading">
-              <h2>{{ o.data.name || o.data.model || o.type }}</h2>
-              <span class="badge">revision {{ o.revision }}</span>
+              <h2>{{ o.data.name || o.data.model || objectLabel(o.type) }}</h2>
+              <span class="badge">{{t('Revision','修订版本')}} {{ o.revision }}</span>
             </div>
             <p v-if="o.data.observationType==='generation'">{{t('Model','模型')}}: {{o.data.model||'—'}} · {{t('Known estimated cost','已知估算费用')}}: {{money(o.cost)}}</p>
             <p v-if="o.data.observationType==='generation'" class="muted">{{t('Input / output / cached tokens','输入 / 输出 / 缓存 Token')}}: {{n(o.data.usage?.inputTokens)}} / {{n(o.data.usage?.outputTokens)}} / {{n(o.data.usage?.cachedInputTokens)}}</p>
@@ -1411,8 +1412,8 @@ const usagePercent = computed(() =>
             <p>
               {{
                 t(
-                  "Rates are USD per million tokens. Unknown prices stay unknown. New versions apply when processing new events or higher revisions; existing cost evidence is preserved. To correct an old call, report the same object with a higher revision and complete usage; exact retries do not recalculate costs.",
-                  "费率为每百万 Token 的美元价格。缺失价格保持未知；添加价格不会自动重算历史费用。需要修正历史调用时，以同一对象、更高 revision 和完整用量重新上报；原样重试不会重新计价。",
+                  "Rates are USD per million tokens. Unknown prices stay unknown. New versions apply when processing new events or higher revisions; existing cost evidence is preserved. To correct an old call, configure a price effective on or before its start time and report the same object with a higher revision and complete usage; exact retries do not recalculate costs.",
+                  "费率为每百万 Token 的美元价格。缺失价格保持未知；添加价格不会自动重算历史费用。修正历史调用时，先配置生效时间不晚于调用开始时间的价格，再以同一对象、更高 revision 和完整用量重新上报；原样重试不会重新计价。",
                 )
               }}
             </p>

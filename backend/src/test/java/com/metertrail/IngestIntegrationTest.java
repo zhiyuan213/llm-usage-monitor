@@ -1187,9 +1187,15 @@ class IngestIntegrationTest {
           }
           assertEquals(126, xml.split("<row r=").length - 1);
           assertEquals(
-              kind.equals("traces") ? 7 : 6,
+              kind.equals("traces") ? 11 : 6,
               xml.substring(xml.indexOf("<row r="), xml.indexOf("</row>")).split("<c r=").length
                   - 1);
+          if (kind.equals("traces")) {
+            assertTrue(xml.contains("模型"));
+            assertTrue(xml.contains("已知 Token"));
+            assertTrue(xml.contains("已知估算费用 USD"));
+            assertTrue(xml.contains("成本未知调用"));
+          }
         } else
           try (var exported = org.apache.pdfbox.Loader.loadPDF(bytes)) {
             assertTrue(exported.getNumberOfPages() > 1);
