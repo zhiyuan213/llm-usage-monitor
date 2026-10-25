@@ -10,10 +10,12 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 /** Transport selection stays behind the durable, encrypted outbox. Never log message bodies. */
@@ -25,6 +27,7 @@ class MailDelivery {
   final JavaMailSender smtp;
   final SesClient ses;
   final long verificationTemplate, notificationTemplate;
+  long weeklyTemplate;
 
   @ConfigurationProperties("metertrail.mail")
   record Settings(
@@ -41,8 +44,10 @@ class MailDelivery {
   }
 
   @Autowired
-  MailDelivery(JavaMailSender smtp, Settings settings) {
+  MailDelivery(JavaMailSender smtp, Settings settings,
+      @Value("${metertrail.mail.weekly-template:0}") long weeklyTemplate) {
     this(smtp, client(settings), settings.verificationTemplate(), settings.notificationTemplate());
+    this.weeklyTemplate=weeklyTemplate;
   }
 
   MailDelivery(
@@ -98,8 +103,23 @@ class MailDelivery {
       // Notification template is plain text: untrusted project names must never become HTML.
       data = new ObjectMapper().writeValueAsString(Map.of("message", message.getText()));
     }
+    sendSes(message, verification ? verificationTemplate : notificationTemplate, data);
+  }
+
+  void sendWeekly(SimpleMailMessage message,Map<String,String> values) throws Exception {
+    if(ses==null) {
+      var mime=smtp.createMimeMessage();var helper=new MimeMessageHelper(mime,true,"UTF-8");
+      helper.setFrom(message.getFrom());helper.setTo(message.getTo());helper.setSubject(message.getSubject());
+      helper.setText(WeeklyEmail.text(values),WeeklyEmail.html(values));smtp.send(mime);return;
+    }
+    // Preserve the existing transport until the dedicated HTML template is approved/configured.
+    if(weeklyTemplate<=0) {send(message);return;}
+    sendSes(message,weeklyTemplate,new ObjectMapper().writeValueAsString(WeeklyEmail.escaped(values)));
+  }
+
+  private void sendSes(SimpleMailMessage message,long templateId,String data) throws Exception {
     Template template = new Template();
-    template.setTemplateID(verification ? verificationTemplate : notificationTemplate);
+    template.setTemplateID(templateId);
     template.setTemplateData(data);
     SendEmailRequest request = new SendEmailRequest();
     request.setFromEmailAddress(message.getFrom());

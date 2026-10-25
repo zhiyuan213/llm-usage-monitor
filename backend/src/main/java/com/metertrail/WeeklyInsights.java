@@ -79,7 +79,7 @@ class WeeklyInsights {
       if(row.get("user_deleted")!=null||row.get("project_deleted")!=null||!Boolean.TRUE.equals(row.get("verified"))||!Set.of("Core","Pro").contains(row.get("plan")))throw new ApiError(403,"INSIGHTS_PLAN_REQUIRED");
       if(Boolean.TRUE.equals(store.db.queryForObject("SELECT EXISTS(SELECT 1 FROM insight_weekly_reports WHERE project_id=? AND test_email AND created_at>?)",Boolean.class,project,Timestamp.from(now.minusSeconds(60)))))return false;
       boolean zh="zh-CN".equals(row.get("language"));var report=example();
-      String body=(zh?"这是测试邮件。以下为模拟数据，不是你的项目统计，不影响正式周报或发送时间。\n\n":"This is a test email. The following data is synthetic, not your project statistics. Your weekly report and schedule are unchanged.\n\n")+render(row.get("name").toString(),report,project,zh,publicUrl);
+      String body=render(row.get("name").toString(),report,project,zh,publicUrl);
       Long outbox=store.db.queryForObject("INSERT INTO outbox(recipient,subject,body,insight_project_id) VALUES(?,?,?,?) RETURNING id",Long.class,row.get("email"),zh?"[TEST] MeterTrail 周报测试":"[TEST] MeterTrail weekly report test",store.secrets.seal(body),project);
       try {store.db.update("INSERT INTO insight_weekly_reports(id,project_id,week_end,summary,outbox_id,test_email) VALUES(?,?,?,?::jsonb,?,true)",UUID.randomUUID(),project,Timestamp.from(now),json.writeValueAsString(report),outbox);}
       catch(com.fasterxml.jackson.core.JsonProcessingException e){throw new IllegalStateException(e);}
@@ -113,39 +113,9 @@ class WeeklyInsights {
 
   @SuppressWarnings("unchecked")
   static String render(String projectName,Map<String,Object> report,UUID project,boolean zh,String publicUrl) {
-    var before=(Map<String,Object>)report.get("before");var after=(Map<String,Object>)report.get("after");var comparison=(Map<String,Object>)report.get("comparison");
-    var lines=new ArrayList<String>();
-    lines.add((zh?"项目：":"Project: ")+projectName);
-    lines.add((zh?"统计区间（起点包含，终点不包含）：":"Window (inclusive start, exclusive end): ")+after.get("start")+" → "+after.get("end"));
-    lines.add((zh?"请求数：":"Requests: ")+after.get("requests")+(zh?"；失败：":"; errors: ")+after.get("errors"));
-    lines.add((zh?"模型调用数：":"Model calls: ")+after.get("generations")+(zh?"；已定价：":"; priced: ")+after.get("priced_generations"));
-    lines.add((zh?"已知模型估算费用（USD）：":"Known estimated model cost (USD): ")+value(after.get("known_cost"),zh));
-    lines.add((zh?"上期已知费用（USD）：":"Previous known cost (USD): ")+value(before.get("known_cost"),zh));
-    lines.add((zh?"每次模型调用均价（仅价格完整时）：":"Average model call cost (complete prices only): ")+value(after.get("average_model_cost"),zh));
-    lines.add((zh?"P95 请求耗时（毫秒）：":"P95 request duration (ms): ")+value(after.get("p95_ms"),zh));
-    lines.add((zh?"费用变化（%）：":"Cost change (%): ")+value(comparison.get("cost_change_pct"),zh));
-    lines.add(zh?"发现与建议：":"Observations and next steps:");
-    if(((List<?>)comparison.get("findings")).isEmpty())lines.add(zh?"现有数据未触发规则阈值。":"No configured threshold was crossed in the available data.");
-    for(String finding:(List<String>)comparison.get("findings")) lines.add("- "+switch(finding) {
-      case "COST_GROWTH" -> zh?"费用增长至少 20%，请结合调用量与均价查看。":"Cost grew at least 20%; review volume and average cost together.";
-      case "UNIT_COST_GROWTH" -> zh?"模型调用均价增长至少 20%，建议检查模型组合、价格和用量。":"Average call cost grew at least 20%; check model mix, pricing and usage.";
-      case "INPUT_GROWTH" -> zh?"平均输入长度增长至少 20%，可检查上下文长度；不能据此认定根因。":"Average input length grew at least 20%; review context size without assuming causation.";
-      case "ERRORS" -> zh?"请求失败比例达到 5%，建议查看失败调用。":"At least 5% of requests failed; inspect failed traces.";
-      case "LATENCY_GROWTH" -> zh?"P95 延迟增长至少 20%，建议检查慢调用。":"P95 latency grew at least 20%; inspect slow traces.";
-      case "MISSING_PRICES" -> zh?"有调用缺少价格，请先补齐模型价格。":"Some model calls lack prices; configure missing model prices.";
-      case "RETENTION_INCOMPLETE" -> zh?"部分历史已超出保留期，对比不完整。":"The historical period is not fully retained.";
-      case "NO_DATA" -> zh?"本周暂无已上报请求或模型调用。":"No requests or model calls were reported for this week.";
-      default -> zh?"至少一个区间模型调用不足 20 次，变化仅供初步观察。":"One period has fewer than 20 model calls; changes are preliminary.";
-    });
-    lines.add((zh?"费用最高的功能（已知费用，最多 5 组）：":"Top features by known cost (up to 5):"));
-    var groups=(List<Map<String,Object>>)report.get("contributors");
-    groups.stream().limit(5).forEach(g->lines.add(value(g.get("label"),zh)+": "+value(g.get("current_cost"),zh)+" USD"));
-    lines.add(zh?"注意：缺失价格不按零费用处理；样本较少或历史数据不完整时，变化不能作为确定结论。以上为模型费用估算，不含 MeterTrail 订阅费，也不包含收入或利润。":"Missing prices are not zero cost. Small samples or incomplete retention limit conclusions. These are model cost estimates, not MeterTrail charges, revenue or profit.");
-    lines.add(publicUrl+"/app/cost-insights?project="+project);
-    lines.add(zh?"可在控制台的“自动周报”中关闭订阅。":"Unsubscribe from Weekly reports in your console.");
-    lines.add(publicUrl+"/app/weekly?project="+project);
-    return String.join("\n",lines);
+    return WeeklyEmail.text(WeeklyEmail.values(projectName,report,project,publicUrl));
   }
+
   static String value(Object value,boolean zh) {
     if(value==null)return zh?"未知 / 不适用":"Unknown / not applicable";
     return value instanceof Number?new java.math.BigDecimal(value.toString()).stripTrailingZeros().toPlainString():value.toString();

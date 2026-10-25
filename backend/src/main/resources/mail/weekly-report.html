@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;padding:24px 12px;background:#f5f7fb;color:#18263e;font-family:Arial,'Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:680px;background:#ffffff;border:1px solid #e1e6f0;border-radius:8px"><tr><td style="padding:28px 24px">
+<p style="margin:0;color:#3156e8;font-size:22px;font-weight:bold">MeterTrail</p>
+<h1 style="font-size:22px;margin:16px 0 8px">运营周报 / Weekly report</h1>
+<p style="margin:8px 0;padding:12px;background:#edf2ff;color:#3156e8;border-radius:6px">{{notice}}</p>
+<p style="margin:16px 0 4px;font-weight:bold;overflow-wrap:anywhere">{{project}}</p>
+<p style="margin:0 0 20px;color:#71809c;font-size:12px">统计区间 / Period (UTC, end exclusive)<br>{{period}}</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed">
+<tr><td width="50%" style="padding:0 6px 12px 0;vertical-align:top"><div style="background:#f5f7fc;padding:16px;border-radius:8px"><span style="color:#71809c;font-size:12px">已知模型估算费用 / Known model cost</span><br><strong style="color:#514bff;font-size:24px">{{cost}}</strong></div></td>
+<td width="50%" style="padding:0 0 12px 6px;vertical-align:top"><div style="background:#f5f7fc;padding:16px;border-radius:8px"><span style="color:#71809c;font-size:12px">请求数 / Requests</span><br><strong style="color:#514bff;font-size:24px">{{requests}}</strong></div></td></tr>
+<tr><td style="padding:0 6px 12px 0;vertical-align:top"><div style="background:#f5f7fc;padding:16px;border-radius:8px"><span style="color:#71809c;font-size:12px">失败请求 / Failed requests</span><br><strong style="color:#514bff;font-size:24px">{{errors}}</strong></div></td>
+<td style="padding:0 0 12px 6px;vertical-align:top"><div style="background:#f5f7fc;padding:16px;border-radius:8px"><span style="color:#71809c;font-size:12px">P95 耗时 / Duration (ms)</span><br><strong style="color:#514bff;font-size:24px">{{p95}}</strong></div></td></tr></table>
+<p style="margin:8px 0">模型调用 / Model calls: {{calls}} &nbsp;·&nbsp; 已定价 / Priced: {{priced}}</p>
+<p style="margin:8px 0">较上周已知费用变化 / Known cost change: {{change}}</p>
+<p style="margin:16px 0;color:#71809c;font-size:12px">模型费用为估算值，不含 MeterTrail 订阅费。缺失价格不按零费用处理，已知费用可能只是部分费用。<br>Model costs are estimates, excluding MeterTrail charges. Missing prices are not zero cost; known cost may be a partial subtotal.</p>
+<p style="margin:20px 0"><a href="{{console_url}}/app/cost-insights?project={{project_id}}" style="color:#3156e8">查看费用诊断 / Cost diagnosis →</a><br><a href="{{console_url}}/app/reliability?project={{project_id}}" style="color:#3156e8">查看失败与慢调用 / Failures and slow calls →</a></p>
+<p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #e1e6f0;color:#71809c;font-size:12px">你收到本邮件，是因为你开启了周报或主动发送了测试邮件。<br>You enabled weekly reports or requested a test email.<br><a href="{{console_url}}/app/weekly?project={{project_id}}" style="color:#3156e8">管理周报订阅 / Manage weekly reports</a></p>
+</td></tr></table></td></tr></table></body></html>

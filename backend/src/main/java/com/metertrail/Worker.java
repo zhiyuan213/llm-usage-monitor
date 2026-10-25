@@ -18,6 +18,8 @@ class Worker {
   final MailDelivery mail;
   final boolean enabled;
   final String from;
+  @Value("${metertrail.public-url}")
+  String publicUrl="https://metertrail.com";
 
   @Value("${metertrail.worker.group-batches:100}")
   int groupBatches = 100;
@@ -300,7 +302,12 @@ class Worker {
               m.setTo((String) row.get("recipient"));
               m.setSubject((String) row.get("subject"));
               m.setText(store.secrets.open((String) row.get("body")));
-              mail.send(m);
+              if(row.get("insight_project_id")!=null) {
+                var report=store.queries().queryForMap("SELECT r.summary,p.name FROM insight_weekly_reports r JOIN projects p ON p.id=r.project_id WHERE r.outbox_id=?",row.get("id"));
+                @SuppressWarnings("unchecked")
+                Map<String,Object> summary=new com.fasterxml.jackson.databind.ObjectMapper().readValue(report.get("summary").toString(),Map.class);
+                mail.sendWeekly(m,WeeklyEmail.values(report.get("name").toString(),summary,(UUID)row.get("insight_project_id"),publicUrl.replaceAll("/+$","")));
+              } else mail.send(m);
               store.db.update("UPDATE outbox SET sent_at=now(),body='' WHERE id=?", row.get("id"));
             } catch (Exception e) {
               store.db.update("UPDATE outbox SET attempts=attempts+1 WHERE id=?", row.get("id"));
