@@ -1169,3 +1169,6 @@
 .ui-v2 .quota-breakdown dd { margin: 0; text-align: right; }
 .ui-v2 .detail-card summary { cursor: pointer; color: #3156e8; padding: 10px 0; }
 .ui-v2 td > small.muted { display: block; }
+.ui-v2 .insight-metrics > .panel { padding: 20px; min-width: 0; }
+.ui-v2 .detail-card > p { margin: 12px 24px; overflow-wrap: anywhere; }
+.ui-v2 .detail-card > details { margin: 12px 24px; }
