@@ -104,7 +104,7 @@ class Insights {
   @Transactional(transactionManager="readTransactionManager",propagation=Propagation.REQUIRES_NEW,readOnly=true,isolation=Isolation.REPEATABLE_READ,timeout=15)
   public Map<String,Object> analyze(UUID user,UUID project,Instant start,Instant middle,Instant end,String dimension) {
     var w=paid(user,project);
-    Instant now=Instant.now(),cutoff=now.minus(Duration.ofDays(Billing.retention(w.get("plan").toString())));
+    Instant now=Instant.now(),cutoff=store.queries().queryForObject("SELECT workspace_retention_cutoff(w) FROM workspaces w WHERE id=?",Timestamp.class,w.get("id")).toInstant();
     Support.require(start.isBefore(middle) && middle.isBefore(end) && !end.isAfter(now.plusSeconds(1))
       && Duration.between(start,end).compareTo(Duration.ofDays(28))<=0,"INVALID_INSIGHT_WINDOW");
     var before=summary(project,start,middle,cutoff);var after=summary(project,middle,end,cutoff);

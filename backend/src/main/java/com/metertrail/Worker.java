@@ -434,13 +434,13 @@ class Worker {
   @Scheduled(fixedDelay = 3600000)
   public void retention() {
     if (!enabled) return;
+    SubscriptionRetention.reconcile(store, tx);
     store.db.update("DELETE FROM sessions WHERE expires_at<now()");
     store.db.update("DELETE FROM verification_challenges WHERE expires_at<now()-interval '1 day'");
     store.db.update(
         "DELETE FROM objects o USING projects p,workspaces w WHERE o.project_id=p.id AND"
             + " p.workspace_id=w.id AND (p.deleted_at IS NOT NULL OR"
-            + " o.started_at<now()-make_interval(days=>CASE w.plan WHEN 'Pro' THEN 1096 WHEN 'Core'"
-            + " THEN 90 ELSE 30 END))");
+            + " o.started_at<workspace_retention_cutoff(w))");
     store.db.update(
         "DELETE FROM alert_evidence e USING alert_rules r WHERE e.rule_id=r.id AND (EXISTS(SELECT 1"
             + " FROM projects p WHERE p.id=r.project_id AND p.deleted_at IS NOT NULL) OR"
@@ -449,8 +449,7 @@ class Worker {
     store.db.update(
         "DELETE FROM cost_entries c USING projects p,workspaces w WHERE c.project_id=p.id AND"
             + " p.workspace_id=w.id AND (p.deleted_at IS NOT NULL OR"
-            + " c.started_at<now()-make_interval(days=>CASE w.plan WHEN 'Pro' THEN 1096 WHEN 'Core'"
-            + " THEN 90 ELSE 30 END))");
+            + " c.started_at<workspace_retention_cutoff(w))");
     store.db.update(
         "UPDATE ingest_events e SET payload='{}' FROM projects p WHERE e.project_id=p.id AND"
             + " p.deleted_at IS NOT NULL AND e.processed");

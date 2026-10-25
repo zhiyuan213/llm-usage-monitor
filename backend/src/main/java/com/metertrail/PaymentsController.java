@@ -286,12 +286,12 @@ class PaymentsController {
             end = Instant.parse(period.path("ends_at").asText());
         if (!end.isAfter(start)) throw new ApiError(400, "INVALID_BILLING_PERIOD");
         Instant previousStart = ((Timestamp) w.get("period_start")).toInstant();
-        if (start.isBefore(previousStart)) return Map.of("status", "stale");
-        boolean newPeriod = start.isAfter(previousStart);
+        if (start.isBefore(previousStart) && !"Free".equals(w.get("plan"))) return Map.of("status", "stale");
+        boolean newPeriod = start.isAfter(previousStart) || "Free".equals(w.get("plan"));
         if(newPeriod) ChargeLedger.close(store,w);
         store.db.update(
             "UPDATE workspaces SET"
-                + " plan=?,subscription_id=?,subscription_status=?,period_start=?,period_end=?,used_units=CASE"
+                + " retention_grace_until=NULL,plan=?,subscription_id=?,subscription_status=?,period_start=?,period_end=?,used_units=CASE"
                 + " WHEN ? THEN 0 ELSE used_units END,addon_units=CASE WHEN ? THEN 0 ELSE addon_units END,overage_units=CASE WHEN ? THEN 0 ELSE overage_units END,addon_consumed=CASE WHEN ? THEN 0 ELSE addon_consumed END,payment_updated_at=? WHERE id=?",
             plan,
             sub,
@@ -307,8 +307,9 @@ class PaymentsController {
       } else {
         if(status.equals("canceled")) ChargeLedger.close(store,w);
         store.db.update(
-            "UPDATE workspaces SET subscription_status=?,auto_overage=false,payment_updated_at=?"
+            "UPDATE workspaces SET retention_grace_until=coalesce(retention_grace_until,least(period_end,?::timestamptz)+interval '30 days'),subscription_status=?,auto_overage=false,payment_updated_at=?"
                 + " WHERE id=?",
+            Timestamp.from(occurred),
             status,
             Timestamp.from(occurred),
             workspace);

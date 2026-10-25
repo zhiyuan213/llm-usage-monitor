@@ -220,8 +220,7 @@ class ConsoleController {
   }
 
   String retained() {
-    return " AND o.started_at>now()-make_interval(days=>CASE w.plan WHEN 'Pro' THEN 1096 WHEN"
-        + " 'Core' THEN 90 ELSE 30 END) ";
+    return " AND o.started_at>workspace_retention_cutoff(w) ";
   }
 
   String source() {
@@ -331,8 +330,7 @@ class ConsoleController {
                             con.prepareStatement(
                                 "SELECT count(*) FROM objects o WHERE o.project_id=? AND"
                                     + " o.type='trace' AND o.started_at>(SELECT"
-                                    + " now()-make_interval(days=>CASE w.plan WHEN 'Pro' THEN 1096"
-                                    + " WHEN 'Core' THEN 90 ELSE 30 END) FROM projects p JOIN"
+                                    + " workspace_retention_cutoff(w) FROM projects p JOIN"
                                     + " workspaces w ON w.id=p.workspace_id WHERE p.id=? AND"
                                     + " w.owner_id=? AND p.deleted_at IS NULL)");
                         stmt.setObject(1, project);

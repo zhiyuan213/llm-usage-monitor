@@ -314,6 +314,8 @@
   gap: 24px;
 }
 .public-v2 .plans article {
+  display: flex;
+  flex-direction: column;
   border-radius: 8px;
   padding: 22px;
   position: relative;
@@ -346,6 +348,7 @@
 }
 .public-v2 .plans .btn {
   width: 100%;
+  margin-top: auto;
 }
 .public-v2 .plan-tag {
   top: 20px;

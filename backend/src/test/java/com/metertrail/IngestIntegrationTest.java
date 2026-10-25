@@ -852,6 +852,71 @@ class IngestIntegrationTest {
   UUID user, workspace, project;
   String key;
 
+  @Test void expiredPaidRetentionHasBoundedGraceAndDowngradesOnlyOnce() {
+    store.db.update("UPDATE workspaces SET plan='Pro',subscription_status='active',period_end=now()-interval '2 days' WHERE id=?",workspace);
+    SubscriptionRetention.reconcile(store,tx);
+    var grace=store.db.queryForObject("SELECT retention_grace_until FROM workspaces WHERE id=?",java.sql.Timestamp.class,workspace);
+    assertEquals("Pro",store.workspace(user).get("plan"));
+    SubscriptionRetention.reconcile(store,tx);
+    assertEquals(grace,store.db.queryForObject("SELECT retention_grace_until FROM workspaces WHERE id=?",java.sql.Timestamp.class,workspace));
+    store.db.update("UPDATE workspaces SET retention_grace_until=now()-interval '1 second',used_units=123,auto_overage=true WHERE id=?",workspace);
+    SubscriptionRetention.reconcile(store,tx);
+    assertEquals("Free",store.workspace(user).get("plan"));
+    assertEquals(0L,((Number)store.workspace(user).get("used_units")).longValue());
+    assertEquals(false,store.workspace(user).get("auto_overage"));
+    store.db.update("UPDATE workspaces SET used_units=7 WHERE id=?",workspace);
+    SubscriptionRetention.reconcile(store,tx);
+    assertEquals(7L,((Number)store.workspace(user).get("used_units")).longValue());
+  }
+
+  @Test void renewedSubscriptionSurvivesOldGraceAndGraceFreezesHistoricalCutoff() {
+    store.db.update("UPDATE workspaces SET plan='Pro',subscription_status='canceled',period_end=now()+interval '15 days',retention_grace_until=now()+interval '20 days' WHERE id=?",workspace);
+    long age=store.db.queryForObject("SELECT extract(epoch FROM now()-workspace_retention_cutoff(w))::bigint FROM workspaces w WHERE id=?",Long.class,workspace);
+    assertTrue(age>=1105L*86400 && age<=1107L*86400);
+    store.db.update("UPDATE workspaces SET subscription_status='active',retention_grace_until=NULL WHERE id=?",workspace);
+    SubscriptionRetention.reconcile(store,tx);
+    assertEquals("Pro",store.workspace(user).get("plan"));
+    assertNull(store.workspace(user).get("retention_grace_until"));
+  }
+
+  @Test void cancellationRetriesDoNotExtendGraceAndRenewalClearsIt() {
+    pack();
+    var w=store.workspace(user);
+    Instant start=((java.sql.Timestamp)w.get("period_start")).toInstant();
+    Instant end=((java.sql.Timestamp)w.get("period_end")).toInstant();
+    var event=renewalEvent(start,end);
+    ((ObjectNode)event.path("data")).put("status","canceled");
+    Instant occurred=Instant.now();
+    event.put("occurred_at",occurred.toString());
+    tx.executeWithoutResult(x->payments.applyEvent(event));
+    var deadline=store.workspace(user).get("retention_grace_until");
+    assertNotNull(deadline);
+    event.put("event_id","evt_"+UUID.randomUUID()).put("occurred_at",occurred.plusSeconds(1).toString());
+    tx.executeWithoutResult(x->payments.applyEvent(event));
+    assertEquals(deadline,store.workspace(user).get("retention_grace_until"));
+    ((ObjectNode)event.path("data")).put("status","active");
+    event.put("event_id","evt_"+UUID.randomUUID()).put("occurred_at",occurred.plusSeconds(2).toString());
+    tx.executeWithoutResult(x->payments.applyEvent(event));
+    assertNull(store.workspace(user).get("retention_grace_until"));
+    assertEquals("Core",store.workspace(user).get("plan"));
+  }
+
+  @Test void gracePreservesPaidHistoryThenPurgesOnlyOldAnalytics() {
+    store.db.update("UPDATE workspaces SET plan='Core',subscription_status='canceled',retention_grace_until=now()+interval '20 days' WHERE id=?",workspace);
+    for (int age : List.of(10,95)) {
+      store.db.update("INSERT INTO objects(project_id,type,object_id,revision,started_at,data) VALUES(?,'trace',?,1,now()-make_interval(days=>?),'{}')",project,"age-"+age,age);
+      store.db.update("INSERT INTO cost_entries(project_id,object_id,revision,started_at,estimated_cost) VALUES(?,?,1,now()-make_interval(days=>?),0.01)",project,"age-"+age,age);
+    }
+    var worker=new Worker(store,tx,mail,true,"test@test.local");
+    worker.retention();
+    assertEquals(2,store.db.queryForObject("SELECT count(*) FROM objects WHERE project_id=?",Integer.class,project));
+    store.db.update("UPDATE workspaces SET retention_grace_until=now()-interval '1 second' WHERE id=?",workspace);
+    worker.retention();
+    assertEquals(List.of("age-10"),store.db.queryForList("SELECT object_id FROM objects WHERE project_id=?",String.class,project));
+    assertEquals(List.of("age-10"),store.db.queryForList("SELECT object_id FROM cost_entries WHERE project_id=?",String.class,project));
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM api_keys WHERE project_id=?",Integer.class,project));
+  }
+
   @BeforeEach
   void setup() {
     user = UUID.randomUUID();

@@ -757,6 +757,8 @@
   margin-bottom: 20px;
 }
 .ui-v2 .plans article {
+  display: flex;
+  flex-direction: column;
   padding: 22px;
   margin: 0;
 }
@@ -780,8 +782,8 @@
   border-color: #7e96ff;
   box-shadow: none;
 }
-.ui-v2 .plans .btn {
-  margin-top: 0;
+.ui-v2 .billing-content .plans article > .btn {
+  margin-top: auto;
 }
 .ui-v2 .console-footer {
   text-align: center;
@@ -1029,7 +1031,12 @@
   .ui-v2 .breadcrumb > svg { display: inline-block; width: 14px; height: 14px; vertical-align: middle; margin: 0 6px; }
 }
 
-.ui-v2 .usage-charges-panel { margin-top: 24px; }
+.ui-v2 .usage-charges-panel { margin-top: 24px; padding: 20px; }
+.ui-v2 .usage-charges-panel .panel-heading { padding: 0; margin-bottom: 16px; }
+.ui-v2 .usage-charges-panel .panel-heading h2 { margin: 0; }
+.ui-v2 .usage-charges-panel > p { margin: 0 0 16px; }
+.ui-v2 .usage-charges-panel .usage-pack-form { margin: 20px 0 16px; gap: 16px; }
+.ui-v2 .usage-charges-panel .table-wrap { margin-top: 20px; }
 .ui-v2 .workspace-summary { padding: 24px; }
 .ui-v2 .workspace-summary-heading { display: flex; align-items: center; gap: 16px; }
 .ui-v2 .workspace-avatar { display: grid; place-items: center; flex: 0 0 52px; height: 52px; border-radius: 10px; background: #3156e8; color: #fff; font-size: 26px; font-weight: 600; }

@@ -18,7 +18,7 @@ defineProps<{ index: number }>();
           index
         ]
       }}
-      {{ t("data access", "数据访问") }}
+      {{ t("of rolling data retention", "滚动数据保留") }}
     </li>
     <li><Check :size="16" />Trace · Observation · Score</li>
     <li v-if="index > 0"><Check :size="16" />{{ t('Cost diagnosis, release comparison and weekly reports', '费用诊断、发布对比与自动周报') }}</li>
@@ -30,4 +30,5 @@ defineProps<{ index: number }>();
       }}
     </li>
   </ul>
+  <p v-if="index > 0" class="muted">{{ t("Retention applies while subscribed. After expiry, ingestion stops and you have 30 days to renew. Then Free retention applies and data older than 30 days is deleted. Deleted data cannot be recovered by renewing.", "订阅有效期间按上述期限保留数据。到期后停止新增接入，并提供30天续费宽限期；期满转为 Free，删除超过30天的调用数据。续费无法恢复已删除数据。") }}</p>
 </template>

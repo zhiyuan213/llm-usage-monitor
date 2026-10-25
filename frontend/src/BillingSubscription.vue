@@ -77,6 +77,7 @@ async function confirm() {
     <p><strong>{{status(data.workspace.subscription_status)}}</strong> · {{data.workspace.plan}}</p>
     <p v-if="scheduled()">{{t('Scheduled change','计划变更')}}: {{status(scheduled().action)}} · {{date(scheduled().effective_at)}}</p>
     <p v-if="data.workspace.subscription_status !== 'active'" class="notice error">{{t('This subscription is not active. Review payment or cancellation details in Manage subscription.','此订阅当前未处于活跃状态，请在“管理订阅”查看付款或取消详情。')}}</p>
+    <p v-if="data.workspace.plan !== 'Free' && data.workspace.retention_grace_until" class="notice" role="status">{{t('Renewal grace ends at','续费宽限期截止')}} {{date(data.workspace.retention_grace_until)}}. {{t('New ingestion is stopped. After this deadline, Free retention applies and analytics older than 30 days will be deleted.','当前停止新增接入。期满后按 Free 保留规则清理超过30天的调用数据。')}}</p>
     <p class="muted">{{t('Core / Pro changes apply immediately with Paddle proration. Review the amount before confirming; failed payments prevent the change. Current-period usage is preserved.','Core / Pro 立即切换，由 Paddle 按剩余账期折算差价。确认前请核对金额；付款失败不变更套餐，当前账期已用额度不会清零。')}}</p>
   </section>
   <p v-if="notice" class="notice" role="status">{{notice}}</p>
