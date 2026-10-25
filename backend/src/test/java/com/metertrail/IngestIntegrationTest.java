@@ -951,9 +951,11 @@ class IngestIntegrationTest {
       String customer=i<2?"January-customer":i==2?"February-customer":"Previous-year";
       String data="{\"customerId\":\""+customer+"\",\"observationType\":\"generation\",\"usage\":{\"inputTokens\":100,\"outputTokens\":50}}";
       store.db.update("INSERT INTO objects(project_id,type,object_id,revision,started_at,data) VALUES(?,'observation',?,1,?,?::jsonb)",project,"calendar-"+i,java.sql.Timestamp.from(Instant.parse(dates[i])),data);
+      if(i!=1)store.db.update("UPDATE objects SET cost=? WHERE project_id=? AND object_id=?",new java.math.BigDecimal(i==2?"0.0109":"0.0001"),project,"calendar-"+i);
     }
     String base="/api/reports/analytics?project="+project+"&year="+year;
     mvc.perform(get(base).cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(2)).andExpect(jsonPath("$.chart[0].dimension").value("January-customer")).andExpect(jsonPath("$.chart[0].tokens").value(300));
+    mvc.perform(get(base).cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.chart_costs[0].dimension").value("February-customer")).andExpect(jsonPath("$.chart_costs[0].cost").value(0.0109)).andExpect(jsonPath("$.chart_costs[1].cost").value(0.0001));
     mvc.perform(get(base+"&month=1").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].objects").value(2)).andExpect(jsonPath("$.items[0].tokens").value(300));
     mvc.perform(get(base+"&month=2").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.items[0].dimension").value("February-customer"));
     mvc.perform(get(base+"&page=1").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(0)).andExpect(jsonPath("$.chart.length()").value(2));

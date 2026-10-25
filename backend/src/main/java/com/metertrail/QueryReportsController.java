@@ -177,7 +177,8 @@ class QueryReportsController {
     var result=new LinkedHashMap<String,Object>();
     result.put("items",items);result.put("total",total);result.put("page",page);result.put("size",size);
     if(kind.equals("analytics")) {
-      result.put("chart",store.queries().queryForList("SELECT dimension,tokens FROM ("+r.sql()+") chart_rows ORDER BY tokens DESC NULLS LAST,dimension ASC NULLS LAST LIMIT 20",r.args()));
+      result.put("chart",store.queries().queryForList("SELECT dimension,tokens,cost FROM ("+r.sql()+") chart_rows ORDER BY tokens DESC NULLS LAST,dimension ASC NULLS LAST LIMIT 20",r.args()));
+      result.put("chart_costs",store.queries().queryForList("SELECT dimension,tokens,cost FROM ("+r.sql()+") chart_rows ORDER BY cost DESC NULLS LAST,dimension ASC NULLS LAST LIMIT 20",r.args()));
       result.put("chart_limit",20);
     }
     return result;
