@@ -1153,3 +1153,12 @@
 }
 .ui-v2 .weekly-summary .insight-metrics article { padding: 16px; background: var(--surface, #f5f7fc); border-radius: 8px; min-width: 0; }
 .ui-v2 .weekly-summary .insight-metrics strong { display: block; font-size: 24px; margin-top: 8px; overflow-wrap: anywhere; }
+
+.ui-v2 .admin-sort { border:0; background:transparent; color:inherit; font:inherit; padding:0; display:inline-flex; gap:6px; align-items:center; cursor:pointer; text-align:left; }
+.ui-v2 .admin-sort:focus-visible { outline:2px solid #3156E8; outline-offset:4px; }
+.ui-v2 .admin-sort:disabled { cursor:wait; }
+
+.ui-v2 .admin-projects-report .table-wrap table { min-width: 920px; table-layout:auto; }
+.ui-v2 .admin-projects-report th, .ui-v2 .admin-projects-report td { white-space:nowrap; word-break:normal; }
+.ui-v2 .admin-projects-report .analytics-filters label { max-width:100%; }
+.ui-v2 .admin-projects-report .analytics-filters select { min-width:0; }

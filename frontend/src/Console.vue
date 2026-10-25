@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SupportMessages from "./SupportMessages.vue";
+import AdminProjects from "./AdminProjects.vue";
 import AnalyticsReport from "./AnalyticsReport.vue";
 import BusinessInsights from './BusinessInsights.vue';
 import BudgetReminders from './BudgetReminders.vue';
@@ -83,13 +84,14 @@ const nav = [
   ["audit", "Audit logs", "审计日志", ScrollText],
   ["messages", "Messages & feedback", "消息反馈", MessageSquare],
   ["admin-messages", "User messages", "用户消息", Inbox],
+  ["admin-projects", "Project statistics", "项目统计", BarChart3],
 ] as const;
 const navGroups = computed(() => [
   {
     en: "Projects",
     zh: "项目",
     items: nav.filter(
-      (item) => !["account", "billing", "audit", "messages", "admin-messages"].includes(item[0]),
+      (item) => !["account", "billing", "audit", "messages", "admin-messages", "admin-projects"].includes(item[0]),
     ),
   },
   {
@@ -99,7 +101,7 @@ const navGroups = computed(() => [
       nav.find((item) => item[0] === id)!,
     ),
   },
-  ...(session.value?.isAdmin ? [{en: "Administrator", zh: "管理员", items: nav.filter((item) => item[0] === "admin-messages")}] : []),
+  ...(session.value?.isAdmin ? [{en: "Administrator", zh: "管理员", items: nav.filter((item) => ["admin-messages", "admin-projects"].includes(item[0]))}] : []),
 ]);
 const title = computed(() => {
   const item = nav.find((v) => v[0] === page.value);
@@ -245,7 +247,7 @@ async function refresh(force = true) {
       data.value = await request(
         "/reports/audit?page=" + reportPage.value + "&size=" + reportSize.value,
       );
-    else if (["account", "messages", "admin-messages"].includes(page.value)) {
+    else if (["account", "messages", "admin-messages", "admin-projects"].includes(page.value)) {
       /* Account is included in context. */
     } else if (selected.value) {
       if (page.value === "overview") {
@@ -547,7 +549,7 @@ const usagePercent = computed(() =>
           <div class="toolbar">
             <select
               v-if="
-                !['billing', 'audit', 'account', 'workspace', 'messages', 'admin-messages'].includes(page) &&
+                !['billing', 'audit', 'account', 'workspace', 'messages', 'admin-messages', 'admin-projects'].includes(page) &&
                 projects.length
               "
               v-model="selected"
@@ -587,7 +589,7 @@ const usagePercent = computed(() =>
           v-if="
             !loading &&
             !selected &&
-            !['billing', 'audit', 'account', 'workspace', 'messages', 'admin-messages'].includes(page)
+            !['billing', 'audit', 'account', 'workspace', 'messages', 'admin-messages', 'admin-projects'].includes(page)
           "
           class="panel empty"
         >
@@ -1027,6 +1029,7 @@ const usagePercent = computed(() =>
             </dl>
           </section></template
         >
+        <AdminProjects v-if="page === 'admin-projects' && accountReady" :refresh-token="loading" />
         <AnalyticsReport v-if="page === 'analytics' && selected" :project="selected" :refresh-token="data" />
         <template v-if="page === 'keys' && selected"
           ><section class="panel integration-banner">
