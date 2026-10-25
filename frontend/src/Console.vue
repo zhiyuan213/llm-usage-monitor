@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SupportMessages from "./SupportMessages.vue";
+import AnalyticsReport from "./AnalyticsReport.vue";
 import BusinessInsights from './BusinessInsights.vue';
 import BudgetReminders from './BudgetReminders.vue';
 import ReliabilityInsights from './ReliabilityInsights.vue';
@@ -276,17 +277,7 @@ async function refresh(force = true) {
         );
       else if (page.value === "trace")
         data.value = await request(path("/traces/" + route.params.detail));
-      else if (page.value === "analytics")
-        data.value = await request(
-          "/reports/analytics?project=" +
-            selected.value +
-            "&dimension=" +
-            dimension.value +
-            "&page=" +
-            reportPage.value +
-            "&size=" +
-            reportSize.value,
-        );
+      else if (page.value === "analytics") data.value = {};
       else if (page.value === "keys") data.value = await request(path("/keys"));
       else if (page.value === "alerts")
         data.value = await request(path("/alerts"));
@@ -1036,90 +1027,7 @@ const usagePercent = computed(() =>
             </dl>
           </section></template
         >
-        <template v-if="page === 'analytics' && selected"
-          ><div class="analytics-toolbar">
-            <div class="tabs">
-              <button
-                v-for="d in ['customerId', 'userId', 'feature']"
-                :class="{ active: dimension === d }"
-                @click="
-                  dimension = d;
-                  reportPage = 0;
-                  refresh();
-                "
-              >
-                {{
-                  d === "customerId"
-                    ? t("Customers", "客户")
-                    : d === "userId"
-                      ? t("Users", "用户")
-                      : t("Features", "功能")
-                }}
-              </button>
-            </div>
-            <div class="query-export trace-export">
-              <a
-                class="btn"
-                :href="reportExportUrl + '&format=xlsx&lang=' + language"
-                >{{ t("Export Excel", "导出 Excel") }}</a
-              >
-              <a
-                class="btn"
-                :href="reportExportUrl + '&format=pdf&lang=' + language"
-                >{{ t("Export PDF", "导出 PDF") }}</a
-              >
-            </div>
-          </div>
-          <section class="panel table-wrap">
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{{ t("Identifier", "标识") }}</th>
-                    <th>{{ t("Objects", "对象数") }}</th>
-                    <th>{{ t("Known tokens", "已知 Token") }}</th>
-                    <th>{{ t("Estimated cost", "估算成本") }}</th>
-                    <th>{{ t("Unknown costs", "未知成本调用") }}</th>
-                    <th>
-                      {{ t("Last activity (UTC)", "最近活动时间 (UTC)") }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="r in data.items || []">
-                    <td>{{ r.dimension || t("Not provided", "未提供") }}</td>
-                    <td>{{ n(r.objects) }}</td>
-                    <td>{{ n(r.tokens) }}</td>
-                    <td>{{ money(r.cost) }}</td>
-                    <td>{{ n(r.unknown_costs) }}</td>
-                    <td>{{ date(r.last_activity_at) }}</td>
-                  </tr>
-                  <tr v-if="!data.items?.length">
-                    <td colspan="6" class="empty-cell">
-                      {{
-                        t(
-                          "Submit userId, customerId, or feature with your events to explore usage.",
-                          "在事件中提交 userId、customerId 或 feature 后即可分析用量。",
-                        )
-                      }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <QueryControls
-              :page="reportPage"
-              :size="reportSize"
-              @resize="
-                reportSize = $event;
-                reportPage = 0;
-                refresh(false);
-              "
-              :total="data.total || 0"
-              :loading="loading"
-              @change="reportTurn"
-            /></section
-        ></template>
+        <AnalyticsReport v-if="page === 'analytics' && selected" :project="selected" :refresh-token="data" />
         <template v-if="page === 'keys' && selected"
           ><section class="panel integration-banner">
             <CodeIcon />

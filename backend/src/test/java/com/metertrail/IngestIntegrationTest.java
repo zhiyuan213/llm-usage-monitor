@@ -940,6 +940,32 @@ class IngestIntegrationTest {
     store.db.update("DELETE FROM payments WHERE workspace_id=?",workspace);
   }
 
+  @Test void analyticsCalendarFiltersMatchChartPaginationAndExport() throws Exception {
+    String token=Support.token();
+    store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(token),user,"analytics-period");
+    var cookie=new jakarta.servlet.http.Cookie("mt_session",token);
+    store.db.update("UPDATE workspaces SET plan='Pro',subscription_status='active',period_end=now()+interval '1 month' WHERE id=?",workspace);
+    int year=java.time.LocalDate.now(java.time.ZoneOffset.UTC).getYear();
+    String[] dates={year+"-01-01T00:00:00Z",year+"-01-31T23:59:59Z",year+"-02-01T00:00:00Z",(year-1)+"-12-31T23:59:59Z"};
+    for(int i=0;i<dates.length;i++) {
+      String customer=i<2?"January-customer":i==2?"February-customer":"Previous-year";
+      String data="{\"customerId\":\""+customer+"\",\"observationType\":\"generation\",\"usage\":{\"inputTokens\":100,\"outputTokens\":50}}";
+      store.db.update("INSERT INTO objects(project_id,type,object_id,revision,started_at,data) VALUES(?,'observation',?,1,?,?::jsonb)",project,"calendar-"+i,java.sql.Timestamp.from(Instant.parse(dates[i])),data);
+    }
+    String base="/api/reports/analytics?project="+project+"&year="+year;
+    mvc.perform(get(base).cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(2)).andExpect(jsonPath("$.chart[0].dimension").value("January-customer")).andExpect(jsonPath("$.chart[0].tokens").value(300));
+    mvc.perform(get(base+"&month=1").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].objects").value(2)).andExpect(jsonPath("$.items[0].tokens").value(300));
+    mvc.perform(get(base+"&month=2").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.items[0].dimension").value("February-customer"));
+    mvc.perform(get(base+"&page=1").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(0)).andExpect(jsonPath("$.chart.length()").value(2));
+    mvc.perform(get(base+"&month=13").cookie(cookie)).andExpect(status().isBadRequest());
+    mvc.perform(get(base+"&dimension=userId").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].tokens").value(450));
+    byte[] pdf=mvc.perform(get("/api/reports/analytics/export?project="+project+"&year="+year+"&month=1&format=pdf").cookie(cookie)).andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+    try(var doc=org.apache.pdfbox.Loader.loadPDF(pdf)) {
+      String text=new org.apache.pdfbox.text.PDFTextStripper().getText(doc);
+      assertTrue(text.contains("January-customer"));assertFalse(text.contains("February-customer"));assertFalse(text.contains("Previous-year"));
+    }
+  }
+
   @BeforeEach
   void setup() {
     user = UUID.randomUUID();

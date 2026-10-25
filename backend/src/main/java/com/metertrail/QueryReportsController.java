@@ -42,6 +42,7 @@ class QueryReportsController {
       String search,
       String status,
       boolean zh,
+      Integer year, Integer month,
       HttpServletRequest req) {
     UUID user = SessionFilter.uid(req);
     if (kind.equals("audit"))
@@ -71,15 +72,26 @@ class QueryReportsController {
     if (kind.equals("analytics")) {
       Support.require(
           Set.of("userId", "customerId", "feature").contains(dimension), "INVALID_DIMENSION");
+      Support.require(year == null || (year>=2000 && year<=9998), "INVALID_FILTER");
+      Support.require(month == null || (year != null && month>=1 && month<=12), "INVALID_FILTER");
+      var analyticsArgs = new ArrayList<Object>(List.of(dimension,project,user));
+      String periodFilter="";
+      if(year!=null) {
+        var start=java.time.LocalDate.of(year,month==null?1:month,1);
+        var end=month==null?start.plusYears(1):start.plusMonths(1);
+        periodFilter=" AND o.started_at>=? AND o.started_at<?";
+        analyticsArgs.add(java.sql.Timestamp.from(start.atStartOfDay(java.time.ZoneOffset.UTC).toInstant()));
+        analyticsArgs.add(java.sql.Timestamp.from(end.atStartOfDay(java.time.ZoneOffset.UTC).toInstant()));
+      }
       return new Report(
           "SELECT o.data->>? AS dimension,count(*) AS objects,sum(o.cost) AS cost,count(*)"
               + " FILTER(WHERE o.data->>'observationType'='generation' AND o.cost IS NULL) AS"
               + " unknown_costs,sum((o.data->'usage'->>'inputTokens')::numeric+(o.data->'usage'->>'outputTokens')::numeric)"
               + " AS tokens,max(o.started_at) AS last_activity_at"
-              + console.source()
+              + console.source() + periodFilter
               + " GROUP BY 1",
           "objects DESC,dimension ASC NULLS LAST",
-          new Object[] {dimension, project, user},
+          analyticsArgs.toArray(),
           zh
               ? new String[] {"标识", "对象数", "已知 Token", "估算成本 USD", "未知成本调用", "最近活动时间 UTC"}
               : new String[] {
@@ -139,12 +151,14 @@ class QueryReportsController {
       @RequestParam(defaultValue = "customerId") String dimension,
       @RequestParam(defaultValue = "") String search,
       @RequestParam(defaultValue = "") String status,
+      @RequestParam(required = false) Integer year,
+      @RequestParam(required = false) Integer month,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "5") int size,
       HttpServletRequest req) {
     Support.require(page >= 0, "INVALID_PAGE");
     Support.require(Set.of(5, 10, 50, 100).contains(size), "INVALID_PAGE_SIZE");
-    var r = report(kind, project, dimension, search, status, false, req);
+    var r = report(kind, project, dimension, search, status, false, year, month, req);
     long total =
         store.queries().queryForObject(
             "SELECT count(*) FROM (" + r.sql() + ") report_count", Long.class, r.args());
@@ -160,7 +174,13 @@ class QueryReportsController {
                 + " LIMIT ? OFFSET ?",
             args.toArray());
     if (kind.equals("traces")) console.decode(items);
-    return Map.of("items", items, "total", total, "page", page, "size", size);
+    var result=new LinkedHashMap<String,Object>();
+    result.put("items",items);result.put("total",total);result.put("page",page);result.put("size",size);
+    if(kind.equals("analytics")) {
+      result.put("chart",store.queries().queryForList("SELECT dimension,tokens FROM ("+r.sql()+") chart_rows ORDER BY tokens DESC NULLS LAST,dimension ASC NULLS LAST LIMIT 20",r.args()));
+      result.put("chart_limit",20);
+    }
+    return result;
   }
 
   @GetMapping("/api/reports/{kind}/export")
@@ -172,12 +192,14 @@ class QueryReportsController {
       @RequestParam(defaultValue = "customerId") String dimension,
       @RequestParam(defaultValue = "") String search,
       @RequestParam(defaultValue = "") String status,
+      @RequestParam(required = false) Integer year,
+      @RequestParam(required = false) Integer month,
       @RequestParam(defaultValue = "en") String lang,
       HttpServletRequest req,
       HttpServletResponse res)
       throws IOException {
     Support.require(Set.of("xlsx", "pdf").contains(format), "INVALID_FORMAT");
-    var r = report(kind, project, dimension, search, status, lang.equals("zh-CN"), req);
+    var r = report(kind, project, dimension, search, status, lang.equals("zh-CN"), year, month, req);
     res.setContentType(
         format.equals("xlsx")
             ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
