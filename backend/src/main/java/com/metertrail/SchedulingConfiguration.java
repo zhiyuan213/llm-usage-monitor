@@ -21,4 +21,9 @@ class SchedulingConfiguration {
     scheduler.setAwaitTerminationSeconds(20);
     return scheduler;
   }
+
+  @Bean(name = "weeklyInsightsScheduler")
+  ThreadPoolTaskScheduler weeklyInsightsScheduler() {
+    return scheduler("weekly-insights-");
+  }
 }

@@ -285,6 +285,11 @@ class Worker {
                           + " UPDATE SKIP LOCKED LIMIT 5");
           for (var row : rows) {
             try {
+              if (!WeeklyInsights.mailEligible(store,row.get("id"))) {
+                store.db.update("UPDATE outbox SET attempts=10,body='' WHERE id=?",row.get("id"));
+                store.db.update("UPDATE insight_weekly_reports SET cancelled_at=now() WHERE outbox_id=?",row.get("id"));
+                continue;
+              }
               SimpleMailMessage m = new SimpleMailMessage();
               m.setFrom(from);
               m.setTo((String) row.get("recipient"));

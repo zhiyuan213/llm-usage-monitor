@@ -1087,3 +1087,31 @@
 .ui-v2 .support-reply-meta time { color: #63738d; font-size: 12px; }
 @media (max-width: 1000px) { .ui-v2 .support-layout { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 600px) { .ui-v2 .support-list, .ui-v2 .support-conversation { padding: 16px; } .ui-v2 .support-original { padding: 14px; } .ui-v2 .support-replies { padding-left: 12px; } }
+
+/* Paid analysis tools share the console's existing forms, panels and pagination. */
+.ui-v2 .sidebar nav { min-height: 0; overflow-y: auto; flex: 1; align-content: start; scrollbar-width: thin; scrollbar-color: #63738d transparent; }
+.ui-v2 .sidebar-bottom { flex-shrink: 0; }
+.ui-v2 .business-insights { display: grid; gap: 20px; min-width: 0; }
+.ui-v2 .business-insights .panel { padding: 24px; min-width: 0; margin-bottom: 0; }
+.ui-v2 .insight-result { display: grid; gap: 20px; min-width: 0; }
+.ui-v2 .insight-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.ui-v2 .insight-metrics strong { display: block; font-size: 26px; margin-top: 12px; color: #3156e8; overflow-wrap: anywhere; }
+.ui-v2 .insight-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
+.ui-v2 .insight-toolbar label { display: grid; gap: 8px; min-width: 160px; margin: 0; }
+.ui-v2 .insight-toolbar h2 { margin-right: auto; }
+.ui-v2 .insight-toolbar input,.ui-v2 .insight-toolbar select { min-width: 0; max-width: 100%; }
+.ui-v2 .insight-table { overflow-x: auto; max-width: 100%; }
+.ui-v2 .insight-table table { width: 100%; table-layout: fixed; }
+.ui-v2 .insight-table th,.ui-v2 .insight-table td { overflow-wrap: anywhere; white-space: normal; vertical-align: top; }
+.ui-v2 .insight-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.ui-v2 .insight-findings { padding-left: 20px; line-height: 1.9; }
+.ui-v2 .insight-findings li { margin-bottom: 10px; }
+.ui-v2 .business-insights p { line-height: 1.8; overflow-wrap: anywhere; }
+@media(max-width:900px) { .ui-v2 .insight-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) {
+  .ui-v2 .business-insights .panel { padding: 16px; }
+  .ui-v2 .insight-metrics { grid-template-columns: 1fr; }
+  .ui-v2 .insight-toolbar { align-items: stretch; }
+  .ui-v2 .insight-toolbar label { width: 100%; }
+  .ui-v2 .insight-table table { min-width: 520px; }
+}

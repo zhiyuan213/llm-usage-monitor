@@ -6,6 +6,8 @@ Follow-up: Tencent Cloud SES API template delivery is now implemented alongside 
 
 ## Implemented
 
+2026-10-25: Core / Pro now include cost diagnosis, manual release comparisons and opt-in weekly email reports. These analyze retained reported metadata and estimated model costs; they do not infer revenue, profit or certain root causes. Weekly subscriptions default to off. See [behavior, limits and rollout requirements](business-insights.md).
+
 | Area | Delivered behavior | Evidence / remaining qualification |
 | --- | --- | --- |
 | Accounts | Email/password, verification, reset, revocable sessions, CSRF, two-address email change, account closure | Real registration and Mailpit email delivery exercised locally; reset/session revocation integration test |

@@ -21,6 +21,7 @@ defineProps<{ index: number }>();
       {{ t("data access", "数据访问") }}
     </li>
     <li><Check :size="16" />Trace · Observation · Score</li>
+    <li v-if="index > 0"><Check :size="16" />{{ t('Cost diagnosis, release comparison and weekly reports', '费用诊断、发布对比与自动周报') }}</li>
     <li>
       <Check :size="16" />{{
         t("Stop at quota by default", "默认额度用尽后停止接收")

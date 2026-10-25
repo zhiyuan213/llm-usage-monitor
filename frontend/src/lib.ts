@@ -61,6 +61,13 @@ export const money = (v: any) =>
 export const date = (v: string) =>
   v ? new Date(v).toISOString().replace("T", " ").slice(0, 19) + " UTC" : "—";
 const errors: Record<string, [string, string]> = {
+  INSIGHTS_PLAN_REQUIRED: ['Cost diagnosis and release comparison require Core or Pro.', '费用诊断与发布对比需要 Core 或 Pro 套餐。'],
+  INVALID_INSIGHT_WINDOW: ['Choose a supported analysis period.', '请选择支持的统计区间。'],
+  INVALID_RELEASE_TIME: ['Choose a past release time within your plan retention.', '请选择套餐数据保留范围内、早于当前时间的发布时间。'],
+  RELEASE_NOT_FOUND: ['This release marker no longer exists.', '这条发布标记已不存在。'],
+  REPORT_NOT_FOUND: ['This report no longer exists or is outside your retention period.', '这份周报已不存在，或已超出数据保留范围。'],
+  INVALID_TIMEZONE: ['Enter a valid timezone, such as Asia/Shanghai or UTC.', '请输入有效时区，例如 Asia/Shanghai 或 UTC。'],
+  INVALID_WEEKLY_SETTINGS: ['Choose whether weekly reports should be enabled.', '请选择是否开启周报。'],
   ADMIN_REQUIRED: ["Administrator access is required.", "仅管理员可以访问。"],
   MESSAGE_NOT_FOUND: ["This conversation was not found.", "消息会话不存在或无权访问。"],
   INVALID_TITLE: ["Enter a subject, or shorten it if it is too long.", "请填写标题；如果标题太长，请精简后再发送。"],

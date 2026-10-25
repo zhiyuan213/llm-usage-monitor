@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SupportMessages from "./SupportMessages.vue";
+import BusinessInsights from './BusinessInsights.vue';
 import UsageCharges from "./UsageCharges.vue";
 import BillingSubscription from "./BillingSubscription.vue";
 import PlanFeatures from "./PlanFeatures.vue";
@@ -65,6 +66,9 @@ const nav = [
   ["overview", "Overview", "概览", Activity],
   ["traces", "Traces", "调用记录", GitBranch],
   ["analytics", "Data analytics", "数据统计", BarChart3],
+  ["cost-insights", "Cost diagnosis", "费用诊断", BarChart3],
+  ["releases", "Release comparison", "发布对比", GitBranch],
+  ["weekly", "Weekly reports", "自动周报", ScrollText],
   ["keys", "API key management", "密钥管理", KeyRound],
   ["alerts", "Alert configuration", "告警配置", Bell],
   ["billing", "Billing", "套餐与账单", CreditCard],
@@ -220,6 +224,7 @@ async function refresh(force = true) {
     projects.value = projectList;
     session.value = user;
     contextReady.value = true;
+    if (typeof route.query.project === 'string' && projectList.some((p:any)=>p.id===route.query.project)) selected.value=route.query.project;
     if (!projects.value.some((p) => p.id === selected.value))
       selected.value = projects.value[0]?.id || "";
     localStorage.setItem("metertrail.project", selected.value);
@@ -313,6 +318,10 @@ async function changeProject() {
   reportPage.value = 0;
   activityPage.value = 0;
   tracePage.value = 0;
+  if (typeof route.query.project === 'string' && route.query.project !== selected.value) {
+    await router.replace({path:route.path,query:{...route.query,project:selected.value}});
+    return;
+  }
   await refresh(false);
 }
 function openProject(id: string, target = "overview") {
@@ -1714,6 +1723,7 @@ const usagePercent = computed(() =>
         />
 
         <BatchHistory v-if="page === 'keys' && selected" :project="selected" />
+        <BusinessInsights v-if="accountReady && selected && ['cost-insights','releases','weekly'].includes(page)" :key="page+selected" :project="selected" :mode="page" :refresh-token="loading" />
         <SupportMessages v-if="accountReady && ['messages', 'admin-messages'].includes(page)" :key="page" :admin="page === 'admin-messages'" :refresh-token="loading" />
         <AccountSecurity v-if="page === 'account'" :disabled="!accountReady || signingOut" />
         <template v-if="page === 'audit'"
