@@ -6,7 +6,11 @@ import WeeklySummary from './WeeklySummary.vue';
 import QueryControls from './QueryControls.vue';
 const props=defineProps<{project:string;mode:string;refreshToken?:boolean}>();
 const busy=ref(false),error=ref(''),notice=ref(''),locked=ref(false),report=ref<any>(null),items=ref<any[]>([]),total=ref(0),page=ref(0),size=ref(5);
-const days=ref(7),dimension=ref('feature'),hours=ref(24),releaseId=ref(''),releaseName=ref(''),releasedAt=ref('');
+function currentLocalTime(){
+  const now=new Date(), pad=(value:number)=>String(value).padStart(2,'0');
+  return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+const days=ref(7),dimension=ref('feature'),hours=ref(24),releaseId=ref(''),releaseName=ref(''),releasedAt=ref(currentLocalTime());
 const subscribed=ref(false),timezone=ref('UTC'),nextDue=ref(''),available=ref(true);
 let version=0,alive=true;
 onBeforeUnmount(()=>{alive=false;++version;});
@@ -27,12 +31,12 @@ async function load() {
   }catch(e){if(alive&&id===version){locked.value=e instanceof ApiError&&e.code==='INSIGHTS_PLAN_REQUIRED';error.value=locked.value?'':errorText(e);}}
   finally{if(alive&&id===version)busy.value=false;}
 }
-watch([()=>props.project,()=>props.mode],()=>{page.value=0;report.value=null;releaseId.value='';items.value=[];notice.value='';void load();},{immediate:true});
+watch([()=>props.project,()=>props.mode],()=>{page.value=0;report.value=null;releaseId.value='';releasedAt.value=currentLocalTime();items.value=[];notice.value='';void load();},{immediate:true});
 watch(()=>props.refreshToken,(loading,previous)=>{if(previous&&!loading)void load();});
 async function createRelease(){
   if(busy.value||!releaseName.value.trim()||!releasedAt.value)return;
   const id=++version;busy.value=true;error.value='';
-  try {await api(`${base()}/releases`,{name:releaseName.value.trim(),releasedAt:new Date(releasedAt.value).toISOString()});if(alive&&id===version){releaseName.value='';releasedAt.value='';notice.value=t('Release marker saved. Select Compare to view its metrics.','发布标记已保存，可点击对比查看指标。');await load();}}
+  try {await api(`${base()}/releases`,{name:releaseName.value.trim(),releasedAt:new Date(releasedAt.value).toISOString()});if(alive&&id===version){releaseName.value='';releasedAt.value=currentLocalTime();notice.value=t('Release marker saved. Select Compare to view its metrics.','发布标记已保存，可点击对比查看指标。');await load();}}
   catch(e){if(alive&&id===version)error.value=errorText(e);}finally{if(alive&&id===version)busy.value=false;}
 }
 async function compare(id=releaseId.value){
