@@ -82,6 +82,7 @@ async function older() {
 <template>
   <section class="support-messages" :aria-busy="loading">
     <p>{{ admin ? t('Read and reply to user feedback. Replies stay in the original conversation.', '查看并回复用户反馈，所有回复保留在原消息会话中。') : t('Tell us what is not working or share a suggestion. Replies appear under your original message.', '遇到问题或有建议，可以在这里反馈。管理员的回复会显示在原消息下面。') }}</p>
+    <p v-if="!admin" class="muted">{{ t('You can also email us at', '遇到问题，也可以发送邮件至') }} <a href="mailto:13428961230@163.com">13428961230@163.com</a>{{ t('.', '。') }}</p>
     <p class="muted">{{ t('Do not include passwords, API keys, payment details, or sensitive event content.', '请勿发送密码、API 密钥、支付信息或敏感事件内容。') }}</p>
     <div v-if="error" class="notice error" role="alert">{{ error }}</div>
     <div v-if="notice" class="notice success" role="status">{{ notice }}</div>

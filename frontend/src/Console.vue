@@ -529,7 +529,7 @@ const usagePercent = computed(() =>
       <main
         class="console-content"
         :class="{
-          'overview-content': page === 'overview',
+          'overview-content': page === 'overview' && !!selected,
           'billing-content': page === 'billing',
         }"
         :aria-busy="loading"

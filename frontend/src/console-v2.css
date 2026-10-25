@@ -973,18 +973,18 @@
   vertical-align: middle;
 }
 @media (min-width: 1200px) {
-  .ui-v2[data-page="overview"] .page-heading {
+  .ui-v2[data-page="overview"] .overview-content .page-heading {
     margin-bottom: 14px;
   }
-  .ui-v2[data-page="overview"] .metric {
+  .ui-v2[data-page="overview"] .overview-content .metric {
     padding-top: 18px;
     padding-bottom: 18px;
   }
-  .ui-v2[data-page="overview"] .real-chart {
+  .ui-v2[data-page="overview"] .overview-content .real-chart {
     height: 124px;
     margin-bottom: 12px;
   }
-  .ui-v2[data-page="overview"] .console-footer {
+  .ui-v2[data-page="overview"] .overview-content .console-footer {
     margin-top: 12px;
   }
   .ui-v2[data-page="billing"] .plans article {
