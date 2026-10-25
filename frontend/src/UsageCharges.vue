@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { api, t, money, date, errorText } from './lib';
+import QueryControls from './QueryControls.vue';
 const props=defineProps<{ workspace:any }>();
 const data=ref<any>(null), consent=ref(false), busy=ref(false), error=ref('');
-async function load(){try{data.value=await api('/billing/usage-charges');}catch(e){error.value=errorText(e);}}
+const page=ref(0), size=ref(5), loading=ref(false);
+let version=0;
+async function load(){const current=++version;loading.value=true;error.value='';try{const result=await api(`/billing/usage-charges?page=${page.value}&size=${size.value}`);if(current!==version)return;data.value=result;const last=Math.max(0,Math.ceil((result.total||0)/size.value)-1);if(page.value>last){page.value=last;await load();}}catch(e){if(current===version)error.value=errorText(e);}finally{if(current===version)loading.value=false;}}
 watch(()=>props.workspace,load,{immediate:true});
 async function buy(){busy.value=true;error.value='';try{const result=await api('/billing/addons',{consent:consent.value});location.assign(result.url);}catch(e){error.value=errorText(e);}finally{busy.value=false;}}
 function state(c:any){
@@ -14,7 +17,7 @@ function state(c:any){
 </script>
 <template>
 <section class="panel usage-charges-panel">
- <div class="panel-heading"><h2>{{t('Additional units & usage charges','加购额度与超额账单')}}</h2><button class="btn" @click="load">{{t('Refresh','刷新')}}</button></div>
+ <div class="panel-heading"><h2>{{t('Additional units & usage charges','加购额度与超额账单')}}</h2><button class="btn" :disabled="loading" @click="load">{{t('Refresh','刷新')}}</button></div>
  <p>{{t('One pack adds 100,000 units for USD 8, valid only in the current billing period. Covers future usage only. No automatic renewal. Units arrive after verified payment. Any approved pack refund removes its units.','每包 100,000 units，8 美元，仅当前账期有效，仅抵扣后续新增用量，不自动续购。付款确认后到账；加购包退款获批后撤回该包额度。')}}</p>
  <p>{{t('Authorized overage is settled after the period closes, using progressive rates and your cap. An inactive subscription requires checkout payment instead of charging its saved method. Prices include tax; Paddle confirms the final payment and any credit applied.','已授权的超额费用在账期结束后按阶梯价和上限结算；订阅已取消或逾期时改为收银台付款。价格含税，最终付款与余额抵扣以 Paddle 确认为准。')}}</p>
  <p v-if="!data?.enabled" class="notice">{{t('Additional billing is not enabled by the operator yet.','运营方尚未启用加购及超额扣款。')}}</p>
@@ -26,5 +29,6 @@ function state(c:any){
  <p v-if="error" role="alert" class="error">{{error}}</p>
  <div v-if="data?.charges?.length" class="table-wrap"><table><thead><tr><th>{{t('Type','类型')}}</th><th>{{t('Amount','金额')}}</th><th>{{t('Status','状态')}}</th><th>{{t('Period end','账期结束')}}</th></tr></thead><tbody><tr v-for="c in data.charges" :key="c.id"><td>{{c.kind==='addon'?t('100,000-unit pack','10万 units 加购包'):t('Period overage','账期超额')}}</td><td>{{money(c.amount)}}</td><td>{{state(c)}} <a v-if="c.checkout_url && c.status==='submitted'" :href="c.checkout_url">{{t('Continue payment','继续付款')}}</a></td><td>{{date(c.period_end)}}</td></tr></tbody></table></div>
  <p v-else>{{t('No additional charges.','暂无加购或超额账单。')}}</p>
+ <QueryControls :page="page" :size="size" :total="data?.total || 0" :loading="loading" @change="page=$event;load()" @resize="size=$event;page=0;load()" />
 </section>
 </template>

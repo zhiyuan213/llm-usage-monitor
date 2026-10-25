@@ -100,9 +100,4 @@ async function confirm() {
     </template>
     <button class="btn" :disabled="busy" @click="emit('update:targetPlan','')">{{t('Close','关闭')}}</button>
   </section>
-  <section v-if="data.adjustments?.length" class="panel billing-subscription">
-    <h2>{{t('Refunds and credits','退款与抵扣')}}</h2>
-    <div class="table-wrap"><table><thead><tr><th>{{t('Transaction','交易')}}</th><th>{{t('Action','动作')}}</th><th>{{t('Status','状态')}}</th><th>{{t('Amount','金额')}}</th><th>{{t('Updated (UTC)','更新时间 (UTC)')}}</th></tr></thead>
-    <tbody><tr v-for="a in data.adjustments" :key="a.id"><td>{{a.transaction_id}}<br><small>{{a.id}}</small></td><td>{{status(a.action)}}</td><td>{{status(a.status)}}</td><td>{{a.amount}} {{a.currency}}</td><td>{{date(a.updated_at)}}</td></tr></tbody></table></div>
-  </section>
 </template>

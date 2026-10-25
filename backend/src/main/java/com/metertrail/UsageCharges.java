@@ -25,13 +25,14 @@ class UsageCharges {
     this.store=store; this.payments=payments; this.tx=tx; this.enabled=enabled; this.worker=worker; this.publicUrl=publicUrl;
   }
   @GetMapping("/api/billing/usage-charges")
-  Map<String,Object> list(HttpServletRequest req) {
+  Map<String,Object> list(@RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="5") int size, HttpServletRequest req) {
+    Support.require(page>=0 && size>=1 && size<=100,"INVALID_PAGE");
     var w=store.workspace(SessionFilter.uid(req));
     long used=((Number)w.get("used_units")).longValue(), overage=((Number)w.get("overage_units")).longValue(), consumed=((Number)w.get("addon_consumed")).longValue();
     Long remaining=store.queries().queryForObject("SELECT coalesce(sum(units-consumed_units),0) FROM usage_charges WHERE workspace_id=? AND period_start=? AND kind='addon' AND credited AND NOT revoked AND status='paid'",Long.class,w.get("id"),w.get("period_start"));
     long available=Math.max(0,Billing.included((String)w.get("plan"))-(used-overage-consumed))+remaining;
     if(!"Free".equals(w.get("plan")) && (!"active".equals(w.get("subscription_status")) || !((Timestamp)w.get("period_end")).toInstant().isAfter(Instant.now())))available=0;
-    return Map.of("availableUnits",available,"enabled",enabled,"packUnits",100000,"packAmount","8.00","currency","USD","charges",store.queries().queryForList("SELECT id,kind,units,amount,currency,status,transaction_id,credited,revoked,period_start,period_end,created_at,checkout_url FROM usage_charges WHERE workspace_id=? ORDER BY created_at DESC LIMIT 100",w.get("id")));
+    return Map.of("availableUnits",available,"enabled",enabled,"packUnits",100000,"packAmount","8.00","currency","USD","total",store.queries().queryForObject("SELECT count(*) FROM usage_charges WHERE workspace_id=?",Long.class,w.get("id")),"charges",store.queries().queryForList("SELECT id,kind,units,amount,currency,status,transaction_id,credited,revoked,period_start,period_end,created_at,checkout_url FROM usage_charges WHERE workspace_id=? ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",w.get("id"),size,(long)page*size));
   }
   static void active(Map<String,Object> w) {
     if("Free".equals(w.get("plan")) || !"active".equals(w.get("subscription_status")) || w.get("subscription_id")==null || !((Timestamp)w.get("period_end")).toInstant().isAfter(Instant.now().plusSeconds(900)))

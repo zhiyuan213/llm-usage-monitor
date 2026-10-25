@@ -592,6 +592,20 @@ class ConsoleController {
                 w.get("period_start")));
   }
 
+  @GetMapping("/api/billing/history")
+  @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+  Map<String,Object> billingHistory(@RequestParam String kind,
+      @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="5") int size,
+      HttpServletRequest req) {
+    Support.require(page>=0 && size>=1 && size<=100,"INVALID_PAGE");
+    Support.require(Set.of("payments","adjustments").contains(kind),"INVALID_PAGE");
+    var w=store.workspace(uid(req));
+    String table=kind.equals("payments")?"payments":"payment_adjustments";
+    String time=kind.equals("payments")?"created_at":"updated_at";
+    long total=store.queries().queryForObject("SELECT count(*) FROM "+table+" WHERE workspace_id=?",Long.class,w.get("id"));
+    return Map.of("total",total,"items",store.queries().queryForList("SELECT * FROM "+table+" WHERE workspace_id=? ORDER BY "+time+" DESC,id DESC LIMIT ? OFFSET ?",w.get("id"),size,(long)page*size));
+  }
+
   @PostMapping("/api/billing/overage")
   @Transactional
   Map<String, String> overage(@RequestBody JsonNode b, HttpServletRequest req) {

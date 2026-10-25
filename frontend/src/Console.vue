@@ -5,6 +5,7 @@ import BudgetReminders from './BudgetReminders.vue';
 import ReliabilityInsights from './ReliabilityInsights.vue';
 import UsageCharges from "./UsageCharges.vue";
 import BillingSubscription from "./BillingSubscription.vue";
+import BillingHistory from "./BillingHistory.vue";
 import PlanFeatures from "./PlanFeatures.vue";
 import QueryControls from "./QueryControls.vue";
 import WorkspaceOverview from "./WorkspaceOverview.vue";
@@ -1480,33 +1481,10 @@ const usagePercent = computed(() =>
                 </button>
               </form>
             </section>
-            <section class="panel billing-history-panel">
-              <div class="panel-heading">
-                <h2>{{ t("Billing history", "账单记录") }}</h2>
-              </div>
-              <div v-if="data.payments?.length" class="table-wrap">
-                <table>
-                  <tbody>
-                    <tr v-for="p in data.payments || []">
-                      <td>{{ p.id }}</td>
-                      <td>{{ p.status }}</td>
-                      <td>{{ p.amount }} {{ p.currency }}</td>
-                      <td>{{ date(p.created_at) }}</td>
-                    </tr>
-                    <tr v-if="!data.payments?.length">
-                      <td class="empty-cell">
-                        {{ t("No payments recorded.", "暂无支付记录。") }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-if="!data.payments?.length" class="billing-history-empty">
-                <ScrollText :size="32" />
-                <span>{{ t("No payments recorded.", "暂无支付记录。") }}</span>
-              </div>
-            </section>
-          </div><UsageCharges :workspace="data.workspace" /></template
+            <UsageCharges :workspace="data.workspace" />
+            <BillingHistory kind="payments" :workspace="data.workspace" />
+            <BillingHistory kind="adjustments" :workspace="data.workspace" />
+          </div></template
         >
         <template v-if="page === 'settings' && selected"
           ><section class="panel form-panel">

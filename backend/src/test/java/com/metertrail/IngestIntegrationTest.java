@@ -917,6 +917,29 @@ class IngestIntegrationTest {
     assertEquals(1,store.db.queryForObject("SELECT count(*) FROM api_keys WHERE project_id=?",Integer.class,project));
   }
 
+  @Test void billingListsPaginateBeyondOneHundredAndRejectInvalidPages() throws Exception {
+    String token=Support.token();
+    store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(token),user,"billing-pages");
+    var cookie=new jakarta.servlet.http.Cookie("mt_session",token);
+    for(int i=0;i<107;i++) {
+      store.db.update("INSERT INTO payments(id,workspace_id,status,amount,currency) VALUES(?,?,'completed',1,'USD')",workspace+"-"+i,workspace);
+      store.db.update("INSERT INTO payment_adjustments(id,workspace_id,transaction_id,action,status,updated_at) VALUES(?,?,?,'refund','approved',now())",workspace+"-"+i,workspace,"txn-test");
+      store.db.update("INSERT INTO usage_charges(id,workspace_id,subscription_id,period_start,period_end,kind,units,amount,status) VALUES(?,?,'sub-test',now(),now()+interval '1 month','addon',100000,8,'paid')",UUID.randomUUID(),workspace);
+    }
+    for(String kind:List.of("payments","adjustments")) {
+      mvc.perform(get("/api/billing/history?kind="+kind+"&page=20&size=5").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(107)).andExpect(jsonPath("$.items.length()").value(5));
+      mvc.perform(get("/api/billing/history?kind="+kind+"&page=21&size=5").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(2));
+    }
+    mvc.perform(get("/api/billing/usage-charges?page=21&size=5").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(107)).andExpect(jsonPath("$.charges.length()").value(2));
+    mvc.perform(get("/api/billing/history?kind=users").cookie(cookie)).andExpect(status().isBadRequest());
+    mvc.perform(get("/api/billing/history?kind=payments&page=-1").cookie(cookie)).andExpect(status().isBadRequest());
+    mvc.perform(get("/api/billing/usage-charges?size=101").cookie(cookie)).andExpect(status().isBadRequest());
+    mvc.perform(get("/api/billing/history?kind=payments")).andExpect(status().isUnauthorized());
+    store.db.update("DELETE FROM usage_charges WHERE workspace_id=?",workspace);
+    store.db.update("DELETE FROM payment_adjustments WHERE workspace_id=?",workspace);
+    store.db.update("DELETE FROM payments WHERE workspace_id=?",workspace);
+  }
+
   @BeforeEach
   void setup() {
     user = UUID.randomUUID();

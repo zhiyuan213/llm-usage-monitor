@@ -1037,6 +1037,9 @@
 .ui-v2 .usage-charges-panel > p { margin: 0 0 16px; }
 .ui-v2 .usage-charges-panel .usage-pack-form { margin: 20px 0 16px; gap: 16px; }
 .ui-v2 .usage-charges-panel .table-wrap { margin-top: 20px; }
+.ui-v2 .billing-details-grid > .usage-charges-panel { margin-top: 0; }
+.ui-v2 .billing-details-grid .billing-history-panel td { overflow-wrap: anywhere; }
+.ui-v2 .billing-details-grid .billing-history-panel .query-controls { margin-top: auto; }
 .ui-v2 .workspace-summary { padding: 24px; }
 .ui-v2 .workspace-summary-heading { display: flex; align-items: center; gap: 16px; }
 .ui-v2 .workspace-avatar { display: grid; place-items: center; flex: 0 0 52px; height: 52px; border-radius: 10px; background: #3156e8; color: #fff; font-size: 26px; font-weight: 600; }
