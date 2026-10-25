@@ -253,7 +253,7 @@ async function copy() {
               >{{
                 session
                   ? t("Open console", "进入控制台")
-                  : t("Start building for free", "免费开始接入")
+                  : t("Start free", "免费开始")
               }}<ArrowRight :size="17"
             /></RouterLink>
             <span v-else class="auth-cta-placeholder" aria-hidden="true"></span>
@@ -270,6 +270,7 @@ async function copy() {
               )
             }}</small
           >
+          <p class="unit-example">{{ t('For example: one request creates 1 Trace + 2 Observations + 1 Score = 4 units. At that structure, 50,000 units cover 12,500 requests. Updating or retrying the same objects does not add units. Units are not tokens.', '例如：一次请求创建1条 Trace、2条 Observation、1条 Score，合计4 units。按此结构，50,000 units 可记录12,500次请求；更新或重试相同对象不增加 units。units 不是 Token 数。') }}</p>
         </div>
         <div class="hero-console">
           <div class="mock-top">
@@ -381,7 +382,21 @@ async function copy() {
         <div class="page-intro"><span class="eyebrow">{{ t('YOUR FIRST REQUEST, STEP BY STEP', '从第一条请求开始') }}</span><h2>{{ t('Choose your integration guide', '选择适合你的接入教程') }}</h2><p>{{ t('Runnable examples, expected results and troubleshooting. No prompt content required.', '提供可运行示例、预期结果与排错步骤，无需上报提示词正文。') }}</p></div>
         <div class="tutorial-grid"><article v-for="item in tutorials" :key="item.slug" class="panel"><h3>{{ t(item.en,item.zh) }}</h3><p>{{ t(item.summary[0],item.summary[1]) }}</p><RouterLink :to="`/tutorials/${item.slug}`" @click="trackAction('open_tutorial','/')">{{ t('View tutorial →', '查看教程 →') }}</RouterLink></article></div>
       </section>
-      <div class="home-performance"><PerformanceReference compact /></div>
+      <section class="home-learning">
+        <div class="page-intro"><span class="eyebrow">{{ t('ILLUSTRATIVE WORKFLOW', '费用排查示例 · 非真实客户案例') }}</span><h2>{{ t('From a cost spike to a concrete next step', '费用上涨之后，知道从哪里查起') }}</h2><p>{{ t('Use reported usage and configured prices to investigate. Savings depend on your application; they are not guaranteed.', '根据已上报用量和配置价格排查问题，优化效果取决于你的应用，不承诺节省比例。') }}</p></div>
+        <div class="tutorial-grid">
+          <article class="panel"><h3>{{ t('1. Find the costly feature', '1. 找到费用上涨的功能') }}</h3><p>{{ t('Group estimated costs by feature to see whether document analysis is driving the increase.', '按功能查看估算费用，发现文档分析的费用上涨，再结合调用量判断是流量增长还是单次消耗增加。') }}</p></article>
+          <article class="panel"><h3>{{ t('2. Inspect the requests', '2. 定位具体请求') }}</h3><p>{{ t('Inspect the trace and model calls. Check token usage, model selection and repeated steps to form a hypothesis.', '查看调用链及模型调用，核对 Token 用量、模型选择和重复步骤，判断是否与输入过长或重复调用有关。') }}</p></article>
+          <article class="panel"><h3>{{ t('3. Compare after a change', '3. 验证修改后的表现') }}</h3><p>{{ t('Mark the release, then compare estimated cost, failures and latency before and after. Account for changes in traffic and pricing.', '记录发布标记，对比修改前后的估算费用、失败与耗时，并结合流量及模型价格变化判断效果。') }}</p></article>
+        </div>
+        <RouterLink to="/demo" class="btn" @click="trackAction('open_demo','/')">{{ t('Explore the interactive demo', '查看交互演示') }}<ArrowRight :size="16" /></RouterLink>
+      </section>
+      <section class="home-learning panel">
+        <h2>{{ t('Choose the plan for your history and controls', '按历史数据需求与提醒方式选择套餐') }}</h2>
+        <p>{{ t('Core includes cost diagnosis, release comparisons and weekly reports with 90-day rolling retention. Pro adds 3-year rolling retention and custom budget warning and slow-call thresholds. Both include 100,000 units per month; Pro does not add ingestion quota.', 'Core 提供费用诊断、发布对比和自动周报，滚动保留90天数据。Pro 适合需要长期追溯历史、自定义预算提醒线与慢调用阈值的用户，滚动保留3年数据。两者每月均含100,000 units，Pro 不增加接入额度。') }}</p>
+        <RouterLink to="/pricing">{{ t('Compare plans and retention terms →', '查看套餐与保留期限说明 →') }}</RouterLink>
+        <p><RouterLink to="/docs#performance">{{ t('See integration limits and performance test conditions →', '查看接入限制与性能测试条件 →') }}</RouterLink></p>
+      </section>
       <section class="bottom-cta">
         <div>
           <span class="eyebrow">{{

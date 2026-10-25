@@ -5,7 +5,7 @@ defineProps<{ index: number }>();
 </script>
 <template>
   <p>
-    {{ t("Everything you need to understand usage.", "掌握应用调用与用量。") }}
+    {{ [t("Start tracking your application.", "开始记录应用调用。"), t("Diagnose costs and follow recent releases.", "排查费用，跟踪近期发布表现。"), t("Keep a longer history with custom reminders.", "长期追溯历史，自定义提醒阈值。")][index] }}
   </p>
   <ul>
     <li>
