@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 class InsightsController {
-  final Store store; final Insights insights; final RateLimits limits;
-  InsightsController(Store store,Insights insights,RateLimits limits) {this.store=store;this.insights=insights;this.limits=limits;}
+  final Store store; final Insights insights; final RateLimits limits; final WeeklyInsights weekly;
+  InsightsController(Store store,Insights insights,RateLimits limits,WeeklyInsights weekly) {this.store=store;this.insights=insights;this.limits=limits;this.weekly=weekly;}
   static Instant timestamp(String value) {
     try {return Instant.parse(value);} catch(Exception e) {throw new ApiError(400,"INVALID_TIMESTAMP");}
   }
@@ -111,6 +111,17 @@ class InsightsController {
     ZoneId zone=WeeklyInsights.zone(timezone!=null?timezone:zones.isEmpty()?"UTC":zones.get(0).get("timezone").toString());
     var end=WeeklyInsights.weekEnd(Instant.now(),zone);
     return insights.analyze(user,project,end.atZone(zone).minusWeeks(2).toInstant(),end.atZone(zone).minusWeeks(1).toInstant(),end,"feature");
+  }
+
+  @PostMapping("/api/projects/{project}/insights/weekly/send")
+  @Transactional
+  Map<String,String> send(@PathVariable UUID project,HttpServletRequest req) {
+    UUID user=SessionFilter.uid(req);var workspace=insights.paid(user,project);
+    Support.require(Boolean.TRUE.equals(SessionFilter.user(req).get("verified")),"EMAIL_NOT_VERIFIED");
+    limits.check("insight-send:"+user,3);
+    boolean queued=weekly.sendNow(project,Instant.now());
+    store.audit(user,(UUID)workspace.get("id"),"weekly.send",project.toString(),true,req);
+    return Map.of("status",queued?"queued":"already_generated");
   }
 
   @GetMapping("/api/projects/{project}/insights/weekly/reports/{report}")

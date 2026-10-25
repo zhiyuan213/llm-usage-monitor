@@ -6,6 +6,8 @@ Follow-up: Tencent Cloud SES API template delivery is now implemented alongside 
 
 ## Implemented
 
+2026-10-25 follow-up: project monthly model-cost budget reminders and separate failure / slow-call analysis are implemented for Core / Pro; Pro adds custom warning and latency thresholds. Weekly reports also have a deduplicated manual send action. See [behavior and limits](operational-insights.md).
+
 2026-10-25: Core / Pro now include cost diagnosis, manual release comparisons and opt-in weekly email reports. These analyze retained reported metadata and estimated model costs; they do not infer revenue, profit or certain root causes. Weekly subscriptions default to off. See [behavior, limits and rollout requirements](business-insights.md).
 
 | Area | Delivered behavior | Evidence / remaining qualification |

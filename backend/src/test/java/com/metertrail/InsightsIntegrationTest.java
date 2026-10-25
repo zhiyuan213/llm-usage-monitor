@@ -30,6 +30,7 @@ class InsightsIntegrationTest {
     r.add("spring.datasource.url",pg::getJdbcUrl);r.add("spring.datasource.username",pg::getUsername);r.add("spring.datasource.password",pg::getPassword);
   }
   @Autowired Store store;@Autowired Insights insights;@Autowired WeeklyInsights weekly;@Autowired MockMvc mvc;
+  @Autowired ReliabilityInsights reliability;@Autowired BudgetAlerts budgets;
   @MockBean RateLimits limits;
   final ObjectMapper json=new ObjectMapper();
   UUID user,workspace,project,other;Cookie cookie,otherCookie;String csrf="insights-test-csrf";
@@ -58,6 +59,102 @@ class InsightsIntegrationTest {
     }
   }
   String url(String tail){return "/api/projects/"+project+"/insights/"+tail;}
+  void budget(String amount,int warning,boolean enabled,boolean forecast) throws Exception {
+    mvc.perform(post(url("budget")).cookie(cookie).header("X-CSRF-Token",csrf).contentType("application/json")
+      .content("{\"monthlyBudget\":\""+amount+"\",\"warningPercent\":"+warning+",\"enabled\":"+enabled+",\"forecastEnabled\":"+forecast+"}"))
+      .andExpect(status().isOk());
+  }
+  void budgetCalls(Instant at,int count,String cost) {
+    for(int i=0;i<count;i++)object("observation",at,"{\"observationType\":\"generation\",\"status\":\"success\",\"durationMs\":100,\"provider\":\"test\",\"model\":\"small\",\"usage\":{\"inputTokens\":100,\"outputTokens\":10}}",cost);
+  }
+  @Test void reliabilityUsesSeparatePopulationsAndCorrectCoverageAndPaging() throws Exception {
+    Instant at=Instant.now().minusSeconds(3600);
+    for(int i=0;i<20;i++)object("trace",at,"{\"name\":\"request\",\"status\":\""+(i<5?"error":i==5?"cancelled":"success")+"\",\"feature\":\"support\",\"error\":\"upstream timeout <script>\""+(i<2?"":",\"durationMs\":"+(i<10?1000:5000))+"}","999");
+    budgetCalls(at,1,"0.1");
+    var data=getJson(url("reliability"));
+    assertEquals(20,data.path("summary").path("total").asInt());assertEquals(5,data.path("summary").path("errors").asInt());
+    assertEquals(1,data.path("summary").path("cancelled").asInt());assertEquals(18,data.path("summary").path("timed").asInt());
+    assertEquals(10,data.path("summary").path("slow").asInt());assertEquals(0.25,data.path("summary").path("error_rate").asDouble());
+    assertEquals(0.9,data.path("summary").path("timing_coverage").asDouble());assertEquals(5000,data.path("summary").path("p95_ms").asDouble());
+    assertEquals(5,data.path("total").asInt());assertEquals(5,data.path("items").size());assertEquals(5,data.path("error_groups").get(0).path("count").asInt());
+    assertEquals("upstream timeout <script>",data.path("error_groups").get(0).path("message").asText());
+    data=getJson(url("reliability?view=slow&page=1&size=5"));assertEquals(10,data.path("total").asInt());assertEquals(5,data.path("items").size());
+    assertEquals(1,getJson(url("reliability?scope=generation&dimension=model")).path("summary").path("total").asInt());
+    mvc.perform(get(url("reliability?slowMs=5000")).cookie(cookie)).andExpect(status().isForbidden());
+    store.db.update("UPDATE workspaces SET plan='Pro' WHERE id=?",workspace);
+    assertEquals(10,getJson(url("reliability?slowMs=5000")).path("summary").path("slow").asInt());
+    mvc.perform(get(url("reliability?scope=score")).cookie(cookie)).andExpect(status().isBadRequest());
+    mvc.perform(get(url("reliability")).param("dimension","model' OR 1=1").cookie(cookie)).andExpect(status().isBadRequest());
+    mvc.perform(get(url("reliability?page=-1")).cookie(cookie)).andExpect(status().isBadRequest());
+    mvc.perform(get(url("reliability"))).andExpect(status().isUnauthorized());
+    mvc.perform(get(url("reliability?slowMs=0")).cookie(cookie)).andExpect(status().isBadRequest());
+    mvc.perform(get(url("reliability")).cookie(otherCookie)).andExpect(status().isNotFound());
+  }
+  @Test void budgetValidatesPlanPrecisionAndOptIn() throws Exception {
+    assertFalse(getJson(url("budget")).path("configured").asBoolean());
+    mvc.perform(post(url("budget")).cookie(cookie).contentType("application/json").content("{}")).andExpect(status().isForbidden());
+    String body="{\"monthlyBudget\":100,\"warningPercent\":70,\"enabled\":true,\"forecastEnabled\":true}";
+    mvc.perform(post(url("budget")).cookie(cookie).header("X-CSRF-Token",csrf).contentType("application/json").content(body)).andExpect(status().isForbidden());
+    for(String amount:List.of("-1","0","1000000001","0.0000001","NaN"))
+      mvc.perform(post(url("budget")).cookie(cookie).header("X-CSRF-Token",csrf).contentType("application/json").content(body.replace("100,","\""+amount+"\",").replace("70,","80,"))).andExpect(status().isBadRequest());
+    store.db.update("UPDATE workspaces SET plan='Pro' WHERE id=?",workspace);budget("100",70,true,true);
+    assertEquals(70,getJson(url("budget")).path("settings").path("warning_percent").asInt());
+    store.db.update("UPDATE workspaces SET plan='Core' WHERE id=?",workspace);
+    assertEquals(80,getJson(url("budget")).path("settings").path("warning_percent").asInt());
+    store.db.update("UPDATE workspaces SET plan='Free' WHERE id=?",workspace);budget("100",80,false,true);
+    assertFalse(getJson(url("budget")).path("available").asBoolean());assertTrue(getJson(url("budget")).path("usage").isNull());
+    mvc.perform(get(url("budget")).cookie(otherCookie)).andExpect(status().isNotFound());
+    mvc.perform(get(url("reliability")).cookie(cookie)).andExpect(status().isForbidden());
+  }
+  @Test void budgetCountsOnlyModelCostsAndDeduplicatesWarningLevelsAndMonths() throws Exception {
+    Instant now=Instant.parse("2026-10-25T12:00:00Z");budget("100",80,true,false);
+    store.db.update("UPDATE project_budgets SET next_check=? WHERE project_id=?",Timestamp.from(now.minusSeconds(1)),project);
+    budgetCalls(now.minusSeconds(3600),20,"4");object("trace",now.minusSeconds(3600),"{\"status\":\"success\"}","9999");
+    assertTrue(budgets.check(project,now));assertFalse(budgets.check(project,now.plusSeconds(301)));
+    var snap=Support.parse(store.db.queryForObject("SELECT snapshot::text FROM budget_notifications WHERE project_id=?",String.class,project));
+    assertEquals(80,snap.path("known_cost").asDouble());assertEquals("2026-10-01T00:00:00Z",snap.path("period_start").asText());
+    budgetCalls(now.minusSeconds(60),1,"25");assertTrue(budgets.check(project,now.plusSeconds(602)));
+    assertEquals(Set.of("warning","exceeded"),new HashSet<>(store.db.queryForList("SELECT kind FROM budget_notifications WHERE project_id=?",String.class,project)));
+    Instant november=Instant.parse("2026-11-02T12:00:00Z");budgetCalls(november.minusSeconds(3600),1,"90");assertTrue(budgets.check(project,november));
+    assertEquals(3,store.db.queryForObject("SELECT count(*) FROM budget_notifications WHERE project_id=?",Integer.class,project));
+  }
+  @Test void budgetForecastRequiresCompletePricesAndEnoughElapsedTime() throws Exception {
+    Instant now=Instant.parse("2026-10-20T12:00:00Z");budget("1000",80,true,true);
+    store.db.update("UPDATE project_budgets SET next_check=? WHERE project_id=?",Timestamp.from(now.minusSeconds(1)),project);
+    budgetCalls(now.minusSeconds(3600),20,"39.5");budgetCalls(now.minusSeconds(3600),1,null);
+    assertFalse(budgets.check(project,now));
+    store.db.update("UPDATE objects SET cost=0 WHERE project_id=? AND cost IS NULL",project);
+    assertTrue(budgets.check(project,now.plusSeconds(301)));
+    assertEquals("forecast",store.db.queryForObject("SELECT kind FROM budget_notifications WHERE project_id=?",String.class,project));
+    var settings=store.db.queryForMap("SELECT * FROM project_budgets WHERE project_id=?",project);
+    store.db.update("UPDATE objects SET started_at=? WHERE project_id=?",Timestamp.from(Instant.parse("2026-10-01T12:00:00Z")),project);
+    var early=budgets.calculate(project,settings,"Core",Instant.parse("2026-10-02T12:00:00Z"));
+    assertEquals(21L,Insights.count(early,"generations"));assertNull(early.get("projected_cost"));
+  }
+  @Test void budgetMailIsSuppressedAfterChangesAndOptOutCancelsPending() throws Exception {
+    Instant now=Instant.now();budget("1",80,true,false);budgetCalls(now.minusSeconds(1),1,"2");
+    assertTrue(budgets.check(project,now.plusSeconds(1)));
+    Long mail=store.db.queryForObject("SELECT outbox_id FROM budget_notifications WHERE project_id=?",Long.class,project);
+    assertTrue(BudgetAlerts.mailEligible(store,mail));
+    store.db.update("UPDATE users SET email=? WHERE id=?","changed-"+user+"@test.local",user);assertFalse(BudgetAlerts.mailEligible(store,mail));
+    store.db.update("UPDATE users SET email=? WHERE id=?",user+"@test.local",user);
+    store.db.update("UPDATE projects SET deleted_at=now() WHERE id=?",project);assertFalse(BudgetAlerts.mailEligible(store,mail));
+    store.db.update("UPDATE projects SET deleted_at=NULL WHERE id=?",project);
+    store.db.update("UPDATE workspaces SET plan='Free' WHERE id=?",workspace);assertFalse(BudgetAlerts.mailEligible(store,mail));
+    budget("1",80,false,false);assertEquals("",store.db.queryForObject("SELECT body FROM outbox WHERE id=?",String.class,mail));
+    assertEquals("cancelled",getJson(url("budget")).path("items").get(0).path("status").asText());
+  }
+  @Test void budgetGenerationRollsBackAndConcurrentRetryQueuesOneEmail() throws Exception {
+    Instant now=Instant.now();budget("1",80,true,false);budgetCalls(now.minusSeconds(1),1,"2");
+    store.db.execute("CREATE FUNCTION reject_budget_notice() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test rollback'; END $$");
+    store.db.execute("CREATE TRIGGER reject_budget_notice BEFORE INSERT ON budget_notifications FOR EACH ROW EXECUTE FUNCTION reject_budget_notice()");
+    try {assertThrows(RuntimeException.class,()->budgets.check(project,now.plusSeconds(1)));assertEquals(0,store.db.queryForObject("SELECT count(*) FROM outbox WHERE budget_project_id=?",Integer.class,project));}
+    finally {store.db.execute("DROP TRIGGER reject_budget_notice ON budget_notifications");store.db.execute("DROP FUNCTION reject_budget_notice()");}
+    var pool=Executors.newFixedThreadPool(2);
+    try {var a=pool.submit(()->budgets.check(project,now.plusSeconds(1)));var b=pool.submit(()->budgets.check(project,now.plusSeconds(1)));a.get(20,TimeUnit.SECONDS);b.get(20,TimeUnit.SECONDS);}finally{pool.shutdownNow();}
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM budget_notifications WHERE project_id=?",Integer.class,project));
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM outbox WHERE budget_project_id=?",Integer.class,project));
+  }
   JsonNode getJson(String url) throws Exception {return json.readTree(mvc.perform(get(url).cookie(cookie)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString());}
   @SuppressWarnings("unchecked")
   @Test void exactCostsCoverageAndRulesUseCorrectDenominators() {
@@ -120,6 +217,23 @@ class InsightsIntegrationTest {
   }
   void subscribe(Instant due) {
     store.db.update("INSERT INTO insight_weekly_subscriptions(project_id,enabled,timezone,next_due) VALUES(?,true,'UTC',?)",project,Timestamp.from(due));
+  }
+  @Test void manualSendIsAuthorizedDeduplicatedAndDoesNotMoveSchedule() throws Exception {
+    String send=url("weekly/send");
+    mvc.perform(post(send).contentType("application/json").content("{}")).andExpect(status().isUnauthorized());
+    mvc.perform(post(send).cookie(cookie).contentType("application/json").content("{}")).andExpect(status().isForbidden());
+    mvc.perform(post(send).cookie(otherCookie).header("X-CSRF-Token",csrf).contentType("application/json").content("{}")).andExpect(status().isNotFound());
+    mvc.perform(post(send).cookie(cookie).header("X-CSRF-Token",csrf).contentType("application/json").content("{}")).andExpect(status().isConflict());
+    Instant due=Instant.now().plus(Duration.ofDays(5));subscribe(due);
+    for(String expected:List.of("queued","already_generated")) {
+      mvc.perform(post(send).cookie(cookie).header("X-CSRF-Token",csrf).contentType("application/json").content("{}"))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.status").value(expected));
+    }
+    assertEquals(Timestamp.from(due).getTime(),store.db.queryForObject("SELECT next_due FROM insight_weekly_subscriptions WHERE project_id=?",Timestamp.class,project).getTime());
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM insight_weekly_reports WHERE project_id=?",Integer.class,project));
+    assertEquals(1,store.db.queryForObject("SELECT count(*) FROM outbox WHERE insight_project_id=?",Integer.class,project));
+    store.db.update("UPDATE workspaces SET plan='Free' WHERE id=?",workspace);
+    mvc.perform(post(send).cookie(cookie).header("X-CSRF-Token",csrf).contentType("application/json").content("{}")).andExpect(status().isForbidden());
   }
   @Test void weeklyGenerationIsConcurrentSafeAndHistoryIsPrivate() throws Exception {
     Instant now=Instant.now();subscribe(now.minusSeconds(1));

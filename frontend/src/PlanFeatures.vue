@@ -22,6 +22,8 @@ defineProps<{ index: number }>();
     </li>
     <li><Check :size="16" />Trace · Observation · Score</li>
     <li v-if="index > 0"><Check :size="16" />{{ t('Cost diagnosis, release comparison and weekly reports', '费用诊断、发布对比与自动周报') }}</li>
+    <li v-if="index > 0"><Check :size="16" />{{ t('Budget reminders and failure / slow-call analysis', '预算提醒与失败、慢调用分析') }}</li>
+    <li v-if="index === 2"><Check :size="16" />{{ t('Custom budget warning and slow-call thresholds', '自定义预算提醒线与慢调用阈值') }}</li>
     <li>
       <Check :size="16" />{{
         t("Stop at quota by default", "默认额度用尽后停止接收")

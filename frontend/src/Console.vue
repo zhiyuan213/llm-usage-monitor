@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import SupportMessages from "./SupportMessages.vue";
 import BusinessInsights from './BusinessInsights.vue';
+import BudgetReminders from './BudgetReminders.vue';
+import ReliabilityInsights from './ReliabilityInsights.vue';
 import UsageCharges from "./UsageCharges.vue";
 import BillingSubscription from "./BillingSubscription.vue";
 import PlanFeatures from "./PlanFeatures.vue";
@@ -69,6 +71,8 @@ const nav = [
   ["cost-insights", "Cost diagnosis", "费用诊断", BarChart3],
   ["releases", "Release comparison", "发布对比", GitBranch],
   ["weekly", "Weekly reports", "自动周报", ScrollText],
+  ["budgets", "Budget reminders", "预算提醒", Bell],
+  ["reliability", "Failures and slow calls", "失败与慢调用", Activity],
   ["keys", "API key management", "密钥管理", KeyRound],
   ["alerts", "Alert configuration", "告警配置", Bell],
   ["billing", "Billing", "套餐与账单", CreditCard],
@@ -1724,6 +1728,8 @@ const usagePercent = computed(() =>
 
         <BatchHistory v-if="page === 'keys' && selected" :project="selected" />
         <BusinessInsights v-if="accountReady && selected && ['cost-insights','releases','weekly'].includes(page)" :key="page+selected" :project="selected" :mode="page" :refresh-token="loading" />
+        <BudgetReminders v-if="accountReady && selected && page==='budgets'" :key="page+selected" :project="selected" :refresh-token="loading" />
+        <ReliabilityInsights v-if="accountReady && selected && page==='reliability'" :key="page+selected" :project="selected" :refresh-token="loading" />
         <SupportMessages v-if="accountReady && ['messages', 'admin-messages'].includes(page)" :key="page" :admin="page === 'admin-messages'" :refresh-token="loading" />
         <AccountSecurity v-if="page === 'account'" :disabled="!accountReady || signingOut" />
         <template v-if="page === 'audit'"

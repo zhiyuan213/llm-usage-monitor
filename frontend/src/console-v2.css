@@ -1099,6 +1099,8 @@
 .ui-v2 .insight-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
 .ui-v2 .insight-toolbar label { display: grid; gap: 8px; min-width: 160px; margin: 0; }
 .ui-v2 .insight-toolbar h2 { margin-right: auto; }
+.ui-v2 .insight-toolbar .insight-check { display: flex; flex-direction: row; align-items: center; min-width: 0; max-width: 260px; line-height: 1.6; }
+.ui-v2 .insight-check input[type=checkbox] { width: 16px; min-height: 16px; height: 16px; flex: 0 0 16px; padding: 0; margin: 0; }
 .ui-v2 .insight-toolbar input,.ui-v2 .insight-toolbar select { min-width: 0; max-width: 100%; }
 .ui-v2 .insight-table { overflow-x: auto; max-width: 100%; }
 .ui-v2 .insight-table table { width: 100%; table-layout: fixed; }

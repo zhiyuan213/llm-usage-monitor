@@ -290,6 +290,11 @@ class Worker {
                 store.db.update("UPDATE insight_weekly_reports SET cancelled_at=now() WHERE outbox_id=?",row.get("id"));
                 continue;
               }
+              if (row.get("budget_project_id")!=null && !BudgetAlerts.mailEligible(store,row.get("id"))) {
+                store.db.update("UPDATE outbox SET attempts=10,body='' WHERE id=?",row.get("id"));
+                store.db.update("UPDATE budget_notifications SET cancelled_at=now() WHERE outbox_id=?",row.get("id"));
+                continue;
+              }
               SimpleMailMessage m = new SimpleMailMessage();
               m.setFrom(from);
               m.setTo((String) row.get("recipient"));

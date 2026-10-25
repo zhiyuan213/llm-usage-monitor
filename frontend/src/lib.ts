@@ -61,7 +61,11 @@ export const money = (v: any) =>
 export const date = (v: string) =>
   v ? new Date(v).toISOString().replace("T", " ").slice(0, 19) + " UTC" : "—";
 const errors: Record<string, [string, string]> = {
-  INSIGHTS_PLAN_REQUIRED: ['Cost diagnosis and release comparison require Core or Pro.', '费用诊断与发布对比需要 Core 或 Pro 套餐。'],
+    WEEKLY_NOT_ENABLED: ['Enable weekly reports before sending.', '请先开启周报，再点击发送。'],
+    INVALID_BUDGET_SETTINGS: ['Enter a positive USD budget (up to 1 billion, at most 6 decimal places) and a warning from 50% to 95%.', '请输入有效的美元预算（大于零、最多 10 亿、最多 6 位小数），提醒线为 50%～95%。'],
+    PRO_CUSTOM_RULES_REQUIRED: ['Custom warning and slow-call thresholds require Pro.', '自定义提醒线或慢调用阈值需要 Pro 套餐。'],
+    INVALID_RELIABILITY_FILTER: ['Choose a supported period, scope and slow-call threshold.', '请选择支持的统计区间、分析对象及慢调用阈值。'],
+    INSIGHTS_PLAN_REQUIRED: ['These analysis tools require Core or Pro.', '使用这些分析工具需要 Core 或 Pro 套餐。'],
   INVALID_INSIGHT_WINDOW: ['Choose a supported analysis period.', '请选择支持的统计区间。'],
   INVALID_RELEASE_TIME: ['Choose a past release time within your plan retention.', '请选择套餐数据保留范围内、早于当前时间的发布时间。'],
   RELEASE_NOT_FOUND: ['This release marker no longer exists.', '这条发布标记已不存在。'],

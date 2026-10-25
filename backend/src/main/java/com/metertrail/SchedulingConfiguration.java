@@ -26,4 +26,8 @@ class SchedulingConfiguration {
   ThreadPoolTaskScheduler weeklyInsightsScheduler() {
     return scheduler("weekly-insights-");
   }
+  @Bean(name = "budgetAlertsScheduler")
+  ThreadPoolTaskScheduler budgetAlertsScheduler() {
+    return scheduler("budget-alerts-");
+  }
 }

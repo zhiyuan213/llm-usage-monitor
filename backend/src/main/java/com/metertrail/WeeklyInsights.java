@@ -57,10 +57,18 @@ class WeeklyInsights {
   }
 
   boolean generate(UUID project,Instant now) {
+    return generate(project,now,false);
+  }
+  boolean sendNow(UUID project,Instant now) {
+    return generate(project,now,true);
+  }
+  private boolean generate(UUID project,Instant now,boolean manual) {
     return Boolean.TRUE.equals(tx.execute(status->{
-      var rows=store.db.queryForList("SELECT s.*,u.id AS owner,u.email,u.language,u.verified,u.deleted_at AS user_deleted,p.deleted_at AS project_deleted,p.name,w.plan FROM insight_weekly_subscriptions s JOIN projects p ON p.id=s.project_id JOIN workspaces w ON w.id=p.workspace_id JOIN users u ON u.id=w.owner_id WHERE s.project_id=? AND s.enabled AND s.next_due<=? FOR UPDATE OF s SKIP LOCKED",project,Timestamp.from(now));
-      if(rows.isEmpty())return false;var row=rows.get(0);var zone=zone(row.get("timezone").toString());
+      var rows=store.db.queryForList("SELECT s.*,u.id AS owner,u.email,u.language,u.verified,u.deleted_at AS user_deleted,p.deleted_at AS project_deleted,p.name,w.plan FROM insight_weekly_subscriptions s JOIN projects p ON p.id=s.project_id JOIN workspaces w ON w.id=p.workspace_id JOIN users u ON u.id=w.owner_id WHERE s.project_id=? AND s.enabled AND (? OR s.next_due<=?) FOR UPDATE OF s"+(manual?"":" SKIP LOCKED"),project,manual,Timestamp.from(now));
+      if(rows.isEmpty()) {if(manual)throw new ApiError(409,"WEEKLY_NOT_ENABLED");return false;}
+      var row=rows.get(0);var zone=zone(row.get("timezone").toString());
       if(row.get("user_deleted")!=null || row.get("project_deleted")!=null || !Boolean.TRUE.equals(row.get("verified")) || "Free".equals(row.get("plan"))) {
+        if(manual)throw new ApiError(403,"INSIGHTS_PLAN_REQUIRED");
         store.db.update("UPDATE insight_weekly_subscriptions SET enabled=false,updated_at=now() WHERE project_id=?",project);return false;
       }
       Instant end=weekEnd(now,zone);
@@ -74,7 +82,7 @@ class WeeklyInsights {
         try {store.db.update("INSERT INTO insight_weekly_reports(id,project_id,week_end,summary,outbox_id) VALUES(?,?,?,?::jsonb,?)",UUID.randomUUID(),project,Timestamp.from(end),json.writeValueAsString(report),outboxId);}
         catch(com.fasterxml.jackson.core.JsonProcessingException e) {throw new IllegalStateException(e);}
       }
-      store.db.update("UPDATE insight_weekly_subscriptions SET next_due=? WHERE project_id=?",Timestamp.from(nextDue(now,zone)),project);
+      if(!manual)store.db.update("UPDATE insight_weekly_subscriptions SET next_due=? WHERE project_id=?",Timestamp.from(nextDue(now,zone)),project);
       return !exists;
     }));
   }
