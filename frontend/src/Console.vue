@@ -1296,8 +1296,8 @@ const usagePercent = computed(() =>
           ><div class="notice">
             {{
               t(
-                "Platform units and model provider costs are separate. Plan changes and payment amounts are confirmed by Paddle.",
-                "平台 units 与模型供应商费用独立核算，套餐变更与付款金额以 Paddle 确认为准。",
+                "Platform units and model provider costs are separate. Plan changes and payment amounts are confirmed by your payment provider.",
+                "平台 units 与模型供应商费用独立核算，套餐变更与付款金额以支付平台确认为准。",
               )
             }}
           </div>
@@ -1314,7 +1314,7 @@ const usagePercent = computed(() =>
               <PlanFeatures :index="i" />
               <button
                 class="btn full"
-                :disabled="data.workspace?.plan === plan || plan === 'Free'"
+                :disabled="data.workspace?.plan === plan || plan === 'Free' || data.workspace?.payment_provider === 'creem'"
                 @click="
                   run(async () => {
                     if (data.workspace?.subscription_id) {
@@ -1362,7 +1362,8 @@ const usagePercent = computed(() =>
                   )
                 }}
               </p>
-              <form class="billing-policy-form" @submit.prevent="saveOverage">
+              <p v-if="data.workspace?.payment_provider==='creem'" class="notice">{{t('Automatic overage is not enabled for Creem subscriptions. Ingestion stops at the included quota.','Creem 订阅暂未开放自动超额计费，额度用完后停止新增接入。')}}</p>
+              <form v-else class="billing-policy-form" @submit.prevent="saveOverage">
                 <label class="check-label"
                   ><input
                     v-model="billing.enabled"
