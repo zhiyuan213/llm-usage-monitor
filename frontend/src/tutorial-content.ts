@@ -23,22 +23,14 @@ export const tutorials = [
 set -eu
 : "\${METERTRAIL_API_KEY:?Set your project API key}"
 : "\${METERTRAIL_ENDPOINT:?Set endpoint}"
-python3 - <<'PY' > batch.json
-import json, uuid
-from datetime import datetime, timezone
-print(json.dumps({
-    "schemaVersion": "1.0",
-    "agent": {"serviceName": "rest-example", "environment": "development", "instanceId": str(uuid.uuid4())},
-    "events": [{"eventId": str(uuid.uuid4()), "objectId": str(uuid.uuid4()),
-                "type": "trace", "revision": 1, "traceId": uuid.uuid4().hex,
-                "startedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-                "data": {"name": "Example request", "status": "success", "durationMs": 120}}]
-}))
+"\${PYTHON:-python3}" - <<'PY' > batch.json
+${examples.Python.split('request = urllib.request.Request(')[0]}
+print(json.dumps(batch))
 PY
 curl --fail-with-body --max-time 10 "$METERTRAIL_ENDPOINT/v1/events/batch" \\
   -H "Authorization: Bearer $METERTRAIL_API_KEY" \\
   -H 'Content-Type: application/json' --data @batch.json`,
-    usage: ['Each run generates one new event and can consume one monitoring unit. For a network retry, resend the same batch.json unchanged instead of generating new IDs. This is a sample trace, not a real model request.', '每次运行生成一条新记录，可能消耗 1 个监控 unit。网络重试时原样重发同一份 batch.json，不要重新生成 ID。这是一条示例调用记录，不会请求模型。'],
+    usage: ['Each run sends one request and one model-call observation (2 monitoring units). For a network retry, resend the same batch.json unchanged instead of generating new IDs. This is a sample trace, not a real model request.', '每次运行上报一条请求及一条模型调用，共 2 个监控 units。网络重试时原样重发同一份 batch.json，不要重新生成 ID。这是一条示例调用记录，不会请求模型。'],
   },
 ];
 export const environmentExample = `# macOS / Linux / WSL
@@ -50,6 +42,6 @@ export METERTRAIL_API_KEY
 # Windows PowerShell (Node.js / Python tutorials)
 $env:METERTRAIL_ENDPOINT = "https://metertrail.com"
 $env:METERTRAIL_API_KEY = Read-Host "Project API key" -MaskInput`;
-export const receipt = '{"batchId":"<batch-id>","received":1,"status":"pending"}';
+export const receipt = '{"batchId":"<batch-id>","received":2,"status":"pending"}';
 export const queryExample = `curl --fail-with-body --max-time 10 "https://metertrail.com/v1/batches/<batch-id>" \\
   -H "Authorization: Bearer $METERTRAIL_API_KEY"`;

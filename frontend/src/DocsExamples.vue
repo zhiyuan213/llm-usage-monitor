@@ -29,6 +29,7 @@ async function copy() {
       )
     }}
   </p>
+  <p>{{ t('All examples send one request and one linked model call (2 units), with user, customer, feature, provider, model and Token usage. Use the field mapping and demonstration pricing instructions in REST integration above; do not replace unknown prices with zero.', '所有示例均包含一条请求及一条关联模型调用（2 units），带用户、客户、功能、供应商、模型和 Token 用量。字段映射与演示价格配置见上方 REST 接入说明；未知费用不会按零处理。') }}</p>
   <div class="code-box">
     <div>
       REST · {{ selected

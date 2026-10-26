@@ -6,6 +6,7 @@
 - Root cause: trace exports now append model, known Token, known estimated cost and unknown-cost count columns, but the existing spreadsheet regression still expected seven columns instead of eleven.
 - Fix: retain the original seven columns and append the four summaries; update the regression to require all eleven headers, including their explicit Chinese names. Keep the existing all-row, pagination, PDF and ownership checks.
 - Prevention: include the complete export integration regression when changing list/report schemas, alongside targeted metric, date-boundary and sort-validation tests. Deployment remains blocked until the exact final commit passes every required CI job.
+- Follow-up checked on 2026-10-26: this notification refers to the historical failure, not a new failure of the deployed version. Fix commit `c4da4a4` updates the trace export expectation to eleven columns and asserts the four new Chinese headers. Current deployed commit `17dfc62762981f02a4ed3405fe54b6228377843f`, run `40201422533`, has successful backend, frontend-sdk, security and images jobs. Repository instructions now explicitly require contract-sensitive local checks before every implementation commit and exact-commit CI verification after each push.
 
 ## 2026-10-22 npm audit service outage
 

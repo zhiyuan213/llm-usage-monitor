@@ -859,3 +859,6 @@
 }
 
 .public-v2 .hero-copy .unit-example { font-size: 13px; line-height: 1.8; margin-top: 16px; }
+.public-v2 .protocol-reference .example-field-map { width: 100%; min-width: 0; table-layout: fixed; }
+.public-v2 .example-field-map th:first-child { width: 30%; }
+.public-v2 .example-field-map td, .public-v2 .example-field-map code { overflow-wrap: anywhere; white-space: normal; }

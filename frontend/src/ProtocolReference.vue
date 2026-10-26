@@ -34,6 +34,17 @@ import {
       }}
     </p>
     <h3>Body</h3>
+    <p>{{ t('One request + one model call: 2 units. Model and Token columns come from the linked generation Observation, not the Trace itself. Replace the sample values and timestamp before sending.', '一条请求 + 一条模型调用，共 2 units。列表中的模型和 Token 来自同一 traceId 下的 generation Observation，不能只发送 Trace。上报前替换示例值与时间。') }}</p>
+    <table class="example-field-map">
+      <thead><tr><th>{{ t('Console field', '列表字段') }}</th><th>{{ t('Reported key', '上报字段') }}</th></tr></thead>
+      <tbody>
+        <tr><td>{{ t('User / customer', '用户 / 客户') }}</td><td><code>trace.data.userId / customerId</code></td></tr>
+        <tr><td>{{ t('Feature', '功能') }}</td><td><code>trace.data.feature</code></td></tr>
+        <tr><td>{{ t('Provider / model', '供应商 / 模型') }}</td><td><code>observation.data.provider / model</code></td></tr>
+        <tr><td>Token</td><td><code>observation.data.usage.inputTokens / outputTokens / cachedInputTokens</code></td></tr>
+      </tbody>
+    </table>
+    <p>{{ t('Configure matching provider/model prices in Project settings before ingestion to estimate cost. For example/example-model, demonstration USD rates per million Tokens of input 3, output 8 and cached input 0.5 yield US$0.00645 for this payload. Cached input is included in input, not added again. Missing pricing remains unknown; old records are not automatically repriced. These are demonstration prices only.', '估算费用需要先在项目设置配置匹配的供应商与模型价格。例如 example / example-model，每百万 Token 美元价格：输入 3、输出 8、缓存输入 0.5，本示例费用为 US$0.00645。缓存输入已包含在输入中，不重复累加。未配置价格时费用仍为未知；旧记录不会自动重算。以上仅为演示价格。') }}</p>
     <p>
       {{
         t(

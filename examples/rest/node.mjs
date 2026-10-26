@@ -1,4 +1,6 @@
 import { randomUUID, randomBytes } from "node:crypto";
+const traceId = randomBytes(16).toString("hex");
+const startedAt = new Date().toISOString();
 const batch = {
   schemaVersion: "1.0",
   agent: {
@@ -12,9 +14,17 @@ const batch = {
       objectId: randomUUID(),
       type: "trace",
       revision: 1,
-      traceId: randomBytes(16).toString("hex"),
-      startedAt: new Date().toISOString(),
-      data: { name: "Example request", status: "success", durationMs: 120 },
+      traceId,
+      startedAt,
+      data: { name: "Example request", status: "success", durationMs: 120,
+        userId: "demo-user", customerId: "demo-customer", feature: "document-analysis" },
+    },
+    {
+      eventId: randomUUID(), objectId: randomUUID(), type: "observation", revision: 1,
+      traceId, spanId: randomBytes(8).toString("hex"), startedAt,
+      data: { name: "Model response", observationType: "generation", status: "success",
+        durationMs: 100, provider: "example", model: "example-model",
+        usage: { inputTokens: 1500, outputTokens: 400, cachedInputTokens: 500 } },
     },
   ],
 };

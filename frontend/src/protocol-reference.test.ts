@@ -18,6 +18,18 @@ function paths(value: unknown, prefix = ""): string[] {
     return [path, ...paths(child, path)];
   });
 }
+it('starts with an attributed request and linked model usage, not an empty trace', () => {
+  const [trace, generation] = JSON.parse(minimalBody).events;
+  expect(trace.data.userId).toBe('demo-user');
+  expect(trace.data.customerId).toBe('demo-customer');
+  expect(trace.data.feature).toBe('document-analysis');
+  expect(generation.type).toBe('observation');
+  expect(generation.traceId).toBe(trace.traceId);
+  expect(generation.data.observationType).toBe('generation');
+  expect(generation.data.model).toBe('example-model');
+  expect(generation.data.usage.inputTokens + generation.data.usage.outputTokens).toBe(1900);
+  expect(JSON.parse(minimalReceiptExample).received).toBe(2);
+});
 it("documents every example header and derives Host from the declared URL", () => {
   const documented = new Set(sections[0].rows.map((row) => row[0]));
   for (const line of requestHeaders.split("\n"))

@@ -528,9 +528,8 @@ export const receiptExample =
   '{"batchId":"550e8400-e29b-41d4-a716-446655440099","received":3,"status":"pending"}';
 
 const minimal = JSON.parse(bodyExample);
-minimal.events = [minimal.events[0]];
-for (const name of ["userId", "customerId", "feature"])
-  delete minimal.events[0].data[name];
+// The first published example must populate the request list, not hide model usage.
+minimal.events = minimal.events.slice(0, 2);
 export const minimalBody = JSON.stringify(minimal, null, 2);
 
 export const requestUrl = "https://metertrail.com/v1/events/batch";
