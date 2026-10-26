@@ -35,9 +35,14 @@ final class Protocol {
             "startedAt",
             "data");
     e.fieldNames().forEachRemaining(k -> Support.require(allowed.contains(k), "UNKNOWN_FIELD"));
-    String id = Support.text(e, "eventId", 36);
+    JsonNode eventId = e.get("eventId");
+    Support.require(eventId != null && !eventId.isNull(), "EVENT_ID_REQUIRED");
+    Support.require(eventId.isTextual(), "INVALID_EVENT_ID_TYPE");
+    String id = eventId.asText();
+    Support.require(!id.isBlank(), "EVENT_ID_REQUIRED");
+    Support.require(id.length() == 36, "EVENT_ID_LENGTH_MUST_BE_36");
     Support.require(
-        id.matches("[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}"), "INVALID_EVENT_ID");
+        id.matches("[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}"), "INVALID_EVENT_ID_FORMAT");
     String type = Support.text(e, "type", 16);
     Support.require(Set.of("trace", "observation", "score").contains(type), "INVALID_TYPE");
     Support.text(e, "objectId", 128);

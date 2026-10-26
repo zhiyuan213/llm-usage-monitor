@@ -4,9 +4,34 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class ProtocolTest {
+  @Test
+  void eventIdErrorsExplainTheExactInvalidContract() {
+    var e = new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode();
+    assertEquals("EVENT_ID_REQUIRED", assertThrows(ApiError.class, () -> Protocol.event(e)).code);
+    e.putNull("eventId");
+    assertEquals("EVENT_ID_REQUIRED", assertThrows(ApiError.class, () -> Protocol.event(e)).code);
+    e.put("eventId", 123);
+    assertEquals("INVALID_EVENT_ID_TYPE", assertThrows(ApiError.class, () -> Protocol.event(e)).code);
+    e.put("eventId", " ");
+    assertEquals("EVENT_ID_REQUIRED", assertThrows(ApiError.class, () -> Protocol.event(e)).code);
+    for (String id : List.of("x".repeat(35), "x".repeat(37), "550e8400e29b41d4a716446655440000")) {
+      e.put("eventId", id);
+      assertEquals("EVENT_ID_LENGTH_MUST_BE_36", assertThrows(ApiError.class, () -> Protocol.event(e)).code);
+    }
+    e.put("eventId", "x".repeat(36));
+    assertEquals("INVALID_EVENT_ID_FORMAT", assertThrows(ApiError.class, () -> Protocol.event(e)).code);
+    e.put("type", "trace"); e.put("objectId", "example"); e.put("revision", 1);
+    e.put("traceId", "0123456789abcdef0123456789abcdef"); e.put("startedAt", Instant.now().toString());
+    e.set("data", Support.parse("{\"name\":\"Example\",\"status\":\"success\",\"durationMs\":1}"));
+    for (String id : List.of("550e8400-e29b-41d4-a716-446655440000", "550E8400-E29B-41D4-A716-446655440000")) {
+      e.put("eventId", id);
+      assertDoesNotThrow(() -> Protocol.event(e));
+    }
+  }
   @Test
   void paymentCurrencyPrecision() {
     assertEquals(new BigDecimal("29.00"), PaymentsController.fromMinorUnits("2900", "USD"));

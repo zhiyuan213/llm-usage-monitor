@@ -160,8 +160,8 @@ export const sections = [
         "string (UUID)",
         "Required",
         "必填",
-        "36-character UUID; unchanged on retries",
-        "36 字符 UUID；重试保持不变",
+        "Exactly 36 characters including four hyphens (8-4-4-4-12), hexadecimal only; unique per project, unchanged on identical retries",
+        "必须恰好 36 个字符（含 4 个连字符），格式 8-4-4-4-12，仅十六进制字符；项目内唯一，原样重试不变",
         '"550e8400-e29b-41d4-a716-446655440000"',
       ],
       [

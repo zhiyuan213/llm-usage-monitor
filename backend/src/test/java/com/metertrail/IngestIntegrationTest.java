@@ -1452,6 +1452,27 @@ class IngestIntegrationTest {
   }
 
   @Test
+  void invalidEventIdReasonsSurviveBatchProcessingWithOriginalIndices() {
+    var missing = event("trace", "id-missing", 1); missing.remove("eventId");
+    var wrongType = event("trace", "id-type", 1); wrongType.put("eventId", 123);
+    var wrongLength = event("trace", "id-length", 1); wrongLength.put("eventId", "short");
+    var wrongFormat = event("trace", "id-format", 1); wrongFormat.put("eventId", "x".repeat(36));
+    var good = event("trace", "id-valid", 1);
+    var row = result(ingest.accept(project, batch(missing, wrongType, wrongLength, wrongFormat, good)));
+    assertEquals(1, row.get("accepted"));
+    assertEquals(4, row.get("rejected"));
+    JsonNode errors = Support.parse(row.get("errors").toString());
+    String[] codes = {"EVENT_ID_REQUIRED", "INVALID_EVENT_ID_TYPE", "EVENT_ID_LENGTH_MUST_BE_36", "INVALID_EVENT_ID_FORMAT"};
+    for (int i = 0; i < codes.length; i++) {
+      assertEquals(i, errors.get(i).path("index").asInt());
+      assertEquals(codes[i], errors.get(i).path("code").asText());
+    }
+    assertEquals(1, units());
+    assertEquals(1, result(ingest.accept(project, batch(good))).get("duplicates"));
+    assertEquals(1, units());
+  }
+
+  @Test
   void fallbackDoesNotRewriteUnconsumedAddonPacks() {
     UUID id = pack();
     packEvent(id, "completed", "800");
