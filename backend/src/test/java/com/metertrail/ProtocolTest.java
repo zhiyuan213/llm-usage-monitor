@@ -9,6 +9,14 @@ import org.junit.jupiter.api.Test;
 
 class ProtocolTest {
   @Test
+  void preflightRejectsScalarEventsWithoutLeakingPayload() {
+    var invalid = assertThrows(Protocol.InvalidEvents.class,
+        () -> Protocol.validateEvents(Support.parse("{\"events\":[null,1,\"private-content\"]}")));
+    assertEquals(3, invalid.errors.size());
+    assertEquals("INVALID_EVENT_TYPE", invalid.code);
+    assertFalse(invalid.errors.toString().contains("private-content"));
+  }
+  @Test
   void eventIdErrorsExplainTheExactInvalidContract() {
     var e = new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode();
     assertEquals("EVENT_ID_REQUIRED", assertThrows(ApiError.class, () -> Protocol.event(e)).code);

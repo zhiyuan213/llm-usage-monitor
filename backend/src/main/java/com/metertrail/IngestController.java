@@ -35,6 +35,11 @@ class IngestController {
     return b;
   }
 
+  @ExceptionHandler(Protocol.InvalidEvents.class)
+  ResponseEntity<?> invalidEvents(Protocol.InvalidEvents invalid) {
+    return ResponseEntity.badRequest().body(Map.of("code", invalid.code, "errors", invalid.errors));
+  }
+
   @PostMapping(value = "/v1/events/batch", produces = "application/json")
   Object batch(HttpServletRequest req) throws IOException {
     if (pipeline.enabled()) return queuedBatch(req);
@@ -91,14 +96,6 @@ class IngestController {
   private com.fasterxml.jackson.databind.JsonNode readBatch(HttpServletRequest req, UUID project)
       throws IOException {
     limits.check("ingest:" + project, 240000);
-    Long queued =
-        store
-            .queries()
-            .queryForObject(
-                "SELECT coalesce(sum(accepted),0) FROM ingest_batches WHERE status IN"
-                    + " ('pending','quarantined')",
-                Long.class);
-    if (queued > 50000) throw new ApiError(503, "INGEST_BACKLOG_FULL");
     if (req.getContentType() == null
         || !req.getContentType().toLowerCase(Locale.ROOT).startsWith("application/json"))
       throw new ApiError(415, "INVALID_CONTENT_TYPE");
@@ -114,6 +111,10 @@ class IngestController {
     }
     var b = Support.parse(new String(bytes, StandardCharsets.UTF_8));
     Protocol.envelope(b);
+    Protocol.validateEvents(b);
+    Long queued = store.queries().queryForObject(
+        "SELECT coalesce(sum(accepted),0) FROM ingest_batches WHERE status IN ('pending','quarantined')", Long.class);
+    if (queued > 50000) throw new ApiError(503, "INGEST_BACKLOG_FULL");
     return b;
   }
 

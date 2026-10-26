@@ -742,6 +742,26 @@ class DurableIngestIntegrationTest {
   }
 
   @Test
+  void malformedEventsReturnImmediate400WithoutAcceptingValidNeighbors() throws Exception {
+    var shortId = event("short", 1); shortId.put("eventId", "short");
+    var badUsage = event("usage", 1);
+    badUsage.withObject("data").put("durationMs", -1);
+    mvc.perform(post("/v1/events/batch").header("Authorization", "Bearer " + key)
+        .contentType("application/json").content(body(shortId, event("valid", 1), badUsage).toString()))
+        .andExpect(request().asyncNotStarted())
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("EVENT_ID_LENGTH_MUST_BE_36"))
+        .andExpect(jsonPath("$.errors.length()").value(2))
+        .andExpect(jsonPath("$.errors[0].index").value(0))
+        .andExpect(jsonPath("$.errors[0].field").value("events[0].eventId"))
+        .andExpect(jsonPath("$.errors[1].index").value(2))
+        .andExpect(jsonPath("$.errors[1].code").value("INVALID_DURATION"));
+    assertEquals(0, units());
+    for (String table : List.of("ingest_accept_queue", "ingest_batches", "usage_ledger"))
+      assertEquals(0L, store.db.queryForObject("SELECT count(*) FROM " + table + " WHERE project_id=?", Long.class, project));
+  }
+
+  @Test
   void readPoolIsPhysicalReadOnlyAndSurvivesWritePoolExhaustion() throws Exception {
     assertNotSame(writes, reads);
     assertThrows(

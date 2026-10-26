@@ -6,6 +6,52 @@ import java.time.*;
 import java.util.*;
 
 final class Protocol {
+  static final class InvalidEvents extends ApiError {
+    final List<Map<String, Object>> errors;
+    InvalidEvents(List<Map<String, Object>> errors) {
+      super(400, (String) errors.get(0).get("code"));
+      this.errors = List.copyOf(errors);
+    }
+  }
+
+  /** Pure request validation; never queries state or accepts any part of a batch. */
+  static void validateEvents(JsonNode body) {
+    var errors = new ArrayList<Map<String, Object>>();
+    int index = 0;
+    for (JsonNode value : body.path("events")) {
+      try {
+        event(value);
+      } catch (ApiError invalid) {
+        String field = switch (invalid.code) {
+          case "EVENT_ID_REQUIRED", "INVALID_EVENT_ID_TYPE", "EVENT_ID_LENGTH_MUST_BE_36", "INVALID_EVENT_ID_FORMAT" -> "eventId";
+          case "INVALID_TYPE" -> "type";
+          case "INVALID_OBJECTID" -> "objectId";
+          case "INVALID_REVISION" -> "revision";
+          case "INVALID_TIMESTAMP" -> "startedAt";
+          case "INVALID_TRACE_ID" -> "traceId";
+          case "INVALID_SPAN_ID" -> "spanId";
+          case "INVALID_PARENT_SPAN" -> "parentSpanId";
+          case "INVALID_DATA", "UNKNOWN_DATA_FIELD" -> "data";
+          case "INVALID_DURATION" -> "data.durationMs";
+          case "INVALID_OBSERVATION_TYPE" -> "data.observationType";
+          case "INVALID_USAGE" -> "data.usage";
+          case "INVALID_NAME" -> "data.name";
+          case "INVALID_STATUS" -> "data.status";
+          case "INVALID_PROVIDER" -> "data.provider";
+          case "INVALID_MODEL" -> "data.model";
+          case "INVALID_USERID" -> "data.userId";
+          case "INVALID_CUSTOMERID" -> "data.customerId";
+          case "INVALID_FEATURE" -> "data.feature";
+          case "INVALID_ERROR" -> "data.error";
+          default -> "";
+        };
+        errors.add(Map.of("index", index, "field", "events[" + index + "]" + (field.isEmpty() ? "" : "." + field), "code", invalid.code));
+      }
+      index++;
+    }
+    if (!errors.isEmpty()) throw new InvalidEvents(errors);
+  }
+
   static void envelope(JsonNode b) {
     Support.require(
         b.isObject() && b.path("schemaVersion").asText().equals("1.0"), "INVALID_SCHEMA");
@@ -21,6 +67,7 @@ final class Protocol {
   }
 
   static void event(JsonNode e) {
+    Support.require(e.isObject(), "INVALID_EVENT_TYPE");
     Support.require(
         e.toString().getBytes(StandardCharsets.UTF_8).length <= 8192, "EVENT_TOO_LARGE");
     Set<String> allowed =

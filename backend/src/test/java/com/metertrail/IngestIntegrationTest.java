@@ -1558,6 +1558,20 @@ class IngestIntegrationTest {
   }
 
   @Test
+  void fallbackHttpAlsoRejectsMalformedEventsBeforeBatchCreation() throws Exception {
+    var invalid = event("trace", "sync-invalid", 1); invalid.put("revision", 0);
+    mvc.perform(post("/v1/events/batch").header("Authorization", "Bearer " + key)
+        .contentType("application/json").content(batch(event("trace", "sync-good", 1), invalid).toString()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("INVALID_REVISION"))
+        .andExpect(jsonPath("$.errors[0].index").value(1))
+        .andExpect(jsonPath("$.errors[0].field").value("events[1].revision"));
+    assertEquals(0, units());
+    assertEquals(0L, store.db.queryForObject("SELECT count(*) FROM ingest_batches WHERE project_id=?", Long.class, project));
+    assertEquals(admission.limit, admission.permits.availablePermits());
+  }
+
+  @Test
   void busyWorkerSliceDrainsMoreThanTenBatchesWithoutRebilling() {
     var receipts = new ArrayList<Map<String,Object>>();
     for (int i = 0; i < 25; i++)

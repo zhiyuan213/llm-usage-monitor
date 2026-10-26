@@ -58,6 +58,7 @@ import {
       <pre>{{ minimalBody }}</pre>
     </div>
     <h3>Resp</h3>
+    <p>{{ t('Invalid event parameters return HTTP 400 immediately with errors[].index, field and code; the whole batch is rejected without a batchId or unit charge. A valid batch receives the HTTP 200 receipt below; state-dependent checks continue afterwards.', '事件参数不合法会直接返回 HTTP 400，包含 errors[].index、field 和 code；整批不接收，不生成 batchId、不扣 units。格式正确后返回下方 HTTP 200 回执，依赖当前状态的检查仍会继续执行。') }}</p>
     <p>
       {{
         t(
