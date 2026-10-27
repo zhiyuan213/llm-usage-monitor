@@ -23,9 +23,9 @@ describe('console usability contracts',()=>{
   const single=await renderToString(createSSRApp(component,{page:0,size:25,total:1,loading:false}));
   expect(single).toContain('1 row');expect(single).not.toContain('1 rows');expect(single).toContain('value="25"');
  });
- it('shows custom-date apply only when both dates can be entered',async()=>{
+ it('shows a primary Search button and visible bounds for presets and custom dates',async()=>{
   const component=(await import('./DateRangeFilter.vue')).default;
-  const quick=await renderToString(createSSRApp(component,{}));expect(quick).not.toContain('Apply dates');
-  const custom=await renderToString(createSSRApp(component,{initial:'custom'}));expect(custom).toContain('Apply dates');expect(custom.match(/type="date"/g)).toHaveLength(2);
+  const quick=await renderToString(createSSRApp(component,{}));expect(quick).toContain('Search');expect(quick).toContain('btn primary');expect(quick.match(/type="date"/g)).toHaveLength(2);
+  const custom=await renderToString(createSSRApp(component,{initial:'custom'}));expect(custom).toContain('Search');expect(custom.match(/type="date"/g)).toHaveLength(2);
  });
 });

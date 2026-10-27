@@ -11,13 +11,15 @@ watch(()=>props.value,value=>{if(value){const dates=visibleDates(value);from.val
 function choose(){
  invalid.value=false;
  if(period.value==='custom'){const dates=monthDates();from.value=dates.from;to.value=dates.to;}
- else if(period.value)query();
+ else if(period.value){const dates=visibleDates(rollingWindow(Number(period.value)));from.value=dates.from;to.value=dates.to;}
 }
 function query(){
+ if(!period.value)return;
  const value=period.value==='custom'?customWindow(from.value,to.value):rollingWindow(Number(period.value));
  invalid.value=!value;
  if(value){if(period.value!=='custom'){const dates=visibleDates(value);from.value=dates.from;to.value=dates.to;}emit('change',value);}
 }
 function edit(){period.value='custom';invalid.value=false;}
 </script>
-<template><div class="insight-toolbar date-range-filter"><label>{{t('Date range (UTC)','日期范围（UTC）')}}<select v-model="period" :disabled="busy" @change="choose"><option value="" disabled>{{t('Choose a quick range','选择快捷日期')}}</option><option value="1">{{t('Last 24 hours','最近24小时')}}</option><option value="7">{{t('Last 7 days','最近7天')}}</option><option value="30">{{t('Last 30 days','最近30天')}}</option><option value="custom">{{t('Custom dates','自定义日期')}}</option></select></label><label>{{t('From','开始日期')}}<input type="date" v-model="from" :disabled="busy" @input="edit" /></label><label>{{t('Through','结束日期（含）')}}<input type="date" v-model="to" :disabled="busy" @input="edit" /></label><button v-if="period==='custom'" type="button" class="btn" :disabled="busy" @click="query">{{t('Apply dates','查询日期')}}</button><span v-if="invalid" role="alert" class="error">{{t('Choose a valid date range.','请选择有效日期范围。')}}</span></div></template>
+<template><div class="insight-toolbar date-range-filter"><label>{{t('Date range (UTC)','日期范围（UTC）')}}<select v-model="period" :disabled="busy" @change="choose"><option value="" disabled>{{t('Choose a quick range','选择快捷日期')}}</option><option value="1">{{t('Last 24 hours','最近24小时')}}</option><option value="7">{{t('Last 7 days','最近7天')}}</option><option value="30">{{t('Last 30 days','最近30天')}}</option><option value="custom">{{t('Custom dates','自定义日期')}}</option></select></label><label>{{t('From','开始日期')}}<input type="date" v-model="from" :disabled="busy" @input="edit" /></label><label>{{t('Through','结束日期（含）')}}<input type="date" v-model="to" :disabled="busy" @input="edit" /></label><button type="button" class="btn primary" :disabled="busy||!period" @click="query">{{t('Search','查询')}}</button><span v-if="invalid" role="alert" class="error">{{t('Choose a valid date range.','请选择有效日期范围。')}}</span></div></template>
+
