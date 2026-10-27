@@ -3,7 +3,7 @@
   --blue: #3156e8;
   --line: #e1e7f0;
   color: #1b2b44;
-  font-family: "MeterTrail Noto Sans SC", sans-serif;
+  font-family: var(--public-font, system-ui, -apple-system, "Segoe UI", sans-serif);
   font-synthesis: weight;
   background: #fff;
 }
@@ -79,7 +79,7 @@
   right: max(24px, calc((100vw - 1280px) / 2));
 }
 .public-language select {
-  font-family: "MeterTrail Noto Sans SC", sans-serif;
+  font-family: var(--public-font, system-ui, -apple-system, "Segoe UI", sans-serif);
   font-size: 12px;
   color: #7c8eaa;
   max-width: 90px;
@@ -862,3 +862,26 @@
 .public-v2 .protocol-reference .example-field-map { width: 100%; min-width: 0; table-layout: fixed; }
 .public-v2 .example-field-map th:first-child { width: 30%; }
 .public-v2 .example-field-map td, .public-v2 .example-field-map code { overflow-wrap: anywhere; white-space: normal; }
+
+html[lang="zh-CN"] .public-v2 { --public-font: "MeterTrail Noto Sans SC", system-ui, "Microsoft YaHei", sans-serif; }
+
+.public-v2 .unit-help { display: inline-block; font-size: 13px; margin-top: 8px; }
+.public-v2 .integration-proof { font-size: 13px; line-height: 1.7; margin-top: 16px; }
+.public-v2 #product, .public-v2 #units { scroll-margin-top: 24px; }
+.public-v2 .units-guide { margin: 24px auto; padding: 24px; }
+.public-v2 .units-guide table { min-width: 600px; font-size: 14px; }
+.public-v2 .public-menu-toggle { display: none; }
+/* Consent stays in document flow: it cannot cover page headings or actions. */
+.analytics-consent { position: relative; inset: auto; width: calc(100% - 48px); max-width: 1024px; margin: 16px auto 64px; padding: 14px 44px 14px 18px; gap: 16px; }
+.analytics-consent .consent-close { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 4px; background: transparent; color: #526981; cursor: pointer; font-size: 22px; }
+.analytics-consent .consent-close:focus-visible { outline: 2px solid #3156e8; }
+@media (max-width: 480px) {
+  .public-v2 .public-header { gap: 12px; }
+  .public-v2 .public-header .brand { margin-right: 0; font-size: 22px; }
+  .public-v2 .public-menu-toggle { display: inline-flex; align-items: center; justify-content: center; height: 36px; width: 36px; border: 1px solid var(--line); border-radius: 6px; background: white; color: #3156e8; margin-left: auto; margin-right: 90px; }
+  .public-v2 .public-header nav { display: none; }
+  .public-v2 .public-header nav.menu-open { display: flex; flex-direction: column; width: 100%; gap: 0; }
+  .public-v2 .public-header nav a { min-height: 42px; }
+  .public-v2 .public-header .header-actions { width: 100%; margin: 0; justify-content: flex-end; }
+  .analytics-consent { width: calc(100% - 24px); padding: 16px 40px 16px 16px; }
+}

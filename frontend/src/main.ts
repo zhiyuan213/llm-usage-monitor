@@ -10,6 +10,7 @@ import "./console-v2.css";
 import "./public-v2.css";
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior(to,from,saved){ if(saved)return saved;if(['/','/pricing'].includes(to.path) && ['#product','#units'].includes(to.hash))return {el:to.hash,behavior:'smooth'};if(to.path!==from.path)return {top:0}; },
   routes: [
     ...consoleRoutes(Console),
     { path: '/tutorials/:tutorial', component: Public, meta: { tutorial: true } },

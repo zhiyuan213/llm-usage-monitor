@@ -56,7 +56,7 @@ def main():
                 time.sleep(0.5)
         import re
         assets = re.findall(r'(?:src|href)="(/(?:assets|fonts)/[^"<>]+)"', html)
-        paths = ["/", "/demo", "/tutorials", "/tutorials/nodejs", "/tutorials/python", "/tutorials/rest", "/sitemap.xml", "/robots.txt", "/googlecc6b6e16e288c986.html", "/fonts/NotoSansSC-Regular.woff2", *assets]
+        paths = ["/", "/security", "/demo", "/tutorials", "/tutorials/nodejs", "/tutorials/python", "/tutorials/rest", "/sitemap.xml", "/robots.txt", "/googlecc6b6e16e288c986.html", "/fonts/NotoSansSC-ui.woff2", *assets]
         for path in paths:
             with urllib.request.urlopen(origin + path, timeout=5) as response:
                 content = response.read()
@@ -66,13 +66,29 @@ def main():
                     raise AssertionError("Google verification file changed")
                 if path.startswith('/tutorials/') and b'Example request' not in content:
                     raise AssertionError("Tutorial initial HTML has no executable example")
+        import gzip
+        compressed_sizes = {}
+        for path in assets:
+            if not path.endswith(('.js', '.css')):
+                continue
+            with urllib.request.urlopen(origin + path, timeout=5) as response:
+                original = response.read()
+            with urllib.request.urlopen(urllib.request.Request(origin + path, headers={'Accept-Encoding': 'gzip'}), timeout=5) as response:
+                compressed = response.read()
+                assert response.headers.get('Content-Encoding') == 'gzip', path
+                assert 'accept-encoding' in response.headers.get('Vary', '').lower(), path
+                assert gzip.decompress(compressed) == original, path
+                assert len(compressed) < len(original), path
+                assert response.headers.get('Content-Security-Policy'), path
+                compressed_sizes[path] = {'original': len(original), 'gzip': len(compressed)}
+        assert compressed_sizes, 'No JS/CSS assets checked'
         for path in ["/app", "/app/workspace?test=1", "/login", "/pay?test=1"]:
             with urllib.request.urlopen(origin + path, timeout=5) as response:
                 if "noindex" not in response.headers.get("X-Robots-Tag", ""):
                     raise AssertionError("Private URL missing noindex: " + path)
                 if not response.headers.get("Content-Security-Policy"):
                     raise AssertionError("Security headers lost")
-        print(json.dumps({"result": "passed", "runtime_uid": uid, "restrictive_context": "files 0600, directories 0700", "public_files_checked": paths, "private_headers_checked": 4}))
+        print(json.dumps({"result": "passed", "runtime_uid": uid, "restrictive_context": "files 0600, directories 0700", "public_files_checked": paths, "private_headers_checked": 4, "static_compression": compressed_sizes}))
     finally:
         subprocess.run(["docker", "rm", "-f", NAME], check=False, timeout=30)
 

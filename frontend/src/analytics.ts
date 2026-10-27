@@ -1,12 +1,12 @@
 // Public-site measurement only. Never send route queries, hashes, account IDs or form values.
 export const measurementId = 'G-W26TJWRR17';
 export const consentKey = 'metertrail.analytics-consent.v1';
-export const publicPaths = ['/', '/pricing', '/docs', '/demo', '/tutorials', '/tutorials/nodejs', '/tutorials/python', '/tutorials/rest', '/privacy', '/terms', '/refunds'];
+export const publicPaths = ['/', '/pricing', '/docs', '/demo', '/tutorials', '/tutorials/nodejs', '/tutorials/python', '/tutorials/rest', '/privacy', '/terms', '/refunds', '/security'];
 const titles: Record<string, string> = {
   '/': 'LLM call tracking and cost monitoring', '/pricing': 'Pricing', '/docs': 'Documentation',
   '/demo': 'Interactive demo', '/tutorials': 'Integration tutorials',
   '/tutorials/nodejs': 'Node.js integration tutorial', '/tutorials/python': 'Python integration tutorial',
-  '/tutorials/rest': 'REST integration tutorial', '/privacy': 'Privacy policy', '/terms': 'Terms', '/refunds': 'Refunds',
+  '/tutorials/rest': 'REST integration tutorial', '/privacy': 'Privacy policy', '/terms': 'Terms', '/refunds': 'Refunds', '/security': 'Security and data handling',
 };
 export function publicPage(path: string) {
   return publicPaths.includes(path) ? { page_location: `https://metertrail.com${path}`, page_title: `${titles[path]} | MeterTrail`, page_referrer: '' } : null;

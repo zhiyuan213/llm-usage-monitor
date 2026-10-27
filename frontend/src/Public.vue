@@ -6,7 +6,6 @@ import { tutorials } from './tutorial-content';
 import { publicPage, trackAction } from './analytics';
 import Checkout from "./Checkout.vue";
 import PlanFeatures from "./PlanFeatures.vue";
-import DocsExamples from "./DocsExamples.vue";
 import ErrorReference from "./ErrorReference.vue";
 import ProtocolReference from "./ProtocolReference.vue";
 import ProtocolFields from "./ProtocolFields.vue";
@@ -16,6 +15,8 @@ import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from "vue"
 import { verificationCooldown } from "./verification-cooldown";
 import { useRoute, useRouter } from "vue-router";
 import {
+  Menu,
+  X,
   Activity,
   ArrowRight,
   GitBranch,
@@ -57,6 +58,8 @@ const activeDoc = computed(() => {
   const id = route.hash.slice(1);
   return docSections.find((section) => section.id === id)?.id || "quickstart";
 });
+const menuOpen=ref(false);
+watch(()=>route.fullPath,()=>menuOpen.value=false);
 const docsContent = ref<HTMLElement | null>(null);
 watch(activeDoc, () => docsContent.value?.scrollTo({ top: 0 }), {
   flush: "post",
@@ -201,8 +204,9 @@ async function copy() {
         ><span class="brand-icon"><Activity :size="20" /></span
         >MeterTrail</RouterLink
       >
-      <nav>
-        <RouterLink to="/">{{ t("Product", "产品") }}</RouterLink
+      <button type="button" class="public-menu-toggle" :aria-expanded="menuOpen" aria-controls="public-navigation" :aria-label="t('Toggle navigation','展开或收起导航')" @click="menuOpen=!menuOpen"><component :is="menuOpen?X:Menu" :size="22" /></button>
+      <nav id="public-navigation" :class="{'menu-open':menuOpen}" @keydown.esc="menuOpen=false">
+        <RouterLink to="/#product">{{ t("Product", "产品") }}</RouterLink
         ><RouterLink to="/pricing">{{ t("Pricing", "价格") }}</RouterLink
         ><RouterLink to="/docs">{{
           t("Documentation", "开发文档")
@@ -270,7 +274,8 @@ async function copy() {
               )
             }}</small
           >
-          <p class="unit-example">{{ t('For example: one request creates 1 Trace + 2 Observations + 1 Score = 4 units. At that structure, 50,000 units cover 12,500 requests. Updating or retrying the same objects does not add units. Units are not tokens.', '例如：一次请求创建1条 Trace、2条 Observation、1条 Score，合计4 units。按此结构，50,000 units 可记录12,500次请求；更新或重试相同对象不增加 units。units 不是 Token 数。') }}</p>
+          <RouterLink class="unit-help" to="/pricing#units">{{t("What counts as a unit?", "什么是 unit？")}}</RouterLink>
+          <p class="integration-proof">{{t('Your application calls the model directly. Send metadata through REST or a supported SDK; cost estimates require reported usage and matching model rates.','应用直接调用模型，通过 REST 或支持的 SDK 上报元数据；费用估算需要用量数据及匹配的模型价格。')}}</p>
         </div>
         <div class="hero-console">
           <div class="mock-top">
@@ -339,7 +344,7 @@ async function copy() {
           </div>
         </div>
       </section>
-      <section class="features">
+      <section id="product" class="features">
         <article
           v-for="(item, i) in [
             [
@@ -506,6 +511,7 @@ async function copy() {
           }}
         </p>
       </section>
+      <section id="units" class="panel units-guide"><h2>{{t('How units work','units 如何计算')}}</h2><p>{{t('Each new Trace, Observation or Score uses one unit. These are example structures, not fixed limits on your requests. Model-provider charges are separate.','每新建一个 Trace、Observation 或 Score 使用 1 unit。下表是示例结构，不是每次请求的固定消耗；模型供应商费用另计。')}}</p><div class="table-wrap"><table><thead><tr><th>{{t('Example','示例')}}</th><th>{{t('Objects per request','每次新建对象')}}</th><th>{{t('Units per request','每次 units')}}</th><th>{{t('Requests within 50,000 units','50,000 units 可记录次数')}}</th></tr></thead><tbody><tr><td>{{t('One model call','一次模型调用')}}</td><td>1 Trace + 1 Observation</td><td>2</td><td>25,000</td></tr><tr><td>{{t('With a score','附加评分')}}</td><td>1 Trace + 1 Observation + 1 Score</td><td>3</td><td>16,666</td></tr><tr><td>{{t('Multiple steps and a score','多步骤及评分')}}</td><td>1 Trace + 2 Observations + 1 Score</td><td>4</td><td>12,500</td></tr></tbody></table></div><p>{{t('Updates and exact retries do not add units. Extra steps create extra objects. Units are not tokens.','更新和原样重试不增加 units；更多步骤会产生更多对象。units 不是 Token 数。')}}</p></section>
     </main>
     <main v-else-if="page === 'pay'" class="public-content checkout-page"><Checkout /></main>
     <main v-else-if="authPage" class="auth-layout">
@@ -697,11 +703,11 @@ async function copy() {
               }}
             </li>
             <li>
-              <strong>{{ t("Configure your environment", "配置环境") }}</strong>
+              <strong>{{ t("Copy a runnable example", "复制可运行示例") }}</strong>
               {{
                 t(
-                  "Set METERTRAIL_API_KEY and METERTRAIL_ENDPOINT to your deployment URL.",
-                  "设置 METERTRAIL_API_KEY 和 METERTRAIL_ENDPOINT 为实际部署地址。",
+                  "Choose Node.js, Python or REST below. The guide includes environment setup and a complete script; no repository clone is needed.",
+                  "选择下方 Node.js、Python 或 REST 教程，按说明设置环境并复制完整脚本，无需克隆仓库。",
                 )
               }}
             </li>
@@ -709,13 +715,14 @@ async function copy() {
               <strong>{{ t("Send an example", "发送示例") }}</strong>
               {{
                 t(
-                  "Run scripts/send-example.mjs, then open the project overview.",
-                  "运行 scripts/send-example.mjs，再打开项目概览。",
+                  "Send the sample, check the returned batchId, then open Traces in the same project.",
+                  "发送示例，查询返回的 batchId，再进入同一项目的调用记录查看。",
                 )
               }}
             </li>
           </ol>
-          <DocsExamples />
+          <div class="tutorial-grid"><RouterLink v-for="guide in tutorials" :key="guide.slug" class="panel" :to="'/tutorials/'+guide.slug"><h2>{{t(guide.en,guide.zh)}}</h2><p>{{t(guide.summary[0],guide.summary[1])}}</p>{{t('Open runnable guide →','查看可运行教程 →')}}</RouterLink></div>
+          <p>{{t('A successful sample sends 1 Trace and 1 model observation (2 units). The provider and model are examples; configure matching rates to estimate cost.','完整示例发送 1 条 Trace 和 1 条模型 Observation（2 units）。供应商和模型为示例值，估算费用需配置匹配价格。')}}</p>
         </section>
         <section
           v-else-if="activeDoc === 'protocol'"
@@ -814,6 +821,7 @@ async function copy() {
         </section>
       </article>
     </main>
+    <main v-else-if="page==='security'" class="legal public-content"><span class="eyebrow">METERTRAIL</span><h1>{{t('Security and data handling','安全与数据处理')}}</h1><h2>{{t('Send metadata, not secrets','上报元数据，不上报秘密')}}</h2><p>{{t('Report request timing, status, model names and token counts. Do not include model API keys, passwords, full prompts or response text in events. Run integrations on your backend.','上报请求耗时、状态、模型名称与 Token 数，不要在事件中包含模型 API 密钥、密码、完整提示词或回答正文。接入代码应运行在服务端。')}}</p><h2>{{t('Project access and account protection','项目访问与账号保护')}}</h2><p>{{t('Project API keys scope ingestion to their project and can be revoked. Sensitive account and key operations require email verification. Console changes use session-bound CSRF protection; sessions use HttpOnly cookies.','项目 API 密钥限定所属项目，可撤销。敏感账号及密钥操作需要邮箱验证；控制台变更使用会话绑定的 CSRF 保护，会话使用 HttpOnly Cookie。')}}</p><h2>{{t('Retention and deletion','数据保留与删除')}}</h2><p>{{t('Queryable detail follows the active plan retention window. Project deletion revokes its keys and removes analytical detail asynchronously. This page describes implemented controls, not an independent security certification or an availability guarantee.','可查询明细遵循当前套餐保留范围。删除项目会撤销密钥并异步移除分析明细。本页描述已实现的措施，不代表独立安全认证或可用性保证。')}}</p><p><RouterLink to="/privacy">{{t('Read the privacy policy','查看隐私政策')}}</RouterLink></p><p>{{t('Report a security concern:','报告安全问题：')}} <a href="mailto:13428961230@163.com">13428961230@163.com</a></p></main>
     <main v-else class="legal public-content">
       <span class="eyebrow">METERTRAIL</span>
       <h1>
@@ -877,6 +885,7 @@ async function copy() {
         ><RouterLink to="/terms">{{ t("Terms", "条款") }}</RouterLink
         ><RouterLink to="/refunds">{{ t("Refunds", "退款") }}</RouterLink>
         <a href="https://basaltkit.com/" target="_blank" rel="noopener noreferrer">{{ t('Developer tools', '开发工具') }}</a>
+        <RouterLink to="/security">{{t('Security','安全')}}</RouterLink>
       </nav>
     </footer>
   </div>

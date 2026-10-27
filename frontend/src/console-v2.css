@@ -1,10 +1,11 @@
 /* MeterTrail UI V2 — scoped to the console; public pages retain their own design. */
 @font-face {
   font-family: "MeterTrail Noto Sans SC";
-  src: url("/fonts/NotoSansSC-Regular.woff2") format("woff2");
+  src: url("/fonts/NotoSansSC-ui.woff2") format("woff2");
   font-style: normal;
   font-weight: 400;
   font-display: swap;
+  unicode-range: U+3000-30FF, U+3400-9FFF, U+F900-FAFF, U+FF00-FFEF;
 }
 .ui-v2 {
   --blue: #3156e8;
