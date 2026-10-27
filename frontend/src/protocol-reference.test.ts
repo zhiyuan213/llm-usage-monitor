@@ -50,14 +50,7 @@ it("documents every field in both minimal and full request examples", () => {
     sections
       .filter((section) => section.en.startsWith("Body:"))
       .flatMap((section) =>
-        section.rows.map((row) => {
-          const prefix =
-            section.en.startsWith("Body: events[]") ||
-            row[0].startsWith("data.")
-              ? "events[]."
-              : "";
-          return prefix + row[0];
-        }),
+          section.rows.map((row) => row[0].replaceAll("[n]", "[]")),
       ),
   );
   for (const example of [minimalBody, bodyExample]) {

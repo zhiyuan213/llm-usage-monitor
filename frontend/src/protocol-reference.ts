@@ -90,7 +90,7 @@ export const sections = [
   },
   {
     en: "Body: agent",
-    zh: "Body：agent 应用信息",
+    zh: "Body：agent 对象",
     rows: [
       [
         "agent.serviceName",
@@ -150,11 +150,11 @@ export const sections = [
     ],
   },
   {
-    en: "Body: events[] common fields",
-    zh: "Body：events[] 通用字段",
+    en: "Body: events[] array",
+    zh: "Body：events[] 数组",
     rows: [
       [
-        "eventId",
+        "events[n].eventId",
         "Event identity for deduplication",
         "事件去重标识",
         "string",
@@ -165,7 +165,7 @@ export const sections = [
         '"550e8400-e29b-41d4-a716-446655440000"',
       ],
       [
-        "type",
+        "events[n].type",
         "Object category",
         "对象类型",
         "string",
@@ -176,7 +176,7 @@ export const sections = [
         '"observation"',
       ],
       [
-        "objectId",
+        "events[n].objectId",
         "One concrete record within a project/type; not a feature name",
         "某一条具体记录的标识，不是业务功能名；功能填 data.feature",
         "string",
@@ -187,7 +187,7 @@ export const sections = [
         '"obs-demo-1"',
       ],
       [
-        "revision",
+        "events[n].revision",
         "Record update version, not request status or stage",
         "记录更新版本，不代表请求阶段、是否完成或对错",
         "integer (int64)",
@@ -198,7 +198,7 @@ export const sections = [
         "1",
       ],
       [
-        "traceId",
+        "events[n].traceId",
         "Trace identifier",
         "链路标识",
         "string",
@@ -209,7 +209,7 @@ export const sections = [
         '"0123456789abcdef0123456789abcdef"',
       ],
       [
-        "spanId",
+        "events[n].spanId",
         "Observation span identifier",
         "Observation 跨度标识",
         "string",
@@ -220,7 +220,7 @@ export const sections = [
         '"0123456789abcdef"',
       ],
       [
-        "parentSpanId",
+        "events[n].parentSpanId",
         "Optional parent span identifier",
         "可选父跨度标识",
         "string | null",
@@ -231,7 +231,7 @@ export const sections = [
         "null",
       ],
       [
-        "startedAt",
+        "events[n].startedAt",
         "Event start time",
         "事件开始时间",
         "string (ISO-8601)",
@@ -242,7 +242,7 @@ export const sections = [
         '"2026-10-23T00:00:00Z"',
       ],
       [
-        "data",
+        "events[n].data",
         "Type-specific payload",
         "按 type 区分的事件内容",
         "object",
@@ -255,11 +255,11 @@ export const sections = [
     ],
   },
   {
-    en: "Body: Trace / Observation data",
-    zh: "Body：Trace / Observation 的 data",
+    en: "Body: data for type=trace or type=observation",
+    zh: "Body：type=trace 或 type=observation 的 data",
     rows: [
       [
-        "data.name",
+        "events[n].data.name",
         "Trace or optional observation name",
         "Trace 名称或可选 Observation 名称",
         "string",
@@ -270,7 +270,7 @@ export const sections = [
         '"Document analysis"',
       ],
       [
-        "data.status",
+        "events[n].data.status",
         "Reported execution result",
         "上报的业务执行状态",
         "string",
@@ -281,7 +281,7 @@ export const sections = [
         '"success"',
       ],
       [
-        "data.durationMs",
+        "events[n].data.durationMs",
         "Duration in milliseconds",
         "耗时，单位毫秒",
         "integer",
@@ -292,7 +292,7 @@ export const sections = [
         "1850",
       ],
       [
-        "data.error",
+        "events[n].data.error",
         "Business error description",
         "业务错误描述",
         "string | null",
@@ -303,7 +303,7 @@ export const sections = [
         '"Upstream timeout"',
       ],
       [
-        "data.userId",
+        "events[n].data.userId",
         "User identifier",
         "用户标识",
         "string | null",
@@ -314,7 +314,7 @@ export const sections = [
         '"demo-userId"',
       ],
       [
-        "data.customerId",
+        "events[n].data.customerId",
         "Customer identifier",
         "客户标识",
         "string | null",
@@ -325,7 +325,7 @@ export const sections = [
         '"demo-customerId"',
       ],
       [
-        "data.feature",
+        "events[n].data.feature",
         "Feature identifier",
         "功能标识",
         "string | null",
@@ -336,7 +336,7 @@ export const sections = [
         '"demo-feature"',
       ],
       [
-        "data.observationType",
+        "events[n].data.observationType",
         "Observation subtype",
         "Observation 子类型",
         "string",
@@ -347,7 +347,7 @@ export const sections = [
         '"generation"',
       ],
       [
-        "data.provider",
+        "events[n].data.provider",
         "Model provider",
         "模型供应商",
         "string",
@@ -358,7 +358,7 @@ export const sections = [
         '"example"',
       ],
       [
-        "data.model",
+        "events[n].data.model",
         "Model name",
         "模型名称",
         "string",
@@ -369,7 +369,7 @@ export const sections = [
         '"example-model"',
       ],
       [
-        "data.usage",
+        "events[n].data.usage",
         "Token usage",
         "Token 用量",
         "object",
@@ -382,11 +382,11 @@ export const sections = [
     ],
   },
   {
-    en: "Body: data.usage fields",
-    zh: "Body：data.usage 用量字段",
+    en: "Body: data.usage fields for type=trace or type=observation",
+    zh: "Body：type=trace 或 type=observation 的 data.usage 用量字段",
     rows: [
       [
-        "data.usage.inputTokens",
+        "events[n].data.usage.inputTokens",
         "Total input tokens, including cached input",
         "总输入 Token，包含缓存输入",
         "integer | null",
@@ -397,7 +397,7 @@ export const sections = [
         "1500",
       ],
       [
-        "data.usage.outputTokens",
+        "events[n].data.usage.outputTokens",
         "Output tokens",
         "输出 Token",
         "integer | null",
@@ -408,7 +408,7 @@ export const sections = [
         "400",
       ],
       [
-        "data.usage.cachedInputTokens",
+        "events[n].data.usage.cachedInputTokens",
         "Cached subset of input tokens",
         "输入 Token 中命中缓存的部分",
         "integer | null",
@@ -421,11 +421,11 @@ export const sections = [
     ],
   },
   {
-    en: "Body: Score data (type = score only)",
-    zh: "Body：Score 的 data（仅 type=score）",
+    en: "Body: data for type=score",
+    zh: "Body：type=score 的 data",
     rows: [
       [
-        "data.name",
+        "events[n].data.name",
         "Score name",
         "评分名称",
         "string",
@@ -436,7 +436,7 @@ export const sections = [
         '"quality"',
       ],
       [
-        "data.targetType",
+        "events[n].data.targetType",
         "Target object type",
         "被评分对象类型",
         "string",
@@ -447,7 +447,7 @@ export const sections = [
         '"observation"',
       ],
       [
-        "data.targetId",
+        "events[n].data.targetId",
         "Target objectId in the same project",
         "同项目内被评分对象的 objectId",
         "string",
@@ -458,7 +458,7 @@ export const sections = [
         '"obs-demo-1"',
       ],
       [
-        "data.valueType",
+        "events[n].data.valueType",
         "Score value type",
         "评分值类型",
         "string",
@@ -469,7 +469,7 @@ export const sections = [
         '"numeric"',
       ],
       [
-        "data.value",
+        "events[n].data.value",
         "Score value",
         "评分值",
         "number | boolean | string",

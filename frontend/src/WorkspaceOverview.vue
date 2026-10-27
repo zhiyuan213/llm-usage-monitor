@@ -85,9 +85,7 @@ function more(event: Event, project: {id: string; name: string}) {
       <tbody>
         <tr v-for="p in data.projects || []" :key="p.id">
           <td>
-            <button class="text-button" @click="emit('select', p.id)">
-              {{ p.name }}
-            </button>
+            <span>{{ p.name }}</span>
           </td>
           <td><span class="badge">{{ p.environment }}</span></td>
           <td>{{ n(p.traces) }}</td>

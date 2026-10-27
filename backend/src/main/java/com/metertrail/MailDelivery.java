@@ -28,6 +28,7 @@ class MailDelivery {
   final SesClient ses;
   final long verificationTemplate, notificationTemplate;
   long weeklyTemplate;
+  long verificationHtmlTemplate, notificationHtmlTemplate;
 
   @ConfigurationProperties("metertrail.mail")
   record Settings(
@@ -45,9 +46,13 @@ class MailDelivery {
 
   @Autowired
   MailDelivery(JavaMailSender smtp, Settings settings,
-      @Value("${metertrail.mail.weekly-template:0}") long weeklyTemplate) {
+      @Value("${metertrail.mail.weekly-template:0}") long weeklyTemplate,
+      @Value("${metertrail.mail.verification-html-template:0}") long verificationHtmlTemplate,
+      @Value("${metertrail.mail.notification-html-template:0}") long notificationHtmlTemplate) {
     this(smtp, client(settings), settings.verificationTemplate(), settings.notificationTemplate());
     this.weeklyTemplate=weeklyTemplate;
+    this.verificationHtmlTemplate=verificationHtmlTemplate;
+    this.notificationHtmlTemplate=notificationHtmlTemplate;
   }
 
   MailDelivery(
@@ -83,10 +88,6 @@ class MailDelivery {
   }
 
   void send(SimpleMailMessage message) throws Exception {
-    if (ses == null) {
-      smtp.send(message);
-      return;
-    }
     if (message.getTo() == null
         || message.getTo().length != 1
         || message.getFrom() == null
@@ -94,16 +95,23 @@ class MailDelivery {
         || message.getText() == null)
       throw new IllegalArgumentException("One recipient and complete message required");
     boolean verification = VERIFICATION_SUBJECT.equals(message.getSubject());
-    String data;
+    String value;
     if (verification) {
       var matcher = CODE.matcher(message.getText());
       if (!matcher.find()) throw new IllegalArgumentException("Invalid verification message");
-      data = new ObjectMapper().writeValueAsString(Map.of("code", matcher.group(1)));
+      value=matcher.group(1);
     } else {
-      // Notification template is plain text: untrusted project names must never become HTML.
-      data = new ObjectMapper().writeValueAsString(Map.of("message", message.getText()));
+      value=message.getText();
     }
-    sendSes(message, verification ? verificationTemplate : notificationTemplate, data);
+    if(ses==null) {
+      if(!verification&&!message.getSubject().startsWith("MeterTrail")) {smtp.send(message);return;}
+      var mime=smtp.createMimeMessage();var helper=new MimeMessageHelper(mime,true,"UTF-8");
+      helper.setFrom(message.getFrom());helper.setTo(message.getTo());helper.setSubject(message.getSubject());
+      helper.setText(message.getText(),ServiceEmail.html(verification,value));smtp.send(mime);return;
+    }
+    long htmlTemplate=verification?verificationHtmlTemplate:notificationHtmlTemplate;
+    String data=new ObjectMapper().writeValueAsString(htmlTemplate>0?ServiceEmail.values(verification,value):Map.of(verification?"code":"message",value));
+    sendSes(message,htmlTemplate>0?htmlTemplate:verification?verificationTemplate:notificationTemplate,data);
   }
 
   void sendWeekly(SimpleMailMessage message,Map<String,String> values) throws Exception {

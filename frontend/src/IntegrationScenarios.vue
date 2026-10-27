@@ -10,14 +10,13 @@ function choose(id:string) { if(id!==selected.value && !id.startsWith('score')) 
 const scenarios = [
   { id:'single', en:'1. One model call', zh:'1. 一次模型调用', units:2 },
   { id:'multiple', en:'2. Multiple model calls', zh:'2. 多次模型调用', units:4 },
-  { id:'score-trace', en:'3. Score the whole request', zh:'3. 评价整次请求', units:1 },
-  { id:'score', en:'4. Score one model call', zh:'4. 评价某次模型调用', units:1 },
+  { id:'score-trace', en:'3. Optional feedback', zh:'3. 可选评分', units:1 },
 ];
 const traceId = ref(crypto.randomUUID().replaceAll('-',''));
 const timestamp = ref(new Date().toISOString());
 function refresh() { traceId.value=crypto.randomUUID().replaceAll('-',''); timestamp.value=new Date().toISOString(); copied.value=''; }
 const rest = computed(() => {
-  return restScenarios[selected.value].map(events=>JSON.stringify({events:events.map(event=>({eventId:crypto.randomUUID(),...event}))},null,2)
+  return restScenarios[selected.value].map(events=>JSON.stringify({schemaVersion:'1.0',agent:{serviceName:'document-api',environment:'test',instanceId:'demo-1'},events:events.map(event=>({eventId:crypto.randomUUID(),revision:1,...event}))},null,2)
     .replaceAll('@trace@',traceId.value).replaceAll('@time@',timestamp.value).replaceAll('@score@',crypto.randomUUID()));
 });
 async function copy(text:string,id:string) { try { await navigator.clipboard.writeText(text); copied.value=id; } catch { copied.value='failed'; } }
@@ -35,7 +34,11 @@ async function copy(text:string,id:string) { try { await navigator.clipboard.wri
     </details>
     <p>{{t('Start with your application request. A Trace describes the whole request; each Observation describes one model call or step. A Score is optional feedback, not a required stage.', '从一笔业务请求理解接入：Trace 记录整次请求，Observation 记录其中一次模型调用或步骤。Score 是可选评分，不是必经阶段。')}}</p>
     <div class="scenario-tabs" role="group" :aria-label="t('Choose a scenario','选择接入场景')">
-      <button v-for="item in scenarios" :key="item.id" class="btn" :class="{primary:selected===item.id}" :aria-pressed="selected===item.id" @click="choose(item.id)">{{t(item.en,item.zh)}}</button>
+      <button v-for="item in scenarios" :key="item.id" class="btn" :class="{primary:selected===item.id || (item.id==='score-trace' && selected==='score')}" :aria-pressed="selected===item.id || (item.id==='score-trace' && selected==='score')" @click="choose(item.id)">{{t(item.en,item.zh)}}</button>
+    </div>
+    <div v-if="selected.startsWith('score')" class="scenario-tabs" role="group" :aria-label="t('Feedback target','评分对象')">
+      <button class="btn" :class="{primary:selected==='score-trace'}" :aria-pressed="selected==='score-trace'" @click="choose('score-trace')">{{t('Whole request','评价整次请求')}}</button>
+      <button class="btn" :class="{primary:selected==='score'}" :aria-pressed="selected==='score'" @click="choose('score')">{{t('One model call','评价某次模型调用')}}</button>
     </div>
     <p v-if="selected==='score-trace'"><code>targetType: trace → targetId: trace-{{traceId}}</code></p>
     <p v-if="selected==='score'"><code>targetType: observation → targetId: obs-{{traceId}}-1</code></p>
@@ -58,11 +61,11 @@ async function copy(text:string,id:string) { try { await navigator.clipboard.wri
       <label class="scenario-language">{{t('SDK language','SDK 语言')}} <select v-model="language"><option>Node.js</option><option>Python</option><option>Java</option></select></label>
       <p>{{t('Install the source SDK using the repository instructions above. Node/Python samples run from that repository root. For Java, save Scenario.java and add the SDK and its Jackson dependencies to your application classpath. Set METERTRAIL_ENDPOINT=https://metertrail.com and METERTRAIL_API_KEY locally; never put keys in frontend code.', '先按上方仓库说明安装源码 SDK。Node / Python 示例从 SDK 仓库根目录运行；Java 保存为 Scenario.java，在应用中加入 SDK 及其 Jackson 依赖。环境变量设置 METERTRAIL_ENDPOINT=https://metertrail.com、METERTRAIL_API_KEY，仅在本地服务端保存密钥。')}}</p>
       <p v-if="selected==='score'">{{t('Set METERTRAIL_TRACE_ID to the traceId printed by the earlier single/multiple example. The referenced Observation must already exist in the same project.', '将 METERTRAIL_TRACE_ID 设置为之前单次或多次调用示例打印的 traceId，确保目标 Observation 已在同一项目处理成功。')}}</p>
-      <div class="code-box"><div>{{language}} · {{t(scenarios.find(s=>s.id===selected)!.en,scenarios.find(s=>s.id===selected)!.zh)}}<button @click="copy(scenarioSources[language][selected],'sdk')">{{copied==='sdk'?t('Copied','已复制'):t('Copy','复制')}}</button></div><pre>{{scenarioSources[language][selected]}}</pre></div>
+      <div class="code-box"><div>{{language}} · {{t(scenarios.find(s=>s.id===(selected==='score'?'score-trace':selected))!.en,scenarios.find(s=>s.id===(selected==='score'?'score-trace':selected))!.zh)}}<button @click="copy(scenarioSources[language][selected],'sdk')">{{copied==='sdk'?t('Copied','已复制'):t('Copy','复制')}}</button></div><pre>{{scenarioSources[language][selected]}}</pre></div>
       <p>{{t('record queues locally; it does not confirm server acceptance. flush sends buffered events and HTTP 200/pending only confirms receipt. Automatic batching, concurrent recording and retries can change network batch boundaries. Check batch results when needed; SDK buffers are in memory, not durable storage.', 'record 只加入本地队列，不表示服务器已接收；flush 发送缓冲数据，HTTP 200 / pending 也只表示收到批次。自动批处理、并发记录及重试可能改变实际网络分批边界。按需查询批次结果；SDK 为内存缓冲，不是持久队列。')}}</p>
     </template>
     <template v-else>
-      <p>{{t('Each block below is a separate POST body for /v1/events/batch, with the same project Authorization header. schemaVersion, agent and revision are omitted to use defaults.', '下方每个代码块分别作为一次 POST /v1/events/batch 的 Body，使用同一项目的 Authorization 请求头。省略 schemaVersion、agent 和 revision，使用默认值。')}}</p>
+      <p>{{t('Each block below is a separate POST body for /v1/events/batch, with the same project Authorization header. The complete body explicitly includes schemaVersion, agent and revision; these fields remain optional and use defaults when omitted.', '下方每个代码块分别作为一次 POST /v1/events/batch 的 Body，使用同一项目的 Authorization 请求头。完整入参显式包含 schemaVersion、agent 和 revision；这些字段仍为非必填，省略时使用默认值。')}}</p>
       <button v-if="!selected.startsWith('score')" class="btn" @click="refresh">{{t('Generate new request IDs and time','生成新的请求 ID 和时间')}}</button>
       <p v-if="selected==='score'">{{t('Replace targetId with the Observation objectId you actually sent. This example targets Observation 1 in the other examples. Generate a new eventId and objectId for each new score.', 'targetId 请替换为实际已上报的 Observation objectId。本例指向其他场景中的 Observation 1；每条新评分应生成新的 eventId 与 objectId。')}}</p>
       <div v-for="(body,i) in rest" :key="`${selected}-${i}`" class="code-box"><div>{{t('Request','第')}} {{i+1}} {{t('· JSON','次请求 · JSON')}}<button @click="copy(body,String(i))">{{copied===String(i)?t('Copied','已复制'):t('Copy','复制')}}</button></div><pre>{{body}}</pre></div>
