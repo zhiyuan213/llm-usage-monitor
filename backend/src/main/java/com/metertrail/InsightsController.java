@@ -15,7 +15,7 @@ class InsightsController {
   static Instant timestamp(String value) {
     try {return Instant.parse(value);} catch(Exception e) {throw new ApiError(400,"INVALID_TIMESTAMP");}
   }
-  static void pagination(int page,int size) {Support.require(page>=0 && page<=100000 && Set.of(5,10,50,100).contains(size),"INVALID_PAGE");}
+  static void pagination(int page,int size) {Support.require(page>=0 && page<=100000 && Set.of(5,10,25,50,100).contains(size),"INVALID_PAGE");}
 
   @GetMapping("/api/projects/{project}/insights/costs")
   Map<String,Object> costs(@PathVariable UUID project,@RequestParam(defaultValue="7") int days,

@@ -58,7 +58,7 @@ class SupportMessagesController {
       HttpServletRequest req) {
     authorize(req);
     Support.require(
-        page >= 0 && page <= 100000 && Set.of(5, 10, 50, 100).contains(size), "INVALID_PAGE");
+        page >= 0 && page <= 100000 && Set.of(5, 10, 25, 50, 100).contains(size), "INVALID_PAGE");
     String where = admin(req) ? "" : " WHERE t.user_id=?";
     Object[] scope = admin(req) ? new Object[] {} : new Object[] {SessionFilter.uid(req)};
     Long total =

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import {usePageSize} from "./page-size";
+import KeyQuickstart from "./KeyQuickstart.vue";
 import IngestionNotice from "./IngestionNotice.vue";
 import {readTraceView,traceViewKey} from "./trace-view-state";
 import DateRangeFilter from "./DateRangeFilter.vue";
@@ -78,7 +80,7 @@ const nav = [
   ["releases", "Release comparison", "发布对比", GitBranch],
   ["weekly", "Weekly reports", "自动周报", ScrollText],
   ["budgets", "Budget reminders", "预算提醒", Bell],
-  ["reliability", "Failures and slow calls", "失败与慢调用", Activity],
+  ["reliability", "Failures & latency", "失败与慢调用", Activity],
   ["keys", "API key management", "密钥管理", KeyRound],
   ["alerts", "Alert configuration", "告警配置", Bell],
   ["billing", "Billing", "套餐与账单", CreditCard],
@@ -133,6 +135,7 @@ function restoreTraceView(){
 }
 function saveTraceView(){try{sessionStorage.setItem(traceViewKey(session.value?.id||'',selected.value),JSON.stringify({search:search.value,status:status.value,cost:costFilter.value,reason:costReasonFilter.value,sort:traceSort.value,direction:traceDirection.value,page:tracePage.value,size:reportSize.value,window:reportWindow.value,route:route.fullPath}));}catch{}}
 
+async function copyRecordId(value:string){try{await navigator.clipboard.writeText(value);notice.value=t('ID copied.','ID 已复制。');}catch{error.value=t('Could not copy. Select the full ID from its tooltip or detail page.','复制失败，请从提示或详情页获取完整 ID。');}}
 function applyDates(value:{from:string;to:string}){reportWindow.value=value;tracePage.value=0;activityPage.value=0;refresh(false);}
 function sortTraces(value:string){traceDirection.value=traceSort.value===value&&traceDirection.value==='desc'?'asc':'desc';traceSort.value=value;tracePage.value=0;refresh(false);}
 const pageDescription=computed(()=>({overview:t('Request performance, known model cost and usage for the selected period.','查看所选时间内的请求表现、已知模型费用和用量。'),traces:t('Find requests by name or status, then compare latency and model usage.','检索请求，比较耗时、模型用量与已知费用。'),trace:t('Inspect request steps, model usage and pricing evidence.','查看请求步骤、模型用量与计费依据。'),analytics:t('Compare usage by customer, user or feature.','按客户、用户或功能比较用量。'),'cost-insights':t('Find cost drivers and compare equal-length periods.','定位费用来源，对比等长时间段的变化。'),releases:t('Mark releases and compare before and after.','记录发布时间，对比修改前后的表现。'),weekly:t('Manage weekly email summaries and delivery history.','管理每周邮件摘要与发送记录。'),billing:t('Manage your plan, quota and payment records.','管理套餐、额度和付款记录。'),keys:t('Create and revoke project API keys.','创建与撤销项目接入密钥。'),settings:t('Manage project details and model price versions.','管理项目资料与模型价格版本。'),account:t('Manage sign-in methods and account security.','管理登录方式与账号安全。'),messages:t('Send feedback and follow replies.','提交问题与建议，查看回复。'),workspace:t('Manage projects and shared workspace usage.','管理项目与工作空间共享用量。'),budgets:t('Set model spending reminders.','设置模型费用预算提醒。'),reliability:t('Investigate failed and slow requests.','排查失败请求与慢调用。'),alerts:t('Configure notifications for project activity.','配置项目用量与异常通知。'),audit:t('Review account and workspace actions.','查看账号与工作空间操作记录。') } as Record<string,string>)[page.value]||t('Review and manage this section.','查看与管理本栏目内容。'));
@@ -142,10 +145,10 @@ function costReason(o:any){return ({usage_missing:t('Missing input, output or ca
 const traceSummary=computed(()=>{const calls=traceObjects.value.filter((o:any)=>o.type==='observation'&&o.data.observationType==='generation');const priced=calls.filter((o:any)=>o.cost!=null);const usage=calls.filter((o:any)=>o.data.usage?.inputTokens!=null&&o.data.usage?.outputTokens!=null);return {calls:calls.length,priced:priced.length,cost:priced.length?priced.reduce((n:number,o:any)=>n+Number(o.cost),0):null,tokens:usage.length?usage.reduce((n:number,o:any)=>n+Number(o.data.usage.inputTokens)+Number(o.data.usage.outputTokens),0):null,duration:traceObjects.value.find((o:any)=>o.type==='trace')?.data.durationMs};});
 const accountReady = computed(() => contextReady.value && !loading.value && !!session.value?.csrf);
 const activityPage = ref(0),
-  activitySize = ref(5),
+  activitySize=usePageSize(),
   activityTotal = ref(0),
   reportPage = ref(0),
-  reportSize = ref(5);
+  reportSize=usePageSize();
 const reportExportUrl = computed(
   () =>
     "/api/reports/" +
@@ -601,6 +604,7 @@ const usagePercent = computed(() =>
         <div v-if="route.query.oauth === 'failed'" class="notice error" role="alert">
           {{ t("GitHub authorization failed. Please try again.", "GitHub 授权失败，请重试。") }}
         </div>
+        <IngestionNotice v-if="contextReady && !loading && session?.workspace?.ingestion?.can_accept_new===false && page!=='billing'" :state="session.workspace.ingestion" prominent />
         <div v-if="error" class="notice error" role="alert">{{ error }}</div>
         <div v-if="notice" class="notice success">{{ notice }}</div>
         <div
@@ -649,8 +653,8 @@ const usagePercent = computed(() =>
                 ],
                 [
                   t('Known estimated model cost', '已知模型估算费用'),
-                  money(overview.summary?.cost),
-                  `${n(Number(overview.summary?.calls||0)-Number(overview.summary?.unknown_costs||0))}/${n(overview.summary?.calls)} ` + t('model calls priced', '条模型调用已定价'),
+                  overview.summary?.cost==null?'—':money(overview.summary?.cost),
+                  overview.summary?.cost==null?t('No priced model calls yet','暂无已定价模型调用'):`${n(Number(overview.summary?.calls||0)-Number(overview.summary?.unknown_costs||0))}/${n(overview.summary?.calls)} ` + t('model calls priced', '条模型调用已定价'),
                 ],
                 [
                   t('P95 latency', 'P95 延迟'),
@@ -668,7 +672,7 @@ const usagePercent = computed(() =>
                 />
               </div>
               <strong>{{ v[1] }}</strong
-              ><small>{{ v[2] }}</small>
+              ><small>{{ v[2] }}</small><RouterLink v-if="i===2" :to="'/app/settings?project='+selected">{{t('Review model rates →','查看模型价格 →')}}</RouterLink>
             </article>
           </div>
           <div class="chart-grid">
@@ -842,7 +846,7 @@ const usagePercent = computed(() =>
             /></section
         ></template>
         <template v-if="page === 'traces' && selected"
-          ><DateRangeFilter :busy="loading" @change="applyDates" /><p class="muted">{{date(reportWindow.from)}} → {{date(reportWindow.to)}} · {{t("Known model usage is aggregated by trace; unknown costs are excluded from the subtotal.","模型用量按调用链汇总；已知费用不含未知费用部分。")}}</p><section class="panel">
+          ><DateRangeFilter :busy="loading" @change="applyDates" /><div class="muted range-hint">{{date(reportWindow.from)}} → {{date(reportWindow.to)}}<details><summary>{{t('Calculation details','统计口径')}}</summary>{{t("Known model usage is aggregated by trace; unknown costs are excluded from the subtotal.","模型用量按调用链汇总；已知费用不含未知费用部分。")}}</details></div><section class="panel">
             <form
               class="filters trace-filters"
               @submit.prevent="
@@ -878,7 +882,7 @@ const usagePercent = computed(() =>
               </div>
             </form>
             <div class="table-wrap">
-              <table>
+              <table class="traces-table">
                 <thead>
                   <tr>
                     <th>{{ t("Name", "名称") }}</th>
@@ -893,16 +897,16 @@ const usagePercent = computed(() =>
                 </thead>
                 <tbody>
                   <tr v-for="o in data.items || []" :key="o.object_id">
-                    <td>
+                    <td :data-label="t('Name','名称')">
                       <strong>{{ o.data.name || "—" }}</strong>
                     </td>
-                    <td class="mono">{{ o.object_id }}</td>
-                    <td>{{ n(o.data.durationMs) }} ms</td><td>{{o.models||"—"}}</td><td>{{o.tokens==null?t("Unknown","未知"):n(o.tokens)}}</td><td>{{money(o.estimated_cost)}}<small class="muted">{{n(o.priced_calls)}}/{{n(o.generations)}} {{t("priced","条已定价")}}</small></td>
-                    <td>
+                    <td :data-label="t('Object ID','对象 ID')"><span class="record-id"><code :title="o.object_id">{{o.object_id.length>16?o.object_id.slice(0,8)+'…'+o.object_id.slice(-4):o.object_id}}</code><button type="button" class="copy-id" :aria-label="t('Copy full ID','复制完整 ID')" @click="copyRecordId(o.object_id)"><Copy :size="14" /></button></span></td>
+                    <td :data-label="t('Duration','耗时')">{{ n(o.data.durationMs) }} ms</td><td :data-label="t('Models','模型')">{{o.models||"—"}}</td><td data-label="Token" :title="o.tokens==null?t('Token usage not reported','未上报 Token 用量'):''">{{o.tokens==null?'—':n(o.tokens)}}</td><td :data-label="t('Known cost','已知费用')"><span :title="o.estimated_cost==null?t('No priced model calls; check usage and model rates.','无已定价模型调用，请检查用量和模型价格。'):''">{{o.estimated_cost==null?'—':money(o.estimated_cost)}}</span><small class="muted">{{n(o.priced_calls)}}/{{n(o.generations)}} {{t("priced","条已定价")}}</small></td>
+                    <td :data-label="t('User / Customer','用户 / 客户')">
                       {{ o.data.userId || "—" }} /
                       {{ o.data.customerId || "—" }}
                     </td>
-                    <td>
+                    <td :data-label="t('Status','状态')">
                       <span
                         :class="[
                           'badge',
@@ -911,8 +915,8 @@ const usagePercent = computed(() =>
                         >{{ o.data.status }}</span
                       >
                     </td>
-                    <td>{{ date(o.started_at) }}</td>
-                    <td>
+                    <td :data-label="t('Started at (UTC)','开始时间（UTC）')">{{ date(o.started_at) }}</td>
+                    <td :data-label="t('Actions','操作')">
                       <RouterLink
                         class="btn"
                         :to="'/app/trace/' + o.trace_id + '?project='+selected"
@@ -967,7 +971,7 @@ const usagePercent = computed(() =>
               <code>{{ route.params.detail }}</code>
             </div>
             <span class="badge"
-              >{{ traceObjects.length }} {{ t("objects", "个对象") }}</span
+              >{{ traceObjects.length }} {{ traceObjects.length===1?t("object", "个对象"):t("objects", "个对象") }}</span
             >
           </div>
           <div class="insight-metrics"><article class="panel"><span>{{t('Request duration','请求总耗时')}}</span><strong>{{n(traceSummary.duration)}} ms</strong></article><article class="panel"><span>{{t('Model calls','模型调用数')}}</span><strong>{{n(traceSummary.calls)}}</strong></article><article class="panel"><span>{{t('Known tokens','已知 Token')}}</span><strong>{{n(traceSummary.tokens)}}</strong></article><article class="panel"><span>{{t('Known estimated cost','已知估算费用')}}</span><strong>{{money(traceSummary.cost)}}</strong><small>{{traceSummary.priced}}/{{traceSummary.calls}} {{t('model calls priced','条模型调用已定价')}}</small></article></div>
@@ -1086,17 +1090,19 @@ const usagePercent = computed(() =>
                 {{ t("Dismiss", "关闭") }}
               </button>
             </div>
+            <KeyQuickstart :api-key="createdKey" />
           </section>
+          <section v-if="Array.isArray(data) && !data.some((key:any)=>!key.revoked_at) && !createdKey" class="notice"><strong>{{t('Create an active key to connect your application','创建有效密钥以接入应用')}}</strong><p>{{t('Enter a name below. After verification, copy your key and run the example to send your first request. Revoked keys cannot send data.','在下方填写密钥名称；验证后复制密钥，运行示例发送第一条数据。已撤销的密钥不能上报。')}}</p></section>
           <section class="panel report-section keys-section">
             <div class="panel-heading">
               <h2>{{ t("API keys", "API 密钥") }}</h2>
               <form class="inline-form" @submit.prevent="createKey">
-                <input
+                <label class="key-name-label">{{t('Key name','密钥名称')}}<input
                   v-model="keyName"
                   required
                   maxlength="128"
                   :aria-label="t('Key name', '密钥名称')"
-                /><button class="btn primary">
+                /></label><button class="btn primary">
                   <Plus :size="16" />{{ t("Create key", "创建密钥") }}
                 </button>
               </form>

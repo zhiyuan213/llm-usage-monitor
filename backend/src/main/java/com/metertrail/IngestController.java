@@ -110,7 +110,7 @@ class IngestController {
       }
     }
     var b = Support.parse(new String(bytes, StandardCharsets.UTF_8));
-    Protocol.envelope(b);
+    b = Protocol.defaults(b);
     Protocol.validateEvents(b);
     Long queued = store.queries().queryForObject(
         "SELECT coalesce(sum(accepted),0) FROM ingest_batches WHERE status IN ('pending','quarantined')", Long.class);

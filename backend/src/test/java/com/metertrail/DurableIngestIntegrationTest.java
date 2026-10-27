@@ -762,6 +762,24 @@ class DurableIngestIntegrationTest {
   }
 
   @Test
+  void durablePayloadFillsOptionalMetadataAndStoresArbitraryEventIds() throws Exception {
+    var e = event("optional-durable", 1); e.put("eventId", "Z".repeat(36)); e.remove("revision");
+    var payload = body(e); payload.remove("schemaVersion"); payload.remove("agent");
+    var ticket = enqueue(payload);
+    assertTrue(pipeline.processOne());
+    assertEquals(200, result(ticket).status());
+    assertEquals(1, units());
+    var agent = Support.parse(store.db.queryForObject("SELECT agent::text FROM ingest_batches WHERE project_id=?", String.class, project));
+    assertEquals("serviceName-1", agent.path("serviceName").asText());
+    assertEquals("environment-1", agent.path("environment").asText());
+    assertEquals("instanceId-1", agent.path("instanceId").asText());
+    assertEquals("Z".repeat(36), store.db.queryForObject("SELECT event_key FROM ingest_events WHERE project_id=?", String.class, project));
+    var again = enqueue(payload); assertTrue(pipeline.processOne());
+    assertEquals(1, batch(again).get("duplicates"));
+    assertEquals(1, units());
+  }
+
+  @Test
   void readPoolIsPhysicalReadOnlyAndSurvivesWritePoolExhaustion() throws Exception {
     assertNotSame(writes, reads);
     assertThrows(

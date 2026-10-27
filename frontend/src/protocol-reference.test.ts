@@ -19,7 +19,12 @@ function paths(value: unknown, prefix = ""): string[] {
   });
 }
 it('starts with an attributed request and linked model usage, not an empty trace', () => {
+  const basic = JSON.parse(minimalBody);
+  expect(basic.schemaVersion).toBeUndefined();
+  expect(basic.agent).toBeUndefined();
   const [trace, generation] = JSON.parse(minimalBody).events;
+  expect(trace.revision).toBeUndefined();
+  expect(generation.revision).toBeUndefined();
   expect(trace.data.userId).toBe('demo-user');
   expect(trace.data.customerId).toBe('demo-customer');
   expect(trace.data.feature).toBe('document-analysis');

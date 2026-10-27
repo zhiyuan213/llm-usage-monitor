@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {usePageSize} from "./page-size";
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api, date, errorText, session, t } from "./lib";
@@ -8,7 +9,7 @@ const route = useRoute(), router = useRouter();
 const base = computed(() => props.admin ? "/admin/messages" : "/messages");
 const routeBase = computed(() => props.admin ? "/app/admin-messages" : "/app/messages");
 const threadId = computed(() => String(route.params.detail || ""));
-const items = ref<any[]>([]), total = ref(0), page = ref(0), size = ref(5);
+const items = ref<any[]>([]), total = ref(0), page = ref(0), size=usePageSize();
 const detail = ref<any>(null), busy = ref(false), loading = ref(false), olderBusy = ref(false);
 const error = ref(""), notice = ref(""), composing = ref(false), reply = ref("");
 const draft = reactive({title:"",body:""});

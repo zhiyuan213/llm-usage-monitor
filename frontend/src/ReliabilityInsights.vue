@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import {usePageSize} from "./page-size";
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { api, ApiError, errorText, t, date, n, session } from './lib';
 import QueryControls from './QueryControls.vue';
 const props=defineProps<{project:string;refreshToken?:boolean}>();
 const busy=ref(false),error=ref(''),locked=ref(false),data=ref<any>(null);
-const days=ref(7),scope=ref('trace'),dimension=ref('feature'),view=ref('errors'),slowMs=ref(3000),page=ref(0),size=ref(5);
-const groupPage=ref(0),groupSize=ref(5),errorPage=ref(0),errorSize=ref(5);
+const days=ref(7),scope=ref('trace'),dimension=ref('feature'),view=ref('errors'),slowMs=ref(3000),page=ref(0),size=usePageSize();
+const groupPage=ref(0),groupSize=usePageSize(),errorPage=ref(0),errorSize=usePageSize();
 const custom=computed(()=>session.value?.workspace?.plan==='Pro');
 const groups=computed(()=>(data.value?.groups||[]).slice(groupPage.value*groupSize.value,(groupPage.value+1)*groupSize.value));
 const errors=computed(()=>(data.value?.error_groups||[]).slice(errorPage.value*errorSize.value,(errorPage.value+1)*errorSize.value));

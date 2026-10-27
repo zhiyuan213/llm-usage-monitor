@@ -1151,7 +1151,7 @@ class IngestIntegrationTest {
       mvc.perform(get(query + "&page=24").cookie(cookie))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.items.length()").value(5));
-      for (int size : List.of(5, 10, 50, 100)) {
+      for (int size : List.of(5, 10, 25, 50, 100)) {
         mvc.perform(get(query + "&size=" + size).cookie(cookie))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.size").value(size))
@@ -1456,13 +1456,13 @@ class IngestIntegrationTest {
     var missing = event("trace", "id-missing", 1); missing.remove("eventId");
     var wrongType = event("trace", "id-type", 1); wrongType.put("eventId", 123);
     var wrongLength = event("trace", "id-length", 1); wrongLength.put("eventId", "short");
-    var wrongFormat = event("trace", "id-format", 1); wrongFormat.put("eventId", "x".repeat(36));
+    var wrongFormat = event("trace", "id-format", 1); wrongFormat.put("eventId", "x".repeat(37));
     var good = event("trace", "id-valid", 1);
     var row = result(ingest.accept(project, batch(missing, wrongType, wrongLength, wrongFormat, good)));
     assertEquals(1, row.get("accepted"));
     assertEquals(4, row.get("rejected"));
     JsonNode errors = Support.parse(row.get("errors").toString());
-    String[] codes = {"EVENT_ID_REQUIRED", "INVALID_EVENT_ID_TYPE", "EVENT_ID_LENGTH_MUST_BE_36", "INVALID_EVENT_ID_FORMAT"};
+    String[] codes = {"EVENT_ID_REQUIRED", "INVALID_EVENT_ID_TYPE", "EVENT_ID_LENGTH_MUST_BE_36", "EVENT_ID_LENGTH_MUST_BE_36"};
     for (int i = 0; i < codes.length; i++) {
       assertEquals(i, errors.get(i).path("index").asInt());
       assertEquals(codes[i], errors.get(i).path("code").asText());
@@ -1569,6 +1569,40 @@ class IngestIntegrationTest {
     assertEquals(0, units());
     assertEquals(0L, store.db.queryForObject("SELECT count(*) FROM ingest_batches WHERE project_id=?", Long.class, project));
     assertEquals(admission.limit, admission.permits.availablePermits());
+  }
+
+  @Test
+  void omittedRevisionAndExplicitOneAreTheSameIdentityAndNewIdsNeedNotBeUuids() throws Exception {
+    var e = event("trace", "optional-identity", 1);
+    e.put("eventId", "a".repeat(36)); e.remove("revision");
+    var b = batch(e); b.remove("schemaVersion"); b.remove("agent");
+    mvc.perform(post("/v1/events/batch").header("Authorization", "Bearer " + key)
+        .contentType("application/json").content(b.toString())).andExpect(status().isOk());
+    assertEquals(1, units());
+    assertEquals(1L, store.db.queryForObject("SELECT revision FROM billable_objects WHERE project_id=? AND object_id='optional-identity'", Long.class, project));
+    e.put("revision", 1);
+    assertEquals(1, result(ingest.accept(project, batch(e))).get("duplicates"));
+    assertEquals(1, units());
+    var conflict = e.deepCopy(); conflict.withObject("data").put("durationMs", 999);
+    assertTrue(result(ingest.accept(project, batch(conflict))).get("errors").toString().contains("EVENT_ID_CONFLICT"));
+    conflict.put("eventId", "b".repeat(36)); conflict.put("revision", 2);
+    assertEquals(1, result(ingest.accept(project, batch(conflict))).get("accepted"));
+    assertEquals(1, units());
+    assertEquals(2L, store.db.queryForObject("SELECT revision FROM billable_objects WHERE project_id=? AND object_id='optional-identity'", Long.class, project));
+  }
+
+  @Test
+  void legacyUuidWritesStillFillTextIdentityDuringRollingDeployment() {
+    var receipt = ingest.accept(project, batch(event("trace", "legacy-batch", 1)));
+    var legacy = event("trace", "legacy-writer", 1);
+    legacy.put("eventId", legacy.path("eventId").asText().toUpperCase(Locale.ROOT));
+    var p = ingest.prepare(batch(legacy)).get(0);
+    store.db.update("INSERT INTO ingest_events(project_id,event_id,content_hash,batch_id,event_index,payload,processed) VALUES(?,?,?,?,?,?::jsonb,true)",
+        project, UUID.fromString(legacy.path("eventId").asText()), p.eventHash(), UUID.fromString(receipt.get("batchId").toString()), 0, p.json());
+    assertEquals(legacy.path("eventId").asText().toLowerCase(Locale.ROOT),
+        store.db.queryForObject("SELECT event_key FROM ingest_events WHERE project_id=? AND event_id=?", String.class, project, UUID.fromString(legacy.path("eventId").asText())));
+    assertEquals(1, result(ingest.accept(project, batch(legacy))).get("duplicates"));
+    assertEquals(1, units());
   }
 
   @Test

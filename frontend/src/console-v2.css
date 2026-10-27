@@ -394,6 +394,35 @@
   min-width: 680px;
   font-size: 14px;
 }
+
+/* Keep wide reports inside their cards; never break ordinary words into letters. */
+.ui-v2 .table-wrap { min-width: 0; max-width: 100%; overflow-x: auto; }
+.ui-v2 .table-wrap td { word-break: normal; overflow-wrap: break-word; }
+.ui-v2 .traces-table { min-width: 1140px; table-layout: auto; }
+.ui-v2 .traces-table th, .ui-v2 .traces-table td { padding: 10px 12px; }
+.ui-v2 .traces-table td { white-space: nowrap; }
+.ui-v2 .traces-table td:first-child { min-width: 170px; max-width: 240px; white-space: normal; }
+.ui-v2 .traces-table td:first-child strong { display: block; line-height: 1.5; }
+.ui-v2 .traces-table td:nth-child(4), .ui-v2 .traces-table td:nth-child(7) { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+.ui-v2 .record-id { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.ui-v2 .copy-id { border: 0; background: transparent; color: var(--blue); padding: 6px; cursor: pointer; display: inline-flex; }
+.ui-v2 .copy-id:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.ui-v2 .key-name-label { display: flex; flex-direction: column; gap: 6px; }
+.ui-v2 .key-quickstart { margin-top: 20px; min-width: 0; }
+.ui-v2 .key-quickstart pre { max-width: 100%; overflow-x: auto; padding: 16px; background: #f5f7fb; color: #12213d; border-radius: 8px; }
+.ui-v2 .ingestion-prominent { border-left: 4px solid #c77713; background: #fff7e8; color: #714500; }
+@media (max-width: 760px) {
+  .ui-v2 .traces-table { display: block; min-width: 0; width: 100%; }
+  .ui-v2 .traces-table thead { display: none; }
+  .ui-v2 .traces-table tbody { display: block; padding: 12px; }
+  .ui-v2 .traces-table tr { display: block; padding: 12px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 12px; }
+  .ui-v2 .traces-table td { display: grid; grid-template-columns: minmax(76px, 34%) minmax(0, 1fr); align-items: start; gap: 8px; min-width: 0; max-width: none; white-space: normal; overflow: visible; border: 0; padding: 6px 0; }
+  .ui-v2 .traces-table td::before { content: attr(data-label); color: #8594ad; font-size: 12px; }
+  .ui-v2 .traces-table td:first-child, .ui-v2 .traces-table td:nth-child(4), .ui-v2 .traces-table td:nth-child(7) { min-width: 0; max-width: none; }
+  .ui-v2 .traces-table td small { grid-column: 2; }
+  .ui-v2 .traces-table td.empty-cell { display: block; }
+  .ui-v2 .traces-table td.empty-cell::before { display: none; }
+}
 .ui-v2 th {
   background: #f8fafc;
   color: #8594ad;

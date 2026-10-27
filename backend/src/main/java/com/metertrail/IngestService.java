@@ -55,7 +55,8 @@ class IngestService {
   public Map<String, Object> accept(UUID project, JsonNode b) {
     long started = System.nanoTime();
     try {
-      var prepared = prepare(b);
+      var normalized = Protocol.defaults(b);
+      var prepared = prepare(normalized);
       elapsed("prepare", started);
       long acquiring = System.nanoTime();
       return transactions.execute(
@@ -63,7 +64,7 @@ class IngestService {
             elapsed("transaction_acquire", acquiring);
             long bodyStarted = System.nanoTime();
             try {
-              return acceptPrepared(project, b, prepared);
+              return acceptPrepared(project, normalized, prepared);
             } finally {
               elapsed("transaction_body", bodyStarted);
               long completing = System.nanoTime();
@@ -83,7 +84,7 @@ class IngestService {
 
   record PreparedEvent(
       JsonNode payload,
-      UUID eventId,
+      String eventId,
       String eventHash,
       String contentHash,
       Instant started,
@@ -110,12 +111,13 @@ class IngestService {
     for (JsonNode event : body.path("events")) {
       try {
         Protocol.event(event);
+        event = Protocol.eventDefaults(event);
         var content = event.deepCopy();
         ((com.fasterxml.jackson.databind.node.ObjectNode) content).remove("eventId");
         result.add(
             new PreparedEvent(
                 event,
-                Support.uuid(event.path("eventId").asText()),
+                Protocol.eventIdentity(event.path("eventId").asText()),
                 Support.hash(Support.canonical(event)),
                 Support.hash(Support.canonical(content)),
                 Instant.parse(event.path("startedAt").asText()),
@@ -239,12 +241,12 @@ class IngestService {
       try {
         if (p.error() != null) throw p.error();
         String eventHash = p.eventHash();
-        UUID eventId = p.eventId();
+        String eventId = p.eventId();
         var previous =
             store
                 .queries()
                 .queryForList(
-                    "SELECT content_hash FROM ingest_events WHERE project_id=? AND event_id=?",
+                    "SELECT content_hash FROM ingest_events WHERE project_id=? AND event_key=?",
                     project,
                     eventId);
         if (!previous.isEmpty()) {
@@ -465,9 +467,9 @@ class IngestService {
       long addonConsumed,
       long before) {
     var events = new ArrayList<JsonNode>();
-    var eventIds = new ArrayList<UUID>();
+    var eventIds = new ArrayList<String>();
     var identities = new ArrayList<String>();
-    var eventSet = new HashSet<UUID>();
+    var eventSet = new HashSet<String>();
     var identitySet = new HashSet<String>();
     Instant now = Instant.now();
     String plan = (String) w.get("plan");
@@ -476,7 +478,7 @@ class IngestService {
       JsonNode event = p.payload();
       try {
         if (p.error() != null) return null;
-        UUID eventId = p.eventId();
+        String eventId = p.eventId();
         String identity = event.path("type").asText() + "\u0000" + event.path("objectId").asText();
         Instant started = p.started();
         if (!eventSet.add(eventId) || !identitySet.add(identity)) return null;
@@ -504,7 +506,7 @@ class IngestService {
         store
             .queries()
             .queryForList(
-                "SELECT 1 FROM ingest_events WHERE project_id=? AND event_id IN ("
+                "SELECT 1 FROM ingest_events WHERE project_id=? AND event_key IN ("
                     + eventMarks
                     + ") LIMIT 1",
                 eventArgs.toArray());
@@ -586,6 +588,7 @@ class IngestService {
       Collections.addAll(
           pending,
           project,
+          Protocol.legacyEventIdentity(eventIds.get(index)),
           eventIds.get(index),
           p.eventHash(),
           p.batch(batch),
@@ -610,9 +613,9 @@ class IngestService {
         objects);
     multiInsert(
         "INSERT INTO"
-            + " ingest_events(project_id,event_id,content_hash,batch_id,event_index,payload,processed)"
+            + " ingest_events(project_id,event_id,event_key,content_hash,batch_id,event_index,payload,processed)"
             + " VALUES ",
-        "(?,?,?,?,?,?::jsonb,?)",
+        "(?,?,?,?,?,?,?::jsonb,?)",
         events.size(),
         pending);
     used += events.size();
@@ -648,7 +651,7 @@ class IngestService {
 
   private void remember(
       UUID project,
-      UUID event,
+      String event,
       String hash,
       UUID batch,
       int index,
@@ -656,9 +659,10 @@ class IngestService {
       boolean processed) {
     store.db.update(
         "INSERT INTO"
-            + " ingest_events(project_id,event_id,content_hash,batch_id,event_index,payload,processed)"
-            + " VALUES(?,?,?,?,?,?::jsonb,?)",
+            + " ingest_events(project_id,event_id,event_key,content_hash,batch_id,event_index,payload,processed)"
+            + " VALUES(?,?,?,?,?,?,?::jsonb,?)",
         project,
+        Protocol.legacyEventIdentity(event),
         event,
         hash,
         batch,

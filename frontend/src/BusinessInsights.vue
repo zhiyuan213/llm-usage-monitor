@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {usePageSize} from "./page-size";
 import { onBeforeUnmount, ref, watch } from 'vue';
 import { api, ApiError, errorText, t, date, language } from './lib';
 import InsightResult from './InsightResult.vue';
@@ -6,7 +7,7 @@ import WeeklySummary from './WeeklySummary.vue';
 import DateRangeFilter from './DateRangeFilter.vue';
 import QueryControls from './QueryControls.vue';
 const props=defineProps<{project:string;mode:string;refreshToken?:boolean}>();
-const busy=ref(false),error=ref(''),notice=ref(''),locked=ref(false),report=ref<any>(null),items=ref<any[]>([]),total=ref(0),page=ref(0),size=ref(5);
+const busy=ref(false),error=ref(''),notice=ref(''),locked=ref(false),report=ref<any>(null),items=ref<any[]>([]),total=ref(0),page=ref(0),size=usePageSize();
 function currentLocalTime(){
   const now=new Date(), pad=(value:number)=>String(value).padStart(2,'0');
   return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;

@@ -168,7 +168,7 @@ class QueryReportsController {
       @RequestParam(defaultValue = "5") int size,
       HttpServletRequest req) {
     Support.require(page >= 0, "INVALID_PAGE");
-    Support.require(Set.of(5, 10, 50, 100).contains(size), "INVALID_PAGE_SIZE");
+    Support.require(Set.of(5, 10, 25, 50, 100).contains(size), "INVALID_PAGE_SIZE");
     var r = report(kind, project, dimension, search, status, false, year, month, req);
     long total =
         store.queries().queryForObject(

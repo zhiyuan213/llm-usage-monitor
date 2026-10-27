@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import {usePageSize} from "./page-size";
 import { ref, watch } from 'vue';
 import { api, t, date, errorText } from './lib';
 import QueryControls from './QueryControls.vue';
 const props=defineProps<{ kind:'payments'|'adjustments'; workspace:any }>();
-const rows=ref<any[]>([]), total=ref(0), page=ref(0), size=ref(5), busy=ref(false), error=ref('');
+const rows=ref<any[]>([]), total=ref(0), page=ref(0), size=usePageSize(), busy=ref(false), error=ref('');
 let generation=0;
 async function load() {
   const current=++generation; busy.value=true; error.value='';

@@ -22,7 +22,7 @@ class AdminProjectsController {
     if (!Boolean.TRUE.equals(store.queries().queryForObject(
         "SELECT is_admin AND verified AND deleted_at IS NULL FROM users WHERE id=?",
         Boolean.class,SessionFilter.uid(req)))) throw new ApiError(403,"ADMIN_REQUIRED");
-    Support.require(page>=0 && page<=100000 && Set.of(5,10,50,100).contains(size),"INVALID_PAGE");
+    Support.require(page>=0 && page<=100000 && Set.of(5,10,25,50,100).contains(size),"INVALID_PAGE");
     Support.require(Set.of("email","name","environment","calls","objects","tokens","cost","unknown_costs").contains(sort)
         && Set.of("asc","desc").contains(direction),"INVALID_SORT");
     int selectedYear=year==null?Year.now(ZoneOffset.UTC).getValue():year;

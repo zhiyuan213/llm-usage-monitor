@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import {usePageSize} from "./page-size";
 import { ref, watch } from 'vue';
 import { api, t, money, date, errorText, n } from './lib';
 import QueryControls from './QueryControls.vue';
 const props=defineProps<{ workspace:any }>();
 const data=ref<any>(null), consent=ref(false), busy=ref(false), error=ref('');
-const page=ref(0), size=ref(5), loading=ref(false);
+const page=ref(0), size=usePageSize(), loading=ref(false);
 let version=0;
 async function load(){const current=++version;loading.value=true;error.value='';try{const result=await api(`/billing/usage-charges?page=${page.value}&size=${size.value}`);if(current!==version)return;data.value=result;const last=Math.max(0,Math.ceil((result.total||0)/size.value)-1);if(page.value>last){page.value=last;await load();}}catch(e){if(current===version)error.value=errorText(e);}finally{if(current===version)loading.value=false;}}
 watch(()=>props.workspace,load,{immediate:true});

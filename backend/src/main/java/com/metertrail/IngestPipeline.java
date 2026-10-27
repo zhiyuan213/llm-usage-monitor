@@ -96,7 +96,7 @@ class IngestPipeline implements SmartLifecycle {
   }
 
   Ticket submit(Store.KeyScope scope, JsonNode body) {
-    Protocol.envelope(body);
+    body = Protocol.defaults(body);
     if (!running) throw new ApiError(503, "INGEST_SHUTTING_DOWN");
     if (!slots.tryAcquire()) throw new ApiError(503, "INGEST_BUSY");
     String payload = body.toString();

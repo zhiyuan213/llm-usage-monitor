@@ -54,16 +54,45 @@ final class Protocol {
 
   static void envelope(JsonNode b) {
     Support.require(
-        b.isObject() && b.path("schemaVersion").asText().equals("1.0"), "INVALID_SCHEMA");
+        b.isObject() && (!b.has("schemaVersion") || (b.path("schemaVersion").isTextual() && b.path("schemaVersion").asText().equals("1.0"))), "INVALID_SCHEMA");
     JsonNode a = b.path("agent");
+    Support.require(!b.has("agent") || a.isObject(), "INVALID_AGENT");
     for (String key : List.of("serviceName", "environment", "instanceId"))
-      Support.text(a, key, 128);
+      if (a.has(key)) Support.text(a, key, 128);
     for (String k : List.of("sdkName", "sdkVersion")) if (a.has(k)) Support.text(a, k, 128);
     Support.require(
         b.path("events").isArray()
             && b.path("events").size() >= 1
             && b.path("events").size() <= 500,
         "INVALID_BATCH_SIZE");
+  }
+
+  static JsonNode defaults(JsonNode body) {
+    envelope(body);
+    var normalized = (com.fasterxml.jackson.databind.node.ObjectNode) body.deepCopy();
+    if (!normalized.has("schemaVersion")) normalized.put("schemaVersion", "1.0");
+    var agent = normalized.withObject("agent");
+    for (String key : List.of("serviceName", "environment", "instanceId"))
+      if (!agent.has(key)) agent.put(key, key + "-1");
+    return normalized;
+  }
+
+  static JsonNode eventDefaults(JsonNode event) {
+    if (!event.isObject() || event.has("revision")) return event;
+    var normalized = (com.fasterxml.jackson.databind.node.ObjectNode) event.deepCopy();
+    normalized.put("revision", 1);
+    return normalized;
+  }
+
+  // Keep legacy UUID spelling semantics while allowing arbitrary new 36-character IDs.
+  static String eventIdentity(String id) {
+    return id.matches("[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}")
+        ? id.toLowerCase(Locale.ROOT) : id;
+  }
+
+  static UUID legacyEventIdentity(String id) {
+    return id.matches("[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}")
+        ? UUID.fromString(id) : UUID.randomUUID();
   }
 
   static void event(JsonNode e) {
@@ -87,16 +116,14 @@ final class Protocol {
     Support.require(eventId.isTextual(), "INVALID_EVENT_ID_TYPE");
     String id = eventId.asText();
     Support.require(!id.isBlank(), "EVENT_ID_REQUIRED");
-    Support.require(id.length() == 36, "EVENT_ID_LENGTH_MUST_BE_36");
-    Support.require(
-        id.matches("[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}"), "INVALID_EVENT_ID_FORMAT");
+    Support.require(id.codePointCount(0, id.length()) == 36, "EVENT_ID_LENGTH_MUST_BE_36");
     String type = Support.text(e, "type", 16);
     Support.require(Set.of("trace", "observation", "score").contains(type), "INVALID_TYPE");
     Support.text(e, "objectId", 128);
     Support.require(
-        e.path("revision").isIntegralNumber()
+        !e.has("revision") || (e.path("revision").isIntegralNumber()
             && e.path("revision").canConvertToLong()
-            && e.path("revision").asLong() > 0,
+            && e.path("revision").asLong() > 0),
         "INVALID_REVISION");
     try {
       Instant started = Instant.parse(Support.text(e, "startedAt", 40));

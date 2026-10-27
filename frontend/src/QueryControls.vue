@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { t, n, language } from "./lib";
+import {pageSizes} from './page-size';
 defineProps<{
   page: number;
   size: number;
@@ -19,7 +20,7 @@ defineEmits<{ change: [page: number]; resize: [size: number] }>();
         t("Export PDF", "导出 PDF")
       }}</a>
     </div>
-    <div class="query-pages">
+    <div v-if="total > 0" class="query-pages">
       <label class="page-size"
         >{{ t("Rows per page", "每页条数") }}
         <select
@@ -31,7 +32,7 @@ defineEmits<{ change: [page: number]; resize: [size: number] }>();
           "
         >
           <option
-            v-for="option in [5, 10, 50, 100]"
+            v-for="option in [...new Set([size,...pageSizes])].sort((a,b)=>a-b)"
             :key="option"
             :value="option"
           >
@@ -40,7 +41,7 @@ defineEmits<{ change: [page: number]; resize: [size: number] }>();
         </select>
       </label>
       <span
-        >{{ t("Total", "共") }} {{ n(total) }} {{ t("rows", "条") }} ·
+        >{{ t("Total", "共") }} {{ n(total) }} {{ total===1?t("row", "条"):t("rows", "条") }} ·
         {{ page + 1 }} / {{ Math.max(1, Math.ceil(total / size)) }}</span
       >
       <button

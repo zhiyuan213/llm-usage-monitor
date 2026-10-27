@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {usePageSize} from "./page-size";
 import { computed, ref, watch } from 'vue';
 import { api, t, n, money, date, language, errorText } from './lib';
 import DateRangeFilter from './DateRangeFilter.vue';
@@ -9,7 +10,7 @@ const years=Array.from({length:4},(_,i)=>currentYear-i);
 const draftDimension=ref('customerId'), period=ref('year'), year=ref(currentYear), month=ref(new Date().getUTCMonth()+1);
 const customWindow=ref<{from:string;to:string}|null>(null);
 const applied=ref({dimension:'customerId',year:currentYear,month:0});
-const page=ref(0), size=ref(5), total=ref(0), rows=ref<any[]>([]), tokenChart=ref<any[]>([]), costChart=ref<any[]>([]), busy=ref(false), error=ref('');
+const page=ref(0), size=usePageSize(), total=ref(0), rows=ref<any[]>([]), tokenChart=ref<any[]>([]), costChart=ref<any[]>([]), busy=ref(false), error=ref('');
 const metric=ref<'tokens'|'cost'>('tokens');
 const chart=computed(()=>metric.value==='tokens'?tokenChart.value:costChart.value);
 let version=0;

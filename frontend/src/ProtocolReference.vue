@@ -48,11 +48,16 @@ import {
     <p>
       {{
         t(
-          "Replace serviceName with your application name and use the current UTC time for startedAt. Generate new IDs for new events; keep the original event unchanged when retrying. revision starts at 1.",
-          "将 serviceName 换成应用名称，startedAt 换成当前 UTC 时间。新事件生成新 ID；网络重试时原样重发，revision 首次填 1。",
+          "Use actual startedAt and data. schemaVersion defaults to 1.0; agent defaults to serviceName-1 / environment-1 / instanceId-1; revision defaults to 1. Only omitted fields get defaults; null or invalid values are rejected. Set agent metadata when you need to identify your application.",
+          "startedAt 和 data 填实际值。schemaVersion 可省略，默认 1.0；agent 可省略，三个子字段分别默认 serviceName-1、environment-1、instanceId-1；revision 可省略，默认 1。仅省略时使用默认值，null 或非法值不会自动修正。需要区分应用来源时，再填写 agent。",
         )
       }}
     </p>
+    <table class="example-field-map"><thead><tr><th>{{ t('Scenario', '使用场景') }}</th><th>{{ t('Identity rule', 'ID 与版本怎么填') }}</th></tr></thead><tbody>
+      <tr><td>{{ t('New request', '新的一次请求') }}</td><td>{{ t('New eventId (36 characters), new objectIds; related steps share a new traceId. Omit revision.', '生成新的 36 字符 eventId 和各自的新 objectId；请求与步骤共用新的 traceId。revision 不填即可。') }}</td></tr>
+      <tr><td>{{ t('Network retry', '网络重试') }}</td><td>{{ t('Resend the same IDs and content unchanged.', '保留同一份 ID 和内容原样重发，不要重新生成 ID。') }}</td></tr>
+      <tr><td>{{ t('Update a record', '更新原记录（进阶）') }}</td><td>{{ t('Keep objectId, generate a new eventId and send a higher revision with the complete replacement record. This is not a request stage or status.', '保留 objectId，生成新 eventId，显式填写更高 revision 并提交完整替换记录。版本号不代表请求阶段、完成状态或对错。') }}</td></tr>
+    </tbody></table>
     <div class="code-box">
       <div>Body · JSON</div>
       <pre>{{ minimalBody }}</pre>

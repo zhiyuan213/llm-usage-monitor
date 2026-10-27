@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {usePageSize} from "./page-size";
 import { computed, ref, watch } from 'vue';
 import { t, money, n, date } from './lib';
 import QueryControls from './QueryControls.vue';
@@ -7,7 +8,7 @@ const emit=defineEmits<{expand:[]}>();
 const dataState=computed(()=>props.report.data_state?.kind||'ready');
 const stateText=computed(()=>({outside_retention:t('This entire period is outside the current retention window; historical data is unavailable, not zero.','此区间完全超出当前数据保留范围，历史数据不可查询，不代表零调用。'),window_empty:t('No requests or model calls in this window; the project has data in another retained period.','当前窗口没有请求或模型调用，该项目在其他保留时间内有数据。'),no_retained_data:t('No queryable records in the retention window. Check your integration and retention before sending more data.','当前保留期内没有可查询记录，请先核对接入情况与保留期限。'),no_model_calls:t('Requests were received, but this window has no generation observations. Model cost cannot yet be analyzed.','已收到应用请求，但当前窗口没有模型生成步骤，暂无法分析模型费用。'),partial_pricing:t('Some calls lack usable cost evidence; known cost is a partial subtotal.','部分调用缺少可用费用证据，已知费用并非完整总额。')} as Record<string,string>)[dataState.value]);
 const unknownUrl=computed(()=>'/app/traces?'+new URLSearchParams({project:props.project,cost:'unknown',from:props.report.after.start,to:props.report.after.end}));
-const page=ref(0),size=ref(5),samplePage=ref(0),sampleSize=ref(5);
+const page=ref(0),size=usePageSize(),samplePage=ref(0),sampleSize=usePageSize();
 watch(()=>props.report,()=>{page.value=0;samplePage.value=0;});
 const groups=computed(()=>props.report.contributors.slice(page.value*size.value,(page.value+1)*size.value));
 const samples=computed(()=>(props.report.samples||[]).slice(samplePage.value*sampleSize.value,(samplePage.value+1)*sampleSize.value));

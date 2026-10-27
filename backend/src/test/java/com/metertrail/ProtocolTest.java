@@ -30,14 +30,33 @@ class ProtocolTest {
       e.put("eventId", id);
       assertEquals("EVENT_ID_LENGTH_MUST_BE_36", assertThrows(ApiError.class, () -> Protocol.event(e)).code);
     }
-    e.put("eventId", "x".repeat(36));
-    assertEquals("INVALID_EVENT_ID_FORMAT", assertThrows(ApiError.class, () -> Protocol.event(e)).code);
     e.put("type", "trace"); e.put("objectId", "example"); e.put("revision", 1);
     e.put("traceId", "0123456789abcdef0123456789abcdef"); e.put("startedAt", Instant.now().toString());
     e.set("data", Support.parse("{\"name\":\"Example\",\"status\":\"success\",\"durationMs\":1}"));
-    for (String id : List.of("550e8400-e29b-41d4-a716-446655440000", "550E8400-E29B-41D4-A716-446655440000")) {
+    for (String id : List.of("550e8400-e29b-41d4-a716-446655440000", "550E8400-E29B-41D4-A716-446655440000", "x".repeat(36), "中".repeat(36), "😀".repeat(36))) {
       e.put("eventId", id);
       assertDoesNotThrow(() -> Protocol.event(e));
+    }
+  }
+  @Test
+  void optionalDefaultsDoNotHideInvalidExplicitValues() {
+    var input = Support.parse("{\"events\":[{}]}");
+    var normalized = Protocol.defaults(input);
+    assertEquals("1.0", normalized.path("schemaVersion").asText());
+    for (String key : List.of("serviceName", "environment", "instanceId"))
+      assertEquals(key + "-1", normalized.path("agent").path(key).asText());
+    assertFalse(input.has("agent"));
+    assertEquals(1, Protocol.eventDefaults(Support.parse("{}")).path("revision").asInt());
+    for (String invalid : List.of("{\"schemaVersion\":null,\"events\":[{}]}", "{\"schemaVersion\":1.0,\"events\":[{}]}", "{\"agent\":null,\"events\":[{}]}", "{\"agent\":{\"serviceName\":null},\"events\":[{}]}"))
+      assertThrows(ApiError.class, () -> Protocol.defaults(Support.parse(invalid)));
+    var e = new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode();
+    e.put("eventId", "r".repeat(36)); e.put("type", "trace"); e.put("objectId", "defaults");
+    e.put("traceId", "0123456789abcdef0123456789abcdef"); e.put("startedAt", Instant.now().toString());
+    e.set("data", Support.parse("{\"name\":\"test\",\"status\":\"success\",\"durationMs\":1}"));
+    assertDoesNotThrow(() -> Protocol.event(e));
+    for (String value : List.of("null", "0", "-1", "1.5", "\"1\"")) {
+      e.set("revision", Support.parse(value));
+      assertEquals("INVALID_REVISION", assertThrows(ApiError.class, () -> Protocol.event(e)).code);
     }
   }
   @Test

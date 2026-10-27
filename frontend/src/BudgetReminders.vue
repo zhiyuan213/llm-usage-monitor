@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import {usePageSize} from "./page-size";
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { api, errorText, t, date, money, n } from './lib';
 import QueryControls from './QueryControls.vue';
 const props=defineProps<{project:string;refreshToken?:boolean}>();
-const busy=ref(false),error=ref(''),notice=ref(''),data=ref<any>(null),enabled=ref(false),forecast=ref(true),amount=ref('100'),warning=ref(80),page=ref(0),size=ref(5);
+const busy=ref(false),error=ref(''),notice=ref(''),data=ref<any>(null),enabled=ref(false),forecast=ref(true),amount=ref('100'),warning=ref(80),page=ref(0),size=usePageSize();
 const available=computed(()=>data.value?.available===true),custom=computed(()=>data.value?.custom_rules===true);
 const pct=(value:any)=>value==null?'—':`${n(Number(value)*100)}%`;
 let epoch=0,alive=true;onBeforeUnmount(()=>{alive=false;++epoch;});
