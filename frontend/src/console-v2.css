@@ -1235,3 +1235,6 @@
 .ui-v2 .trace-query-toolbar .trace-export { margin-left: auto; display: flex; flex-wrap: wrap; gap: 12px; }
 @media (max-width: 700px) { .ui-v2 .trace-query-fields { width: 100%; } .ui-v2 .trace-query-fields .search-field { width: 100%; } .ui-v2 .trace-query-toolbar .trace-export { margin-left: 0; } }
 @media (max-width: 700px) { .ui-v2 .trace-filters .search-field { flex:1 1 100%; width:100%; max-width:none; min-width:0; } .ui-v2 .trace-filters .trace-export { margin-left:0; flex-wrap:wrap; } }
+.ui-v2 .verification-target label { display: grid; gap: 8px; margin-top: 12px; }
+.ui-v2 .verification-target input { width: 100%; min-width: 0; box-sizing: border-box; }
+.ui-v2 .verification-target p { margin: 8px 0; }

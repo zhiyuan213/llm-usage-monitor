@@ -393,16 +393,30 @@ async function removeEntry(kind: "keys" | "alerts", id: string) {
     await refresh();
   });
 }
+const verificationKeyName = ref("");
+let verificationKeyProject = "";
+async function sendVerificationCode() {
+  if (verification.action === "key.create") {
+    if (!keyName.value.trim()) {
+      verification.error = t("Enter a key name.", "请输入密钥名称。");
+      return;
+    }
+    verification.target = verificationKeyProject + ":" + keyName.value;
+  }
+  await sendCode();
+}
 async function createKey() {
-  const p = selected.value,
-    name = keyName.value;
-  await verify("key.create", p + ":" + name, async (proof) => {
+  const p = selected.value;
+  verificationKeyProject = p;
+  await verify("key.create", p + ":" + keyName.value, async (proof) => {
+    const name = keyName.value;
     const result = await api("/projects/" + p + "/keys", { ...proof, name });
     createdKey.value = result.key;
   });
 }
-async function revoke(key: string) {
+async function revoke(key: string, name: string) {
   const p = selected.value;
+  verificationKeyName.value = name;
   await verify("key.revoke", p + ":" + key, async (proof) => {
     await api("/projects/" + p + "/keys/" + key + "/revoke", proof);
   });
@@ -1080,20 +1094,13 @@ const usagePercent = computed(() =>
             </div>
             <KeyQuickstart :api-key="createdKey" />
           </section>
-          <section v-if="Array.isArray(data) && !data.some((key:any)=>!key.revoked_at) && !createdKey" class="notice"><strong>{{t('Create an active key to connect your application','创建有效密钥以接入应用')}}</strong><p>{{t('Enter a name below. After verification, copy your key and run the example to send your first request. Revoked keys cannot send data.','在下方填写密钥名称；验证后复制密钥，运行示例发送第一条数据。已撤销的密钥不能上报。')}}</p></section>
+          <section v-if="Array.isArray(data) && !data.some((key:any)=>!key.revoked_at) && !createdKey" class="notice"><strong>{{t('Create an active key to connect your application','创建有效密钥以接入应用')}}</strong><p>{{t('Click Create key and enter a name in the dialog. After verification, copy your key and run the example to send your first request. Revoked keys cannot send data.','点击创建密钥，在弹窗中填写名称；验证后复制密钥，运行示例发送第一条数据。已撤销的密钥不能上报。')}}</p></section>
           <section class="panel report-section keys-section">
             <div class="panel-heading">
               <h2>{{ t("API keys", "API 密钥") }}</h2>
-              <form class="inline-form" @submit.prevent="createKey">
-                <label class="key-name-label">{{t('Key name','密钥名称')}}<input
-                  v-model="keyName"
-                  required
-                  maxlength="128"
-                  :aria-label="t('Key name', '密钥名称')"
-                /></label><button class="btn primary">
-                  <Plus :size="16" />{{ t("Create key", "创建密钥") }}
-                </button>
-              </form>
+              <button class="btn primary" type="button" @click="createKey">
+                <Plus :size="16" />{{ t("Create key", "创建密钥") }}
+              </button>
             </div>
             <div class="table-wrap">
               <table>
@@ -1124,7 +1131,7 @@ const usagePercent = computed(() =>
                       <button
                         v-if="!k.revoked_at"
                         class="btn danger-text"
-                        @click="revoke(k.id)"
+                        @click="revoke(k.id, k.name)"
                       >
                         {{ t("Revoke", "撤销") }}
                       </button>
@@ -1783,7 +1790,16 @@ const usagePercent = computed(() =>
               : t("to authorize this change.", "发送验证码以授权此次变更。")
           }}
         </p>
-        <div class="verification-target">
+        <div v-if="verification.action === 'key.create'" class="verification-target">
+          <strong>{{ t('Create key', '创建密钥') }}</strong>
+          <label>{{ t('Key name', '密钥名称') }}<input v-model="keyName" required maxlength="128" :disabled="verification.busy || !!verification.challengeId" /></label>
+        </div>
+        <div v-else-if="verification.action === 'key.revoke'" class="verification-target">
+          <strong>{{ t('Revoke key', '撤销密钥') }}</strong>
+          <p>{{ t('Key name: ', '密钥名称：') }}{{ verificationKeyName }}</p>
+          <small>{{ t('Programs using this key will no longer be able to send data after revocation.', '撤销后，使用该密钥的程序将无法继续上报。') }}</small>
+        </div>
+        <div v-else class="verification-target">
           <code>{{ verification.action }}</code
           ><small>{{ verification.target }}</small>
         </div>
@@ -1821,7 +1837,7 @@ const usagePercent = computed(() =>
             class="text-button"
             type="button"
             :disabled="verification.busy"
-            @click="sendCode"
+            @click="sendVerificationCode"
           >
             {{
               verification.challengeId
