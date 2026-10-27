@@ -175,7 +175,7 @@ const search = ref(""),
   dimension = ref("customerId"),
   showCreate = ref(false),
   createdKey = ref(""),
-  keyName = ref("Production key"),
+  keyName = ref(""),
   copied = ref(false);
 const changeTargetPlan = ref("");
 const newProject = reactive({ name: "", environment: "production" }),
@@ -1157,14 +1157,7 @@ const usagePercent = computed(() =>
                 </tbody>
               </table>
             </div>
-            <div class="panel-foot">
-              {{
-                t(
-                  "To rotate: create a new key, migrate your application, then revoke the previous key. Revocation takes effect immediately.",
-                  "轮换方式：创建新密钥、迁移应用，再撤销旧密钥。撤销立即生效。",
-                )
-              }}
-            </div>
+
           </section></template
         >
         <template v-if="page === 'alerts' && selected"
@@ -1792,7 +1785,7 @@ const usagePercent = computed(() =>
         </p>
         <div v-if="verification.action === 'key.create'" class="verification-target">
           <strong>{{ t('Create key', '创建密钥') }}</strong>
-          <label>{{ t('Key name', '密钥名称') }}<input v-model="keyName" required maxlength="128" :disabled="verification.busy || !!verification.challengeId" /></label>
+          <label>{{ t('Key name', '密钥名称') }}<input v-model="keyName" :placeholder="t('Enter a key name', '请输入密钥名称')" required maxlength="128" :disabled="verification.busy || !!verification.challengeId" /></label>
         </div>
         <div v-else-if="verification.action === 'key.revoke'" class="verification-target">
           <strong>{{ t('Revoke key', '撤销密钥') }}</strong>
