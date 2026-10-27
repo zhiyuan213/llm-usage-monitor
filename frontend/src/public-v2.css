@@ -75,6 +75,8 @@
   color: white;
 }
 .public-language {
+  /* Follow the document header, never float over content after scrolling. */
+  position: absolute;
   top: 20px;
   right: max(24px, calc((100vw - 1280px) / 2));
 }

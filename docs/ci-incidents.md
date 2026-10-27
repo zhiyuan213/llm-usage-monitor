@@ -1,5 +1,12 @@
 # CI failure records
 
+## 2026-10-27 retained-assets acceptance fixture permissions
+
+- Commit `fb81119`, run `40468486687`: backend, frontend-sdk and security passed; images failed in `check-web-image.py` when requesting the previous-release fixture (HTTP 404).
+- Root cause: Python TemporaryDirectory defaults to mode 0700 on Linux. Non-root nginx could not traverse the mounted fixture directory. Windows local verification did not expose the POSIX permission difference.
+- Fix already shipped in `e25c096`: explicitly set fixture directories to 0755 and files to 0644, matching the production archive preparation script.
+- Prevention: test mounted fixture access under the actual UID 101 image on Linux CI; retain restrictive source-context tests. Exact fixed commit run `40468559956` passed backend, frontend-sdk, security and images before deployment. Confirmed again when investigating this notification; the email concerns the earlier failed commit, not a new production failure.
+
 ## 2026-10-27 cached entry references removed release assets
 
 - Production screenshot showed a blank console: old hashed JS returned 404 and CSS was served as HTML. Current HTML had no explicit Cache-Control, and each web image replaced previous assets.
