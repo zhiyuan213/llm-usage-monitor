@@ -905,3 +905,20 @@ html[lang="zh-CN"] .public-v2 { --public-font: "MeterTrail Noto Sans SC", system
 .public-v2 .integration-tutorial-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 1200px) { .public-v2 .integration-tutorial-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .public-v2 .integration-tutorial-grid { grid-template-columns: 1fr; } }
+
+/* Scenario guides: scoped diagrams and selectors, with code scrolling inside its box. */
+.public-v2 .scenario-tabs { display:flex; flex-wrap:wrap; gap:12px; margin:20px 0; }
+.public-v2 .scenario-tabs .btn { white-space:normal; height:auto; min-height:36px; padding:8px 14px; }
+.public-v2 .scenario-flow { background:#f5f7fb; border:1px solid #dce3f0; border-radius:8px; padding:24px; margin:20px 0; }
+.public-v2 .scenario-flow-row { display:grid; grid-template-columns:150px minmax(0,1fr); gap:16px; margin-top:16px; align-items:start; }
+.public-v2 .scenario-type { color:#3156e8; font-weight:600; }
+.public-v2 .scenario-flow-children { border-left:2px solid #b9c8ee; margin-left:12px; padding-left:20px; }
+.public-v2 .scenario-flow p { margin-bottom:0; }
+.public-v2 .scenario-language { display:flex; align-items:center; gap:12px; margin:20px 0; }
+.public-v2 .integration-scenarios .code-box { min-width:0; margin-top:20px; }
+.public-v2 .integration-scenarios .code-box > div { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+@media(max-width:700px) {
+  .public-v2 .scenario-flow { padding:16px; }
+  .public-v2 .scenario-flow-row { grid-template-columns:minmax(0,1fr); gap:4px; }
+  .public-v2 .scenario-tabs .btn { flex:1 1 100%; }
+}

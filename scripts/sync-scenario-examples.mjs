@@ -1,0 +1,98 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+
+export function batches(kind, id, time, scoreId = id) {
+  const trace = {type:'trace',objectId:`trace-${id}`,traceId:id,startedAt:time,data:{name:'Document analysis',status:'success',durationMs:6200,userId:'demo-user',customerId:'demo-customer',feature:'document-analysis'}};
+  const observation = (n, duration, input, output) => ({type:'observation',objectId:`obs-${id}-${n}`,traceId:id,spanId:String(n).padStart(16,'0'),startedAt:time,data:{observationType:'generation',status:'success',durationMs:duration,provider:'example',model:'example-model',usage:{inputTokens:input,outputTokens:output}}});
+  if (kind === 'single') { trace.data.durationMs=2100; return [[trace, observation(1,2000,1500,400)]]; }
+  if (kind === 'multiple') return [[observation(1,2000,2500,500)],[observation(2,1000,1000,200)],[observation(3,3000,2000,500),trace]];
+  return [[{type:'score',objectId:`score-${scoreId}`,startedAt:time,data:{name:'User satisfaction',targetType:'observation',targetId:`obs-${id}-1`,valueType:'numeric',value:1}}]];
+}
+const kinds=['single','multiple','score'];
+export function source(language, kind) {
+  const values=batches(kind,'@trace@','@time@','@score@');
+  const json=JSON.stringify(values,null,2);
+  if(language==='Node.js') return `import { randomUUID } from 'node:crypto';
+import { MeterTrail } from './node/index.mjs';
+
+// Run from the source SDK repository root. Set METERTRAIL_ENDPOINT and METERTRAIL_API_KEY.
+const traceId = ${kind==='score'?"process.env.METERTRAIL_TRACE_ID":"randomUUID().replaceAll('-', '')"};
+if (!/^[0-9a-f]{32}$/.test(traceId || '')) throw Error('Set METERTRAIL_TRACE_ID to the earlier request traceId');
+console.log('traceId:', traceId); // Keep this ID if a score will be sent later.
+const startedAt = new Date().toISOString(); // Use actual request/step start times in your app.
+const batches = ${json}.map(events => JSON.parse(JSON.stringify(events)
+  .replaceAll('@trace@', traceId).replaceAll('@time@', startedAt).replaceAll('@score@', randomUUID())));
+const sdk = new MeterTrail({ serviceName:'document-api', onResult:console.log, onError:console.error });
+try {
+  for (const events of batches) {
+    // Each group represents a completed step or request; no prompt/answer text is sent.
+    for (const event of events) if (!sdk.record(event)) throw Error('SDK buffer rejected event');
+    await sdk.flush(); // Send this group before recording the next group.
+    if (sdk.paused) throw Error('SDK paused: ' + sdk.paused);
+  }
+} finally { console.log(await sdk.close()); }
+`;
+  if(language==='Python') return `import json
+import os
+import uuid
+from datetime import datetime, timezone
+from python.metertrail import MeterTrail
+
+# Run from the source SDK repository root. Set METERTRAIL_ENDPOINT and METERTRAIL_API_KEY.
+trace_id = ${kind==='score'?"os.environ['METERTRAIL_TRACE_ID']":"uuid.uuid4().hex"}
+if len(trace_id) != 32 or any(c not in '0123456789abcdef' for c in trace_id):
+    raise ValueError('Use the earlier request traceId')
+print('traceId:', trace_id)  # Keep this ID for a later score.
+started_at = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+# In your app, use actual request/step start times and measured durations.
+batches = json.loads(r'''${json}'''.replace('@trace@', trace_id)
+    .replace('@time@', started_at).replace('@score@', str(uuid.uuid4())))
+sdk = MeterTrail(service_name='document-api', on_result=print, on_error=print)
+try:
+    for events in batches:
+        for event in events:
+            if not sdk.record(event):
+                raise RuntimeError('SDK buffer rejected event')
+        if not sdk.flush():
+            raise RuntimeError('SDK could not finish sending; retain buffered events')
+finally:
+    print(sdk.close())
+`;
+  return `import com.metertrail.sdk.MeterTrail;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.UUID;
+
+public class Scenario {
+  public static void main(String[] args) throws Exception {
+    String traceId = ${kind==='score'?'System.getenv("METERTRAIL_TRACE_ID")':'UUID.randomUUID().toString().replace("-", "")'};
+    if (traceId == null || !traceId.matches("[0-9a-f]{32}"))
+      throw new IllegalArgumentException("Use the earlier request traceId in METERTRAIL_TRACE_ID");
+    System.out.println("traceId: " + traceId); // Keep for a later score.
+    // Use actual request/step start times and measured durations in your app.
+    String payload = """
+${json}
+      """.replace("@trace@", traceId).replace("@time@", Instant.now().toString())
+        .replace("@score@", UUID.randomUUID().toString());
+    var batches = new ObjectMapper().readTree(payload);
+    try (var sdk = new MeterTrail(System.getenv("METERTRAIL_ENDPOINT"),
+        System.getenv("METERTRAIL_API_KEY"), "document-api", System.out::println, System.err::println)) {
+      for (var events : batches) {
+        for (var event : events)
+          if (!sdk.record(event)) throw new IllegalStateException("SDK buffer rejected event");
+        if (!sdk.flush(Duration.ofSeconds(30)))
+          throw new IllegalStateException("SDK could not finish sending; retain buffered events");
+      }
+    }
+  }
+}
+`;
+}
+export const sources=Object.fromEntries(['Node.js','Python','Java'].map(lang=>[lang,Object.fromEntries(kinds.map(kind=>[kind,source(lang,kind)]))]));
+const output='// Generated by scripts/sync-scenario-examples.mjs.\nexport const scenarioSources: Record<string, Record<string, string>> = '+JSON.stringify(sources,null,2)+';\nexport const restScenarios: Record<string, Record<string, unknown>[][]> = '+JSON.stringify(Object.fromEntries(kinds.map(kind=>[kind,batches(kind,'@trace@','@time@','@score@')])),null,2)+';\n';
+if(process.argv[1]?.endsWith('sync-scenario-examples.mjs')) {
+  const path='frontend/src/scenario-examples.ts';
+  if(process.argv.includes('--check')) { if(readFileSync(path,'utf8').replace(/\r\n/g,'\n')!==output) throw Error('Scenario examples out of sync'); }
+  else writeFileSync(path,output);
+}
+

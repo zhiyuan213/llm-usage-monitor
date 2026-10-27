@@ -34,6 +34,10 @@ jobs:
         with: {python-version: '3.12'}
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: '17'}
+      - name: Build Java SDK for published scenario examples
+        run: mvn -B -f sdk/java/pom.xml verify dependency:build-classpath -Dmdep.outputFile=target/scenario-classpath.txt
+      - name: Verify scenario example synchronization and execute all SDK scenarios
+        run: node scripts/sync-scenario-examples.mjs --check && node scripts/check-scenario-examples.mjs
       - name: Execute public integration tutorials against a local capture server
         run: node scripts/check-tutorials.mjs
         working-directory: frontend

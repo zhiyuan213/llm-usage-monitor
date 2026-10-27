@@ -97,3 +97,10 @@ Full Header / Body / response field definitions and examples: [REST integration 
 ### Purchased units and quota
 
 `GET /v1/quota` additionally returns `addon_units` (current-period purchased units), `addon_consumed` (current-period historical pack consumption, including later refunded packs), `overage_units` (authorized usage billed separately) and `available_units` (remaining base plus valid purchased units). An inactive paid subscription has zero available units. A pack does not reprice previously accrued overage. Pack expiry and refunds preserve historical consumption and cannot create a new, unconsented charge.
+
+## 接入场景
+- 单次模型调用：请求完成后同一批次发送 Trace 和 generation Observation，共 2 个新对象、2 units。
+- 多次模型调用：可逐步发送 Observation，最后发送最终 Trace；所有步骤共用 traceId。示例为三批（1、1、2 个事件），共 4 个新对象、4 units。也允许完成后同批发送。
+- 可选评分：单独请求发送 Score，通过 targetType / targetId 指向同一项目中已处理成功的 Observation；不重发原对象，新评分为 1 unit。
+- 网络分批边界不等于业务请求边界。SDK 的 record 为内存排队，flush 推送缓冲；HTTP 200 / pending 是接收回执，按需查询批次处理结果。新业务生成新 ID；重试保留原 ID 和内容。
+- 官网 REST / SDK 场景代码由 `scripts/sync-scenario-examples.mjs` 同源生成。`scripts/check-scenario-examples.mjs` 执行三种语言的全部场景并校验实际批次、对象关联、字段和评分目标。

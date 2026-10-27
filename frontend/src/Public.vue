@@ -7,6 +7,7 @@ import { publicPage, trackAction } from './analytics';
 import Checkout from "./Checkout.vue";
 import PlanFeatures from "./PlanFeatures.vue";
 import ErrorReference from "./ErrorReference.vue";
+import IntegrationScenarios from "./IntegrationScenarios.vue";
 import ProtocolReference from "./ProtocolReference.vue";
 import ProtocolFields from "./ProtocolFields.vue";
 import BatchQueryReference from "./BatchQueryReference.vue";
@@ -699,8 +700,8 @@ import LegalPolicy from './LegalPolicy.vue';
               <strong>{{ t("Create an API key", "创建密钥") }}</strong>
               {{
                 t(
-                  "Open API key management. Verify the action by email to create a project key.",
-                  "进入密钥管理，通过邮箱验证码创建项目密钥。",
+                  "Open API key management. The first project key needs no additional email verification; later keys require it.",
+                  "进入密钥管理创建项目密钥。首把无需额外邮箱验证，后续创建仍需验证。",
                 )
               }}
             </li>
@@ -778,6 +779,7 @@ import LegalPolicy from './LegalPolicy.vue';
               >Java</a
             >
           </div>
+          <IntegrationScenarios sdk />
         </section>
         <section v-else-if="activeDoc === 'fields'" aria-labelledby="fields">
           <h2 id="fields">{{ t("Ingestion fields", "接入字段") }}</h2>
@@ -823,7 +825,7 @@ import LegalPolicy from './LegalPolicy.vue';
         </section>
       </article>
     </main>
-    <main v-else-if="page==='security'" class="legal public-content"><span class="eyebrow">METERTRAIL</span><h1>{{t('Security and data handling','安全与数据处理')}}</h1><h2>{{t('Send metadata, not secrets','上报元数据，不上报秘密')}}</h2><p>{{t('Report request timing, status, model names and token counts. Do not include model API keys, passwords, full prompts or response text in events. Run integrations on your backend.','上报请求耗时、状态、模型名称与 Token 数，不要在事件中包含模型 API 密钥、密码、完整提示词或回答正文。接入代码应运行在服务端。')}}</p><h2>{{t('Project access and account protection','项目访问与账号保护')}}</h2><p>{{t('Project API keys scope ingestion to their project and can be revoked. Sensitive account and key operations require email verification. Console changes use session-bound CSRF protection; sessions use HttpOnly cookies.','项目 API 密钥限定所属项目，可撤销。敏感账号及密钥操作需要邮箱验证；控制台变更使用会话绑定的 CSRF 保护，会话使用 HttpOnly Cookie。')}}</p><h2>{{t('Retention and deletion','数据保留与删除')}}</h2><p>{{t('Queryable detail follows the active plan retention window. Project deletion revokes its keys and removes analytical detail asynchronously. This page describes implemented controls, not an independent security certification or an availability guarantee.','可查询明细遵循当前套餐保留范围。删除项目会撤销密钥并异步移除分析明细。本页描述已实现的措施，不代表独立安全认证或可用性保证。')}}</p><p><RouterLink to="/privacy">{{t('Read the privacy policy','查看隐私政策')}}</RouterLink></p><p>{{t('Report a security concern:','报告安全问题：')}} <a href="mailto:13428961230@163.com">13428961230@163.com</a></p></main>
+    <main v-else-if="page==='security'" class="legal public-content"><span class="eyebrow">METERTRAIL</span><h1>{{t('Security and data handling','安全与数据处理')}}</h1><h2>{{t('Send metadata, not secrets','上报元数据，不上报秘密')}}</h2><p>{{t('Report request timing, status, model names and token counts. Do not include model API keys, passwords, full prompts or response text in events. Run integrations on your backend.','上报请求耗时、状态、模型名称与 Token 数，不要在事件中包含模型 API 密钥、密码、完整提示词或回答正文。接入代码应运行在服务端。')}}</p><h2>{{t('Project access and account protection','项目访问与账号保护')}}</h2><p>{{t('Project API keys scope ingestion to their project and can be revoked. Sensitive account changes, later key creation and key revocation require email verification. The first project key needs no additional email verification. Console changes use session-bound CSRF protection; sessions use HttpOnly cookies.','项目 API 密钥限定所属项目，可撤销。敏感账号变更、后续创建及撤销密钥需要邮箱验证，项目首把密钥无需额外验证；控制台变更使用会话绑定的 CSRF 保护，会话使用 HttpOnly Cookie。')}}</p><h2>{{t('Retention and deletion','数据保留与删除')}}</h2><p>{{t('Queryable detail follows the active plan retention window. Project deletion revokes its keys and removes analytical detail asynchronously. This page describes implemented controls, not an independent security certification or an availability guarantee.','可查询明细遵循当前套餐保留范围。删除项目会撤销密钥并异步移除分析明细。本页描述已实现的措施，不代表独立安全认证或可用性保证。')}}</p><p><RouterLink to="/privacy">{{t('Read the privacy policy','查看隐私政策')}}</RouterLink></p><p>{{t('Report a security concern:','报告安全问题：')}} <a href="mailto:13428961230@163.com">13428961230@163.com</a></p></main>
     <LegalPolicy v-else :page="page" />
     <footer>
       <RouterLink class="brand" to="/"
