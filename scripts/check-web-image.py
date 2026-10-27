@@ -39,10 +39,13 @@ def main():
     docker("build", "--progress=plain", "-t", TAG, "-", input=context.getvalue(), timeout=600)
     retained = tempfile.TemporaryDirectory(prefix="metertrail-assets-")
     retained_path = Path(retained.name)
+    retained_path.chmod(0o755)
     (retained_path / "assets").mkdir()
+    (retained_path / "assets").chmod(0o755)
     legacy = {"previous-release.js": b"window.previousRelease = true;", "previous-release.css": b"body { color: navy; }"}
     for name, content in legacy.items():
         (retained_path / "assets" / name).write_bytes(content)
+        (retained_path / "assets" / name).chmod(0o644)
     try:
         docker("run", "-d", "--name", NAME, "--add-host", "api-blue:127.0.0.1",
                "-p", "127.0.0.1::8080", "-v",
