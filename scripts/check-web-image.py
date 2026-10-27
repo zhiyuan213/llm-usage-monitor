@@ -68,12 +68,15 @@ def main():
                 time.sleep(0.5)
         import re
         assets = re.findall(r'(?:src|href)="(/(?:assets|fonts)/[^"<>]+)"', html)
-        paths = ["/", "/security", "/demo", "/tutorials", "/tutorials/nodejs", "/tutorials/python", "/tutorials/rest", "/sitemap.xml", "/robots.txt", "/googlecc6b6e16e288c986.html", "/fonts/NotoSansSC-ui.woff2", *assets]
+        paths = ["/", "/terms", "/privacy", "/refunds", "/security", "/demo", "/tutorials", "/tutorials/nodejs", "/tutorials/python", "/tutorials/rest", "/sitemap.xml", "/robots.txt", "/googlecc6b6e16e288c986.html", "/fonts/NotoSansSC-ui.woff2", *assets]
         for path in paths:
             with urllib.request.urlopen(origin + path, timeout=5) as response:
                 content = response.read()
                 if response.status != 200 or not content:
                     raise AssertionError("Unreadable public file: " + path)
+                if path in {'/terms','/privacy','/refunds'}:
+                    assert b'2026-10-27' in content and b'13428961230@163.com' in content, path
+                    assert b'Deployment policy template' not in content, path
                 if path == "/googlecc6b6e16e288c986.html" and content != (ROOT / "frontend/public" / path[1:]).read_bytes():
                     raise AssertionError("Google verification file changed")
                 if path.startswith('/tutorials/') and b'Example request' not in content:

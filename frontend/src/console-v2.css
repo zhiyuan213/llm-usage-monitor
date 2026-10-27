@@ -1156,6 +1156,11 @@
 .ui-v2 .sidebar nav { min-height: 0; overflow-y: auto; flex: 1; align-content: start; scrollbar-width: thin; scrollbar-color: #63738d transparent; }
 .ui-v2 .sidebar-bottom { flex-shrink: 0; }
 .ui-v2 .business-insights { display: grid; gap: 20px; min-width: 0; }
+.ui-v2 .business-insights > .date-range-filter,
+.ui-v2 .business-insights > .notice,
+.ui-v2 .business-insights > p { margin: 0; }
+.ui-v2 .business-insights .insight-result { gap: 20px; }
+.ui-v2 .business-insights .insight-result > .notice { margin: 0; }
 .ui-v2 .business-insights .panel { padding: 24px; min-width: 0; margin-bottom: 0; }
 .ui-v2 .insight-result { display: grid; gap: 20px; min-width: 0; }
 .ui-v2 .insight-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
@@ -1219,6 +1224,12 @@
 .ui-v2 .trace-query-fields { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-width: 0; }
 .ui-v2 .trace-query-fields .search-field { width: 260px; max-width: 100%; min-width: 0; }
 .ui-v2 .trace-query-fields .search-field input { width: 100%; min-width: 0; }
+.ui-v2 .trace-query-fields .search-field input:focus { border: 0; outline: 0; box-shadow: none; }
+.ui-v2 .trace-query-fields .search-field:focus-within { border-color: #7997f7; outline: 2px solid #3156e812; }
+.ui-v2 .analytics-top-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 16px 24px; margin-bottom: 16px; }
+.ui-v2 .analytics-top-controls .date-range-filter { margin-bottom: 0; }
+.ui-v2 .analytics-top-controls .analytics-filters { padding: 0; }
+.ui-v2 .analytics-report-heading .query-export { margin-left: auto; }
 .ui-v2 .trace-query-toolbar .trace-export { margin-left: auto; display: flex; flex-wrap: wrap; gap: 12px; }
 @media (max-width: 700px) { .ui-v2 .trace-query-fields { width: 100%; } .ui-v2 .trace-query-fields .search-field { width: 100%; } .ui-v2 .trace-query-toolbar .trace-export { margin-left: 0; } }
 @media (max-width: 700px) { .ui-v2 .trace-filters .search-field { flex:1 1 100%; width:100%; max-width:none; min-width:0; } .ui-v2 .trace-filters .trace-export { margin-left:0; flex-wrap:wrap; } }

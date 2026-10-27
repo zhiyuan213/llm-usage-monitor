@@ -16,7 +16,6 @@ const chart=computed(()=>metric.value==='tokens'?tokenChart.value:costChart.valu
 let version=0;
 const params=computed(()=>new URLSearchParams({project:props.project,dimension:applied.value.dimension,...(customWindow.value?customWindow.value:{year:String(applied.value.year),...(applied.value.month?{month:String(applied.value.month)}:{})})}).toString());
 const exportUrl=computed(()=>'/api/reports/analytics/export?'+params.value+'&lang='+language.value);
-const periodLabel=computed(()=>customWindow.value?`${date(customWindow.value.from)} → ${date(customWindow.value.to)}`:applied.value.month?`${applied.value.year}-${String(applied.value.month).padStart(2,'0')}`:String(applied.value.year));
 async function load(){
   if(!props.project)return;
   const current=++version;busy.value=true;error.value='';
@@ -50,10 +49,9 @@ function tickLabel(value:number){return metric.value==='cost'?costNumber(value):
 </script>
 <template>
   <div class="analytics-report">
-    <div class="analytics-report-heading"><p class="muted">{{periodLabel}} · UTC · {{t('Only data within your plan retention is included.','仅统计套餐保留期内的数据。')}}</p><div class="query-export"><a class="btn" :aria-disabled="busy||!!error" :href="busy||error?undefined:exportUrl+'&format=xlsx'">{{t('Export Excel','导出 Excel')}}</a><a class="btn" :aria-disabled="busy||!!error" :href="busy||error?undefined:exportUrl+'&format=pdf'">{{t('Export PDF','导出 PDF')}}</a></div></div>
+    <div class="analytics-report-heading"><div class="query-export"><a class="btn" :aria-disabled="busy||!!error" :href="busy||error?undefined:exportUrl+'&format=xlsx'">{{t('Export Excel','导出 Excel')}}</a><a class="btn" :aria-disabled="busy||!!error" :href="busy||error?undefined:exportUrl+'&format=pdf'">{{t('Export PDF','导出 PDF')}}</a></div></div>
     <p v-if="error" class="notice error" role="alert">{{error}}</p>
-    <div class="analytics-report-grid">
-      <section class="panel analytics-list-panel" :aria-busy="busy">
+    <div class="analytics-top-controls">
         <DateRangeFilter initial="" :busy="busy" @change="customWindow=$event;applied.dimension=draftDimension;page=0;load()" /><form class="analytics-filters" @submit.prevent="query">
           <label>{{t('Dimension','统计维度')}}<select v-model="draftDimension" :disabled="busy"><option value="customerId">{{t('Customers','客户')}}</option><option value="userId">{{t('Users','用户')}}</option><option value="feature">{{t('Features','功能')}}</option></select></label>
           <label>{{t('Period','时间维度')}}<select v-model="period" :disabled="busy"><option value="year">{{t('Year','年')}}</option><option value="month">{{t('Month','月')}}</option></select></label>
@@ -61,6 +59,9 @@ function tickLabel(value:number){return metric.value==='cost'?costNumber(value):
           <label v-if="period==='month'">{{t('Month','月份')}}<select v-model="month" :disabled="busy"><option v-for="value in 12" :key="value" :value="value">{{value}}{{t('','月')}}</option></select></label>
           <button class="btn primary" :disabled="busy">{{busy?t('Loading…','查询中…'):t('Search','查询')}}</button>
         </form>
+    </div>
+    <div class="analytics-report-grid">
+      <section class="panel analytics-list-panel" :aria-busy="busy">
         <div class="table-wrap"><table><thead><tr><th>{{t('Identifier','标识')}}</th><th>{{t('Objects','对象数')}}</th><th>{{t('Known tokens','已知 Token')}}</th><th>{{t('Estimated cost','估算成本')}}</th><th>{{t('Unknown costs','未知成本调用')}}</th><th>{{t('Last activity (UTC)','最近活动时间（UTC）')}}</th></tr></thead><tbody>
           <tr v-for="row in rows" :key="row.dimension??'missing'"><td>{{label(row)}}</td><td>{{n(row.objects)}}</td><td>{{row.tokens==null?t('Unknown','未知'):n(row.tokens)}}</td><td>{{money(row.cost)}}</td><td>{{n(row.unknown_costs)}}</td><td>{{date(row.last_activity_at)}}</td></tr>
           <tr v-if="!rows.length"><td colspan="6" class="empty-cell">{{busy?t('Loading…','加载中…'):t('No data in this period.','所选时间范围内暂无数据。')}}</td></tr>

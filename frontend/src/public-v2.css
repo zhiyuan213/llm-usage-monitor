@@ -900,3 +900,5 @@ html[lang="zh-CN"] .public-v2 { --public-font: "MeterTrail Noto Sans SC", system
   .public-v2 .public-header .header-actions { width: 100%; margin: 0; justify-content: flex-end; }
   .analytics-consent { width: calc(100% - 24px); padding: 16px 40px 16px 16px; }
 }
+
+.public-v2 .policy-links { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-top: 32px; }

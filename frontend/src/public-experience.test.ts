@@ -33,3 +33,13 @@ it('consent stays optional and a close control explicitly declines statistics',a
  const html=await renderToString(createSSRApp(component).use(router));expect(html).toContain('Close without allowing statistics');expect(html).toContain('Decline');expect(html).toContain('Allow statistics');expect(html).toContain('Statistics preferences');
  expect(fetch).not.toHaveBeenCalled();
 });
+
+it('publishes final distinct policies with the confirmed operator and seven-day refunds',async()=>{
+ const terms=await render('/terms'),privacy=await render('/privacy'),refunds=await render('/refunds');
+ for(const html of [terms,privacy,refunds]){expect(html).not.toContain('Deployment policy template');expect(html).toContain('13428961230@163.com');expect(html).toContain('2026-10-27');}
+ expect(terms).toContain('陈志远');expect(terms).toContain('Guangdong, China');expect(terms).toContain('renew automatically');
+ expect(privacy).toContain('password hashes');expect(privacy).toContain('Statistics preferences');expect(privacy).toContain('30-day renewal grace');
+ expect(refunds).toContain('7 calendar days');expect(refunds).toContain('prior use alone does not disqualify');expect(refunds).toContain('original payment method');
+ const {setLanguage}=await import('./lib');setLanguage('zh-CN');
+ const chinese=await render('/refunds');expect(chinese).toContain('7天退款');expect(chinese).toContain('申请全额退款');
+});

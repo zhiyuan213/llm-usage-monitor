@@ -188,6 +188,8 @@ async function copy() {
   copied.value = true;
   setTimeout(() => (copied.value = false), 2000);
 }
+
+import LegalPolicy from './LegalPolicy.vue';
 </script>
 <template>
   <div
@@ -822,58 +824,7 @@ async function copy() {
       </article>
     </main>
     <main v-else-if="page==='security'" class="legal public-content"><span class="eyebrow">METERTRAIL</span><h1>{{t('Security and data handling','安全与数据处理')}}</h1><h2>{{t('Send metadata, not secrets','上报元数据，不上报秘密')}}</h2><p>{{t('Report request timing, status, model names and token counts. Do not include model API keys, passwords, full prompts or response text in events. Run integrations on your backend.','上报请求耗时、状态、模型名称与 Token 数，不要在事件中包含模型 API 密钥、密码、完整提示词或回答正文。接入代码应运行在服务端。')}}</p><h2>{{t('Project access and account protection','项目访问与账号保护')}}</h2><p>{{t('Project API keys scope ingestion to their project and can be revoked. Sensitive account and key operations require email verification. Console changes use session-bound CSRF protection; sessions use HttpOnly cookies.','项目 API 密钥限定所属项目，可撤销。敏感账号及密钥操作需要邮箱验证；控制台变更使用会话绑定的 CSRF 保护，会话使用 HttpOnly Cookie。')}}</p><h2>{{t('Retention and deletion','数据保留与删除')}}</h2><p>{{t('Queryable detail follows the active plan retention window. Project deletion revokes its keys and removes analytical detail asynchronously. This page describes implemented controls, not an independent security certification or an availability guarantee.','可查询明细遵循当前套餐保留范围。删除项目会撤销密钥并异步移除分析明细。本页描述已实现的措施，不代表独立安全认证或可用性保证。')}}</p><p><RouterLink to="/privacy">{{t('Read the privacy policy','查看隐私政策')}}</RouterLink></p><p>{{t('Report a security concern:','报告安全问题：')}} <a href="mailto:13428961230@163.com">13428961230@163.com</a></p></main>
-    <main v-else class="legal public-content">
-      <span class="eyebrow">METERTRAIL</span>
-      <h1>
-        {{
-          page === "privacy"
-            ? t("Privacy policy", "隐私政策")
-            : page === "refunds"
-              ? t("Refund policy", "退款政策")
-              : t("Terms of service", "服务条款")
-        }}
-      </h1>
-      <div class="notice">
-        {{
-          t(
-            "Deployment policy template — the operator must complete legal entity, contact, jurisdiction, and payment details before public launch.",
-            "部署政策模板：运营方需在公开上线前补充主体、联系方式、司法管辖与支付条款。",
-          )
-        }}
-      </div>
-      <h2>{{ t("Data and service", "数据与服务") }}</h2>
-      <p>
-        {{
-          t(
-            "MeterTrail stores account information and the trace metadata you choose to submit. It does not require complete prompts or responses. Access to usage records follows your plan retention period.",
-            "MeterTrail 保存账号信息和你主动上报的链路元数据，不要求完整提示词或回答，用量明细按套餐保留期限提供访问。",
-          )
-        }}
-      </p>
-      <template v-if="page === 'privacy'">
-        <h2>{{ t('Optional website statistics', '可选的网站访问统计') }}</h2>
-        <p>{{ t('If you allow statistics, public pages load Google Analytics (GA4) to measure page visits and selected actions such as opening the demo or copying an example. Google may process browser/device information and your IP address in providing this service. Analytics cookies distinguish visits. We do not send email addresses, account IDs, API keys, message content, URL queries or hashes. We do not load the analytics tag on account, console or payment pages. Advertising features are disabled.', '你允许统计后，公开页面才会加载 Google Analytics（GA4），用于统计页面访问、打开演示或复制示例等操作。Google 在提供服务时可能处理浏览器、设备信息及 IP 地址，并通过统计 Cookie 区分访问。我们不会发送邮箱、账号 ID、API 密钥、消息内容、网址查询参数或片段；账号、控制台与支付页面不加载统计代码，广告功能关闭。') }}</p>
-        <p>{{ t('Declining does not affect the service. Use Statistics preferences on a public page to change your choice or withdraw permission. Measurement covers consenting visitors and can be blocked by the browser; it is not a complete count of all users.', '拒绝不影响正常使用。你可以随时通过公开页面的“统计偏好”修改选择或撤回许可。统计仅覆盖同意的访客，也可能被浏览器拦截，不代表全部用户数量。') }} <a href="https://policies.google.com/privacy" rel="noopener noreferrer">{{ t('Google privacy policy', 'Google 隐私政策') }}</a></p>
-      </template>
-      <h2>{{ t("Billing and cancellation", "计费与取消") }}</h2>
-      <p>
-        {{
-          t(
-            "Monitoring units and model provider charges are separate. New objects stop at the quota unless you explicitly authorize overage. Refund, cancellation, tax, and dispute terms must be confirmed by the operator and the selected payment provider before accepting live payments.",
-            "监控 units 与模型供应商费用单独核算。默认额度用尽停止接收新增对象，超额需明确授权。退款、取消、税费与争议规则需由运营方及支付平台确认后才能开启正式收款。",
-          )
-        }}
-      </p>
-      <h2>{{ t("Account and deletion", "账号与删除") }}</h2>
-      <p>
-        {{
-          t(
-            "Sensitive changes require email verification. Project deletion removes analytics detail asynchronously; minimal billing and audit records may remain under the applicable retention policy.",
-            "敏感变更需要邮箱验证。删除项目会异步删除分析明细；必要的账单和审计信息按适用保留政策留存。",
-          )
-        }}
-      </p>
-    </main>
+    <LegalPolicy v-else :page="page" />
     <footer>
       <RouterLink class="brand" to="/"
         ><Activity :size="20" />MeterTrail</RouterLink
