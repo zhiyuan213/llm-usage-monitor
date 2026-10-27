@@ -1284,3 +1284,7 @@
 .ui-v2 .request-detail dl {display:block;margin:20px 0;padding:0;}
 .ui-v2 .request-detail dl>div {width:100%;}
 .ui-v2 .request-detail dt {flex-shrink:0;}
+
+.ui-v2 .overview-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1250px) { .ui-v2 .overview-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .ui-v2 .overview-metrics { grid-template-columns: minmax(0, 1fr); } }

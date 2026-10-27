@@ -108,4 +108,26 @@ class ConsoleMetricsIntegrationTest {
     mvc.perform(get(url).cookie(userCookie).param("project",project.toString()).param("from","bad").param("to","bad")).andExpect(status().isBadRequest());
     mvc.perform(get("/api/projects/"+project+"/traces/"+trace).cookie(userCookie)).andExpect(status().isOk());
   }
+
+  @Test void overviewCountsTraceRequestsAndDeleteRequiresLiteralAndProof() throws Exception {
+    UUID project=UUID.randomUUID();
+    UUID workspace=store.db.queryForObject("SELECT id FROM workspaces WHERE owner_id=?",UUID.class,owner);
+    store.db.update("INSERT INTO projects(id,workspace_id,name) VALUES(?,?,'report')",project,workspace);
+    var start=java.time.Instant.now().minusSeconds(3600);
+    String[] types={"trace","trace","trace","observation","score"};
+    String[] statuses={"success","error","cancelled","error","error"};
+    int[] durations={4999,5000,6000,9000,9000};
+    for(int i=0;i<types.length;i++)store.db.update("INSERT INTO objects(project_id,type,object_id,revision,started_at,data) VALUES(?,?,?,1,?::timestamptz,?::jsonb)",project,types[i],"object-"+i,start.toString(),json.writeValueAsString(Map.of("status",statuses[i],"durationMs",durations[i])));
+    String endpoint="/api/projects/"+project;
+    mvc.perform(get(endpoint+"/overview").cookie(userCookie)).andExpect(status().isOk()).andExpect(jsonPath("$.summary.traces").value(3)).andExpect(jsonPath("$.summary.slow_requests").value(2)).andExpect(jsonPath("$.summary.failed_requests").value(1));
+    mvc.perform(get(endpoint+"/overview").cookie(userCookie).param("from",start.plusSeconds(1).toString()).param("to",start.plusSeconds(2).toString())).andExpect(status().isOk()).andExpect(jsonPath("$.summary.traces").value(0)).andExpect(jsonPath("$.summary.slow_requests").value(0)).andExpect(jsonPath("$.summary.failed_requests").value(0));
+    mvc.perform(get(endpoint+"/overview").cookie(otherCookie)).andExpect(status().isNotFound());
+    for(String confirm:List.of("report","DELETE"," delete",""))mvc.perform(post(endpoint+"/delete").cookie(userCookie).header("X-CSRF-Token",csrf).contentType("application/json").content(json.writeValueAsString(Map.of("confirm",confirm)))).andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("CONFIRMATION_REQUIRED"));
+    UUID challenge=UUID.randomUUID();String code="123456";
+    store.db.update("INSERT INTO verification_challenges(id,user_id,action,target,code_hash,expires_at) VALUES(?,?,'project.delete',?,?,now()+interval '5 minutes')",challenge,owner,project.toString(),Support.hmac(store.secrets.secret,challenge+":"+code));
+    mvc.perform(post(endpoint+"/delete").cookie(userCookie).header("X-CSRF-Token",csrf).contentType("application/json").content(json.writeValueAsString(Map.of("confirm","delete","challengeId",challenge.toString(),"code","000000")))).andExpect(status().isBadRequest());
+    assertNull(store.db.queryForMap("SELECT deleted_at FROM projects WHERE id=?",project).get("deleted_at"));
+    mvc.perform(post(endpoint+"/delete").cookie(userCookie).header("X-CSRF-Token",csrf).contentType("application/json").content(json.writeValueAsString(Map.of("confirm","delete","challengeId",challenge.toString(),"code",code)))).andExpect(status().isOk());
+    assertNotNull(store.db.queryForMap("SELECT deleted_at FROM projects WHERE id=?",project).get("deleted_at"));
+  }
 }

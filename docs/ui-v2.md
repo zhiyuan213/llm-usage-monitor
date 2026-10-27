@@ -66,3 +66,5 @@ Validation: screenshots of all ten supplied page layouts at 1920 × 1080, with n
 - 2026-10-27 工作空间摘要：删除上方重复说明，接入状态旁显示暂停条件提示；用量、账期日期时间分别同排，项目数显示有数据 / 全部项目。
 
 2026-10-27: Overview now uses a paginated request explorer in place of the mixed object activity table. See the current style guide for request selection, filters and responsive behavior; exports now contain the matching request report.
+
+- 2026-10-27: Overview uses five cards: Trace requests, slow requests (≥5s), failed requests (error), total tokens and known estimated model cost. Remove P95 and the trend/model distribution row; preserve the request explorer. Project deletion requires literal lowercase `delete` plus email verification in the dialog.

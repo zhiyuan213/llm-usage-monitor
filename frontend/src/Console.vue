@@ -435,7 +435,7 @@ async function saveOverage() {
   });
 }
 const deletionProject = ref<{id: string; name: string} | null>(null);
-const deletionReady = computed(() => verification.action !== 'project.delete' || deleteConfirm.value === deletionProject.value?.name);
+const deletionReady = computed(() => verification.action !== 'project.delete' || deleteConfirm.value === 'delete');
 async function deleteProject(project: {id: string; name: string}) {
   deletionProject.value = {...project};
   deleteConfirm.value = '';
@@ -464,10 +464,6 @@ async function logout() {
     signingOut.value = false;
   }
 }
-const daily = computed(() => [...(overview.value.daily || [])].reverse()),
-  maxCalls = computed(() =>
-    Math.max(1, ...daily.value.map((d: any) => d.calls)),
-  );
 const traceObjects = computed(() =>
   [...(data.value.objects || [])].sort(
     (a: any, b: any) =>
@@ -654,14 +650,24 @@ const usagePercent = computed(() =>
         </div>
         <template v-if="page === 'overview' && selected"
           ><DateRangeFilter :busy="loading" :value="reportWindow" @change="applyDates" />
-          <div class="metrics">
+          <div class="metrics overview-metrics">
             <article
               class="panel metric"
               v-for="(v, i) in [
                 [
-                  t('Model calls', '模型调用'),
-                  n(overview.summary?.calls),
-                  t('Generation observations', '模型生成步骤'),
+                  t('Requests', '请求数'),
+                  n(overview.summary?.traces),
+                  t('Application requests (Trace)', '应用请求（Trace）'),
+                ],
+                [
+                  t('Slow requests', '慢请求数'),
+                  n(overview.summary?.slow_requests),
+                  t('Duration ≥ 5 seconds', '耗时 ≥ 5 秒'),
+                ],
+                [
+                  t('Failed requests', '失败请求数'),
+                  n(overview.summary?.failed_requests),
+                  t('Requests with error status', '状态为 error 的请求'),
                 ],
                 [
                   t('Total tokens', '总 Token'),
@@ -672,11 +678,6 @@ const usagePercent = computed(() =>
                   t('Known estimated model cost', '已知模型估算费用'),
                   overview.summary?.cost==null?'—':money(overview.summary?.cost),
                   overview.summary?.cost==null?t('No priced model calls yet','暂无已定价模型调用'):`${n(Number(overview.summary?.calls||0)-Number(overview.summary?.unknown_costs||0))}/${n(overview.summary?.calls)} ` + t('model calls priced', '条模型调用已定价'),
-                ],
-                [
-                  t('P95 latency', 'P95 延迟'),
-                  n(overview.summary?.p95) + ' ms',
-                  t('Trace requests with reported duration', '已上报耗时的 Trace 请求'),
                 ],
               ]"
               :key="i"
@@ -689,78 +690,8 @@ const usagePercent = computed(() =>
                 />
               </div>
               <strong>{{ v[1] }}</strong
-              ><small>{{ v[2] }}</small><RouterLink v-if="i===2" :to="'/app/settings?project='+selected">{{t('Review model rates →','查看模型价格 →')}}</RouterLink>
+              ><small>{{ v[2] }}</small><RouterLink v-if="i===4" :to="'/app/settings?project='+selected">{{t('Review model rates →','查看模型价格 →')}}</RouterLink>
             </article>
-          </div>
-          <div class="chart-grid">
-            <section class="panel">
-              <div class="panel-heading">
-                <h2>{{ t("Activity over time", "调用趋势") }}</h2>
-                <span class="legend"
-                  ><i></i>{{ t("Requests per day (Trace)", "每日请求数（Trace）") }}</span
-                >
-              </div>
-              <div v-if="daily.length" class="real-chart">
-                <div class="chart-axis" aria-hidden="true">
-                  <span v-for="tick in [1, 2 / 3, 1 / 3, 0]" :key="tick">{{
-                    n(Math.round(maxCalls * tick))
-                  }}</span>
-                </div>
-                <div v-for="d in daily" :key="d.day" class="chart-column">
-                  <span>{{ n(d.calls) }}</span
-                  ><i
-                    :style="{
-                      height: Math.max(3, (95 * d.calls) / maxCalls) + 'px',
-                    }"
-                    :title="d.day + ': ' + d.calls"
-                  ></i
-                  ><small>{{ String(d.day).slice(5, 10) }}</small>
-                </div>
-              </div>
-              <div v-else class="chart-empty">
-                <BarChart3 :size="34" /><span>{{
-                  t(
-                    "Your activity will appear after the first batch.",
-                    "首批数据处理后将在这里显示趋势。",
-                  )
-                }}</span>
-              </div>
-            </section>
-            <section class="panel">
-              <div class="panel-heading">
-                <h2>{{ t("Cost by model", "模型成本分布") }}</h2>
-                <span class="muted">USD</span>
-              </div>
-              <div v-if="overview.models?.length" class="model-list">
-                <div v-for="(m, i) in overview.models" :key="m.model">
-                  <span
-                    class="model-dot"
-                    :style="{
-                      background: ['#0052d9', '#19a6bb', '#7f72df'][
-                        Number(i) % 3
-                      ],
-                    }"
-                  ></span
-                  ><span
-                    >{{ m.model
-                    }}<small
-                      >{{ n(m.calls) }} {{ t("calls", "次调用") }}</small
-                    ></span
-                  ><b>{{ money(m.cost) }}</b>
-                </div>
-              </div>
-              <div v-else class="chart-empty">
-                <CoinsIcon /><span>{{
-                  t(
-                    "Add model rates to estimate costs.",
-                    "配置模型费率后即可估算成本。",
-                  )
-                }}</span
-                ><RouterLink to="/app/settings">{{
-                  t("Configure pricing →", "配置价格 →")
-                }}</RouterLink>
-              </div>
-            </section>
           </div>
           <RequestExplorer :project="selected" :window="reportWindow" :refresh-token="loading" /></template>
         <template v-if="page === 'traces' && selected"
@@ -1687,7 +1618,7 @@ const usagePercent = computed(() =>
         <div v-else-if="verification.action === 'project.delete'" class="verification-target">
           <strong>{{ t('Delete project', '删除项目') }}：{{ deletionProject?.name }}</strong>
           <p>{{ t('Keys stop working immediately. Analytics data is deleted asynchronously. Billing and audit records are retained. This cannot be undone.', '密钥立即失效，分析数据将异步删除，账单和审计记录保留。此操作无法撤销。') }}</p>
-          <label>{{ t('Type the project name to confirm', '输入项目名称确认') }}<input v-model="deleteConfirm" :placeholder="deletionProject?.name" :disabled="verification.busy" autocomplete="off" /></label>
+          <label>{{ t('Type delete to confirm', '输入 delete 确认') }}<input v-model="deleteConfirm" placeholder="delete" :disabled="verification.busy" autocomplete="off" /></label>
         </div>
         <div v-else class="verification-target">
           <code>{{ verification.action }}</code

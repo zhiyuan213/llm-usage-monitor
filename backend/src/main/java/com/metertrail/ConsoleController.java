@@ -227,7 +227,7 @@ class ConsoleController {
   Map<String, String> delete(
       @PathVariable UUID project, @RequestBody JsonNode b, HttpServletRequest req) {
     var p = store.project(uid(req), project);
-    Support.require(b.path("confirm").asText().equals(p.get("name")), "CONFIRMATION_REQUIRED");
+    Support.require(b.path("confirm").asText().equals("delete"), "CONFIRMATION_REQUIRED");
     verify(b, "project.delete", project.toString(), req);
     store.db.update("UPDATE projects SET deleted_at=now() WHERE id=?", project);
     store.db.update("UPDATE api_keys SET revoked_at=now() WHERE project_id=?", project);
@@ -263,7 +263,8 @@ class ConsoleController {
             .queries()
             .queryForMap(
                 "SELECT count(*) AS objects,count(*) FILTER(WHERE o.type='trace') AS"
-                    + " traces,count(*) FILTER(WHERE o.data->>'observationType'='generation') AS"
+                    + " traces,count(*) FILTER(WHERE o.type='trace' AND (o.data->>'durationMs')::numeric>=5000) AS slow_requests,"
+                    + "count(*) FILTER(WHERE o.type='trace' AND o.data->>'status'='error') AS failed_requests,count(*) FILTER(WHERE o.data->>'observationType'='generation') AS"
                     + " calls,count(*) FILTER(WHERE o.data->>'status'='error') AS"
                     + " errors,sum(o.cost) AS cost,count(*) FILTER(WHERE"
                     + " o.data->>'observationType'='generation' AND o.cost IS NULL) AS"
