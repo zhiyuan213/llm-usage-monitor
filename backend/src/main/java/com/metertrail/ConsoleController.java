@@ -130,13 +130,30 @@ class ConsoleController {
             project);
   }
 
+  @GetMapping("/api/projects/{project}/keys/creation-policy")
+  Map<String, Boolean> keyCreationPolicy(@PathVariable UUID project, HttpServletRequest req) {
+    store.project(uid(req), project);
+    return Map.of("verificationRequired", hasCreatedKey(project));
+  }
+
+  boolean hasCreatedKey(UUID project) {
+    // Include revoked and soft-deleted keys: deleting a key must never reset eligibility.
+    return Boolean.TRUE.equals(store.db.queryForObject(
+        "SELECT EXISTS(SELECT 1 FROM api_keys WHERE project_id=?)", Boolean.class, project));
+  }
+
   @PostMapping("/api/projects/{project}/keys")
   @Transactional
   Map<String, Object> key(
       @PathVariable UUID project, @RequestBody JsonNode b, HttpServletRequest req) {
     var p = store.project(uid(req), project);
     String name = Support.text(b, "name", 128);
-    verify(b, "key.create", project + ":" + name, req);
+    // Serialize first-key decisions for this project, including concurrent requests.
+    store.db.queryForObject("SELECT id FROM projects WHERE id=? FOR UPDATE", UUID.class, project);
+    if (hasCreatedKey(project)) {
+      if (b.path("challengeId").asText().isBlank()) throw new ApiError(400, "INVALID_VERIFICATION");
+      verify(b, "key.create", project + ":" + name, req);
+    }
     UUID id = UUID.randomUUID();
     String key = "lm_live_" + Support.token();
     store.db.update(

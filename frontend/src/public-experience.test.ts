@@ -22,7 +22,7 @@ it('keeps unit arithmetic on pricing and provides meaningful product navigation'
 });
 it('quickstart works without repository scripts and links standalone guides',async()=>{
  const html=await render('/docs');expect(html).not.toContain('repository root');expect(html).not.toContain('scripts/send-example.mjs');
- for(const slug of ['nodejs','python','rest'])expect(html).toContain(`href="/tutorials/${slug}"`);
+ for(const slug of ['nodejs','python','java','rest'])expect(html).toContain(`href="/tutorials/${slug}"`);
 });
 it('publishes factual security guidance and no fictional certification',async()=>{
  const html=await render('/security');expect(html).toContain('Security and data handling');expect(html).toContain('HttpOnly');expect(html).toContain('mailto:13428961230@163.com');expect(html).toContain('not an independent security certification');

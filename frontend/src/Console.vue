@@ -205,7 +205,11 @@ async function verify(
   openVerification(action, target);
 }
 async function confirm() {
-  if (verification.busy || !verification.challengeId) return;
+  if (verification.busy || (!firstKeyCreation.value && !verification.challengeId)) return;
+  if (firstKeyCreation.value && !keyName.value.trim()) {
+    verification.error = t("Enter a key name.", "请输入密钥名称。");
+    return;
+  }
   verification.busy = true;
   verification.error = "";
   try {
@@ -218,6 +222,7 @@ async function confirm() {
     await refresh();
   } catch (e) {
     verification.error = errorText(e);
+    if (firstKeyCreation.value && (e as any)?.code === "INVALID_VERIFICATION") keyCreationRequiresVerification.value = true;
   } finally {
     verification.busy = false;
   }
@@ -393,6 +398,8 @@ async function removeEntry(kind: "keys" | "alerts", id: string) {
     await refresh();
   });
 }
+const keyCreationRequiresVerification = ref(true);
+const firstKeyCreation = computed(() => verification.action === "key.create" && !keyCreationRequiresVerification.value);
 const verificationKeyName = ref("");
 let verificationKeyProject = "";
 async function sendVerificationCode() {
@@ -407,6 +414,13 @@ async function sendVerificationCode() {
 }
 async function createKey() {
   const p = selected.value;
+  try {
+    const policy = await api("/projects/" + p + "/keys/creation-policy");
+    keyCreationRequiresVerification.value = policy.verificationRequired !== false;
+  } catch (e) {
+    error.value = errorText(e);
+    return;
+  }
   verificationKeyProject = p;
   await verify("key.create", p + ":" + keyName.value, async (proof) => {
     const name = keyName.value;
@@ -1094,7 +1108,7 @@ const usagePercent = computed(() =>
             </div>
             <KeyQuickstart :api-key="createdKey" />
           </section>
-          <section v-if="Array.isArray(data) && !data.some((key:any)=>!key.revoked_at) && !createdKey" class="notice"><strong>{{t('Create an active key to connect your application','创建有效密钥以接入应用')}}</strong><p>{{t('Click Create key and enter a name in the dialog. After verification, copy your key and run the example to send your first request. Revoked keys cannot send data.','点击创建密钥，在弹窗中填写名称；验证后复制密钥，运行示例发送第一条数据。已撤销的密钥不能上报。')}}</p></section>
+          <section v-if="Array.isArray(data) && !data.some((key:any)=>!key.revoked_at) && !createdKey" class="notice"><strong>{{t('Create an active key to connect your application','创建有效密钥以接入应用')}}</strong><p>{{t('Click Create key and enter a name in the dialog. After creation, copy your key and run the example to send your first request. Revoked keys cannot send data.','点击创建密钥，在弹窗中填写名称；创建后复制密钥，运行示例发送第一条数据。已撤销的密钥不能上报。')}}</p></section>
           <section class="panel report-section keys-section">
             <div class="panel-heading">
               <h2>{{ t("API keys", "API 密钥") }}</h2>
@@ -1769,8 +1783,8 @@ const usagePercent = computed(() =>
           <X :size="20" />
         </button>
         <div class="modal-icon"><ShieldCheck :size="26" /></div>
-        <h2 id="verify-title">{{ t("Verify it’s you", "验证你的身份") }}</h2>
-        <p>
+        <h2 id="verify-title">{{ firstKeyCreation ? t("Create key", "创建密钥") : t("Verify it’s you", "验证你的身份") }}</h2>
+        <p v-if="!firstKeyCreation">
           {{
             verification.challengeId
               ? t("Enter the code sent to", "请输入发送至")
@@ -1801,7 +1815,7 @@ const usagePercent = computed(() =>
         </div>
         <form @submit.prevent="confirm">
           <label
-            >{{ t("Verification code", "验证码")
+            v-if="!firstKeyCreation">{{ t("Verification code", "验证码")
             }}<input
               v-model="verification.code"
               class="code-input"
@@ -1811,7 +1825,7 @@ const usagePercent = computed(() =>
               placeholder="000000"
               autocomplete="one-time-code"
               required /></label
-          ><small>{{
+          ><small v-if="!firstKeyCreation">{{
             t(
               "Expires in 5 minutes. Maximum 5 attempts.",
               "5 分钟内有效，最多尝试 5 次。",
@@ -1819,14 +1833,15 @@ const usagePercent = computed(() =>
           }}</small
           ><button
             class="btn primary full"
-            :disabled="verification.busy || !verification.challengeId"
+            :disabled="verification.busy || (!firstKeyCreation && !verification.challengeId)"
           >
             {{
               verification.busy
                 ? t("Please wait…", "请稍候…")
-                : t("Verify & confirm", "验证并确认")
+                : firstKeyCreation ? t("Create key", "创建密钥") : t("Verify & confirm", "验证并确认")
             }}</button
           ><button
+            v-if="!firstKeyCreation"
             class="text-button"
             type="button"
             :disabled="verification.busy"

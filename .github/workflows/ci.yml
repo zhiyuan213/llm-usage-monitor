@@ -32,6 +32,8 @@ jobs:
       - run: node scripts/sync-doc-examples.mjs --check
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
       - name: Execute public integration tutorials against a local capture server
         run: node scripts/check-tutorials.mjs
         working-directory: frontend

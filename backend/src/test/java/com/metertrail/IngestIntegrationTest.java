@@ -988,6 +988,42 @@ class IngestIntegrationTest {
   }
 
   @Test
+  void firstKeyExemptionIsSerializedAndNeverResetByDeletion() throws Exception {
+    String token = Support.token();
+    store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')", Support.hash(token), user, "first-key");
+    var cookie = new jakarta.servlet.http.Cookie("mt_session", token);
+    UUID fresh = UUID.randomUUID();
+    store.db.update("INSERT INTO projects(id,workspace_id,name) VALUES(?,?,'First key')", fresh, workspace);
+    String base = "/api/projects/" + fresh + "/keys";
+    mvc.perform(get(base + "/creation-policy").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.verificationRequired").value(false));
+    mvc.perform(post(base).cookie(cookie).contentType("application/json").content("{\"name\":\"first\"}")).andExpect(status().isForbidden());
+    mvc.perform(post(base).cookie(cookie).header("X-CSRF-Token", "first-key").contentType("application/json").content("{}")).andExpect(status().isBadRequest());
+    var executor = Executors.newFixedThreadPool(2);
+    var start = new CountDownLatch(1);
+    List<Future<Integer>> results = new ArrayList<>();
+    try {
+      for (int i=0;i<2;i++) results.add(executor.submit(() -> {
+        start.await();
+        return mvc.perform(post(base).cookie(cookie).header("X-CSRF-Token", "first-key").contentType("application/json").content("{\"name\":\"first\"}")).andReturn().getResponse().getStatus();
+      }));
+      start.countDown();
+      var statuses = new ArrayList<Integer>();
+      for (var result: results) statuses.add(result.get(20, TimeUnit.SECONDS));
+      Collections.sort(statuses);
+      assertEquals(List.of(200,400), statuses);
+    } finally { executor.shutdownNow(); }
+    mvc.perform(get(base + "/creation-policy").cookie(cookie)).andExpect(jsonPath("$.verificationRequired").value(true));
+    UUID id = store.db.queryForObject("SELECT id FROM api_keys WHERE project_id=?", UUID.class, fresh);
+    mvc.perform(post(base + "/" + id + "/revoke").cookie(cookie).header("X-CSRF-Token","first-key").contentType("application/json").content("{}")).andExpect(status().isBadRequest());
+    store.db.update("UPDATE api_keys SET revoked_at=now(),deleted_at=now() WHERE id=?",id);
+    mvc.perform(get(base + "/creation-policy").cookie(cookie)).andExpect(jsonPath("$.verificationRequired").value(true));
+    mvc.perform(post(base).cookie(cookie).header("X-CSRF-Token","first-key").contentType("application/json").content("{\"name\":\"second\"}")).andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_VERIFICATION"));
+    mvc.perform(get("/api/projects/" + project + "/keys/creation-policy").cookie(cookie)).andExpect(jsonPath("$.verificationRequired").value(true));
+    mvc.perform(get(base + "/creation-policy")).andExpect(status().isUnauthorized());
+    assertEquals(1, store.db.queryForObject("SELECT count(*) FROM api_keys WHERE project_id=?", Integer.class, fresh));
+  }
+
+  @Test
   void deletedKeysAndRulesLeaveDataAndHistoryAndEnforceOwnership() throws Exception {
     String token = Support.token();
     store.db.update(

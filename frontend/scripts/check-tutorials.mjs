@@ -45,11 +45,11 @@ try {
   const env={...process.env,METERTRAIL_ENDPOINT:`http://127.0.0.1:${server.address().port}`,METERTRAIL_API_KEY:'example'};
   for (const tutorial of tutorials) {
     await writeFile(join(directory,tutorial.filename),tutorial.code);
-    const command=tutorial.slug==='nodejs'?process.execPath:tutorial.slug==='python'?(process.env.PYTHON||'python3'):(process.env.BASH||'sh');
+    const command=tutorial.slug==='nodejs'?process.execPath:tutorial.slug==='python'?(process.env.PYTHON||'python3'):tutorial.slug==='java'?(process.env.JAVA||'java'):(process.env.BASH||'sh');
     // REST's embedded generator invokes python3; callers must provide it in PATH.
     await run(command,[tutorial.filename],env);
     assert.equal(received.length,tutorials.indexOf(tutorial)+1);
     console.log(`PASS: ${tutorial.slug} published code returned HTTP 200 / pending`);
   }
-  assert.equal(new Set(received.map(b=>b.events[0].eventId)).size,3);
+  assert.equal(new Set(received.map(b=>b.events[0].eventId)).size,tutorials.length);
 } finally { await vite.close(); await new Promise(resolve=>server.close(resolve)); await rm(directory,{recursive:true,force:true}); }

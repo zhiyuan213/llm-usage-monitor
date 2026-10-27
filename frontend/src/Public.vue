@@ -387,7 +387,7 @@ import LegalPolicy from './LegalPolicy.vue';
       </section>
       <section class="home-learning">
         <div class="page-intro"><span class="eyebrow">{{ t('YOUR FIRST REQUEST, STEP BY STEP', '从第一条请求开始') }}</span><h2>{{ t('Choose your integration guide', '选择适合你的接入教程') }}</h2><p>{{ t('Runnable examples, expected results and troubleshooting. No prompt content required.', '提供可运行示例、预期结果与排错步骤，无需上报提示词正文。') }}</p></div>
-        <div class="tutorial-grid"><article v-for="item in tutorials" :key="item.slug" class="panel"><h3>{{ t(item.en,item.zh) }}</h3><p>{{ t(item.summary[0],item.summary[1]) }}</p><RouterLink :to="`/tutorials/${item.slug}`" @click="trackAction('open_tutorial','/')">{{ t('View tutorial →', '查看教程 →') }}</RouterLink></article></div>
+        <div class="tutorial-grid integration-tutorial-grid"><article v-for="item in tutorials" :key="item.slug" class="panel"><h3>{{ t(item.en,item.zh) }}</h3><p>{{ t(item.summary[0],item.summary[1]) }}</p><RouterLink :to="`/tutorials/${item.slug}`" @click="trackAction('open_tutorial','/')">{{ t('View tutorial →', '查看教程 →') }}</RouterLink></article></div>
       </section>
       <section class="home-learning">
         <div class="page-intro"><span class="eyebrow">{{ t('ILLUSTRATIVE WORKFLOW', '费用排查示例 · 非真实客户案例') }}</span><h2>{{ t('From a cost spike to a concrete next step', '费用上涨之后，知道从哪里查起') }}</h2><p>{{ t('Use reported usage and configured prices to investigate. Savings depend on your application; they are not guaranteed.', '根据已上报用量和配置价格排查问题，优化效果取决于你的应用，不承诺节省比例。') }}</p></div>
@@ -723,7 +723,7 @@ import LegalPolicy from './LegalPolicy.vue';
               }}
             </li>
           </ol>
-          <div class="tutorial-grid"><RouterLink v-for="guide in tutorials" :key="guide.slug" class="panel" :to="'/tutorials/'+guide.slug"><h2>{{t(guide.en,guide.zh)}}</h2><p>{{t(guide.summary[0],guide.summary[1])}}</p>{{t('Open runnable guide →','查看可运行教程 →')}}</RouterLink></div>
+          <div class="tutorial-grid integration-tutorial-grid"><RouterLink v-for="guide in tutorials" :key="guide.slug" class="panel" :to="'/tutorials/'+guide.slug"><h2>{{t(guide.en,guide.zh)}}</h2><p>{{t(guide.summary[0],guide.summary[1])}}</p>{{t('Open runnable guide →','查看可运行教程 →')}}</RouterLink></div>
           <p>{{t('A successful sample sends 1 Trace and 1 model observation (2 units). The provider and model are examples; configure matching rates to estimate cost.','完整示例发送 1 条 Trace 和 1 条模型 Observation（2 units）。供应商和模型为示例值，估算费用需配置匹配价格。')}}</p>
         </section>
         <section

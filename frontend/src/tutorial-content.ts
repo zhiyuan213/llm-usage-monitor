@@ -15,6 +15,13 @@ export const tutorials = [
     usage: ['Use this server-side example after your application finishes a request. Read duration from your timer and status from the actual result. The example uses no third-party packages and does not send prompt or response text.', '在应用完成请求后使用此服务端示例。耗时来自实际计时，状态来自真实执行结果。示例不依赖第三方包，不发送提示词或回答正文。'],
   },
   {
+    slug: 'java', en: 'Track your first AI request with Java', zh: '用 Java 记录第一条 AI 请求',
+    summary: ['Use the Java HTTP client to send a request and model usage, check the receipt and find it in the console.', '使用 Java HTTP 客户端上报请求和模型用量，检查接收结果，并在控制台查看。'],
+    requirement: ['JDK 17 or later, a MeterTrail account and a project API key. No Maven dependencies required.', '需要 JDK 17 或更新版本、MeterTrail 账号和项目 API 密钥。无需额外 Maven 依赖。'],
+    filename: 'Send.java', command: 'java Send.java', code: examples.Java,
+    usage: ['Run on your backend after the AI request finishes. Each run creates a trace and a model-call observation (2 units). Reuse the unchanged payload and IDs for retries. This example does not call a model or send prompt content.', '在 AI 请求结束后由服务端上报。每次运行创建一条请求和一条模型调用，共 2 units。重试时保留原始数据和 ID。示例不调用模型，不发送提示词正文。'],
+  },
+  {
     slug: 'rest', en: 'Send your first trace with REST and cURL', zh: '通过 REST 和 cURL 发送第一条调用记录',
     summary: ['Try the HTTP API before adding an SDK. Generate a current request, send it, and optionally query batch status.', '先用 HTTP 接口验证接入，再决定是否使用 SDK。生成当前请求、发送数据，并按需查询处理状态。'],
     requirement: ['A POSIX shell (macOS, Linux or WSL), Python 3 and cURL, plus a project API key.', '需要 POSIX shell（macOS、Linux 或 WSL）、Python 3、cURL 和项目 API 密钥。'],
@@ -39,7 +46,7 @@ printf 'Project API key (input is visible): '
 IFS= read -r METERTRAIL_API_KEY
 export METERTRAIL_API_KEY
 
-# Windows PowerShell (Node.js / Python tutorials)
+# Windows PowerShell (Node.js / Python / Java tutorials)
 $env:METERTRAIL_ENDPOINT = "https://metertrail.com"
 $env:METERTRAIL_API_KEY = Read-Host "Project API key" -MaskInput`;
 export const receipt = '{"batchId":"<batch-id>","received":2,"status":"pending"}';
