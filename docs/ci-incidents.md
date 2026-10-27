@@ -1,5 +1,12 @@
 # CI failure records
 
+## 2026-10-27 static compression behind the public reverse proxy
+
+- Commit `88b6dbb` passed local non-root image checks and all CI jobs, but public requests through Caddy returned uncompressed JS/CSS despite requesting gzip. Direct localhost Nginx requests compressed correctly; public HTTP/2 was already enabled.
+- Root cause: Nginx's default `gzip_proxied off` suppresses compression when the upstream request includes a Via header. The initial image test only exercised a direct client.
+- Fix: enable `gzip_proxied any` only in the static `/assets/` location; keep API/authenticated responses outside that compression scope.
+- Prevention: production-image tests now request JS/CSS with both Accept-Encoding: gzip and Via: 1.1 acceptance-proxy, asserting encoding, Vary, byte-identical decompression and retained security headers. Public post-deploy verification must also request gzip through the real TLS proxy.
+
 ## 2026-10-25 trace export schema expanded with usage summaries
 
 - Commit `68ff940`, run `40199162437`: backend failed the retained-row export regression; frontend-sdk and security passed, images were skipped.

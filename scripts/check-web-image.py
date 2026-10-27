@@ -73,7 +73,7 @@ def main():
                 continue
             with urllib.request.urlopen(origin + path, timeout=5) as response:
                 original = response.read()
-            with urllib.request.urlopen(urllib.request.Request(origin + path, headers={'Accept-Encoding': 'gzip'}), timeout=5) as response:
+            with urllib.request.urlopen(urllib.request.Request(origin + path, headers={'Accept-Encoding': 'gzip', 'Via': '1.1 acceptance-proxy'}), timeout=5) as response:
                 compressed = response.read()
                 assert response.headers.get('Content-Encoding') == 'gzip', path
                 assert 'accept-encoding' in response.headers.get('Vary', '').lower(), path
