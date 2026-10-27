@@ -116,6 +116,12 @@ class QueryReportsController {
     Support.require(search.length() <= 128, "INVALID_FILTER");
     var traceArgs=new ArrayList<Object>(List.of(project,user,status,status,search,"%"+search+"%","%"+search+"%"));
     String traceWindow=ReportWindow.filter(req,traceArgs);
+    String minimum=req.getParameter("minDurationMs");
+    if(minimum!=null) {
+      Support.require(minimum.matches("[0-9]{1,9}"),"INVALID_FILTER");
+      traceWindow+=" AND (o.data->>'durationMs')::numeric>=?";
+      traceArgs.add(Long.parseLong(minimum));
+    }
     String cost=Optional.ofNullable(req.getParameter("cost")).orElse("all"),reason=Optional.ofNullable(req.getParameter("costReason")).orElse("");
     Support.require(Set.of("all","unknown","known").contains(cost),"INVALID_FILTER");
     Support.require(Set.of("","usage_missing","model_missing","pricing_evidence_missing").contains(reason),"INVALID_FILTER");

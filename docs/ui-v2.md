@@ -64,3 +64,5 @@ Validation: screenshots of all ten supplied page layouts at 1920 × 1080, with n
 - 2026-10-27：首页套餐摘要卡片必须保留桌面32px/窄屏20px内边距，文案与操作分区，主要按钮和辅助链接统一排列；教程卡片标题不额外留顶空，卡片末尾入口对齐。案例演示入口居中，窄屏正常换行。
 
 - 2026-10-27 工作空间摘要：删除上方重复说明，接入状态旁显示暂停条件提示；用量、账期日期时间分别同排，项目数显示有数据 / 全部项目。
+
+2026-10-27: Overview now uses a paginated request explorer in place of the mixed object activity table. See the current style guide for request selection, filters and responsive behavior; exports now contain the matching request report.

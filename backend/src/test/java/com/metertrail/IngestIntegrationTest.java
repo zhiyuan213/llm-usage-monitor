@@ -1238,6 +1238,24 @@ class IngestIntegrationTest {
           }
       }
     }
+    store.db.update("UPDATE objects SET data=jsonb_set(data,'{durationMs}','6000') WHERE project_id=? AND object_id='row-124'",project);
+    String slowQuery="/api/reports/traces?project="+project+"&minDurationMs=5000&size=5";
+    mvc.perform(get(slowQuery).cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].object_id").value("row-124"));
+    mvc.perform(get(slowQuery+"&page=1").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(0));
+    mvc.perform(get(slowQuery.replace("5000","-1")).cookie(cookie)).andExpect(status().isBadRequest());
+    for(String format:List.of("xlsx","pdf")) {
+      byte[] slowExport=mvc.perform(get("/api/reports/traces/export?project="+project+"&minDurationMs=5000&format="+format).cookie(cookie)).andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+      if(format.equals("pdf"))try(var doc=org.apache.pdfbox.Loader.loadPDF(slowExport)) {
+        String text=new org.apache.pdfbox.text.PDFTextStripper().getText(doc);
+        assertTrue(text.contains("row-124"));assertFalse(text.contains("row-123"));
+      } else try(var zip=new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(slowExport))) {
+        java.util.zip.ZipEntry entry;
+        while((entry=zip.getNextEntry())!=null)if(entry.getName().endsWith("sheet1.xml")) {
+          String xml=new String(zip.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
+          assertEquals(2,xml.split("<row r=").length-1);assertTrue(xml.contains("row-124"));assertFalse(xml.contains("row-123"));
+        }
+      }
+    }
     for (String dim : List.of("userId", "feature"))
       mvc.perform(
               get("/api/reports/analytics?project=" + project + "&dimension=" + dim).cookie(cookie))
@@ -1310,6 +1328,8 @@ class IngestIntegrationTest {
               get("/api/reports/" + kind + "/export?project=" + foreignProject + "&format=xlsx")
                   .cookie(cookie))
           .andExpect(status().isNotFound());
+    mvc.perform(get("/api/reports/traces?project="+foreignProject+"&minDurationMs=5000").cookie(cookie)).andExpect(status().isNotFound());
+    for(String format:List.of("xlsx","pdf"))mvc.perform(get("/api/reports/traces/export?project="+foreignProject+"&minDurationMs=5000&format="+format).cookie(cookie)).andExpect(status().isNotFound());
     String foreignToken = Support.token();
     store.db.update(
         "INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1"

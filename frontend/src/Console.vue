@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RequestExplorer from "./RequestExplorer.vue";
 import {usePageSize} from "./page-size";
 import KeyQuickstart from "./KeyQuickstart.vue";
 import IngestionNotice from "./IngestionNotice.vue";
@@ -286,20 +287,8 @@ async function refresh(force = true) {
       /* Account is included in context. */
     } else if (selected.value) {
       if (page.value === "overview") {
-        const [o, r] = await Promise.all([
-          request(path("/overview")+"?"+new URLSearchParams(reportWindow.value)),
-          request(
-            path("/activity") +
-              "?page=" +
-              activityPage.value +
-              "&size=" +
-              activitySize.value + "&" + new URLSearchParams(reportWindow.value),
-          ),
-        ]);
-        current();
-        overview.value = o;
-        recent.value = r.items;
-        activityTotal.value = r.total;
+        const o = await request(path("/overview")+"?"+new URLSearchParams(reportWindow.value));
+        current(); overview.value = o;
       } else if (page.value === "traces") {
         if(restoreTrace)restoreTraceView();
         saveTraceView();
@@ -767,103 +756,7 @@ const usagePercent = computed(() =>
               </div>
             </section>
           </div>
-          <section class="panel report-section activity-section">
-            <div class="panel-heading">
-              <h2>{{ t("Recent activity", "最近活动") }}</h2>
-              <div class="activity-heading-actions">
-                <a
-                  class="btn"
-                  :href="
-                    '/api' +
-                    path('/activity/export') +
-                    '?format=xlsx&lang=' +
-                    language + '&' + reportWindowQuery
-                  "
-                  >{{ t("Export Excel", "导出 Excel") }}</a
-                >
-                <a
-                  class="btn"
-                  :href="
-                    '/api' +
-                    path('/activity/export') +
-                    '?format=pdf&lang=' +
-                    language + '&' + reportWindowQuery
-                  "
-                  >{{ t("Export PDF", "导出 PDF") }}</a
-                >
-              </div>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{{ t("Object", "对象") }}</th>
-                    <th>{{ t("Type", "类型") }}</th>
-                    <th>{{ t("Model", "模型") }}</th>
-                    <th>{{ t("Cost", "成本") }}</th>
-                    <th>{{ t("Status", "状态") }}</th>
-                    <th>{{ t("Time (UTC)", "时间 (UTC)") }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="o in recent" :key="o.type + ':' + o.object_id">
-                    <td>
-                      <RouterLink
-                        v-if="o.trace_id"
-                        :title="o.data.name || o.object_id"
-                        :to="'/app/trace/' + o.trace_id + '?project='+selected"
-                        >{{ o.data.name || o.object_id }}</RouterLink
-                      ><span v-else>{{ o.data.name || o.object_id }}</span
-                      ><small v-if="o.unmatched" class="amber">{{
-                        t("Unmatched parent", "父对象尚未到达")
-                      }}</small>
-                    </td>
-                    <td>
-                      <span class="badge">{{ o.type }}</span>
-                    </td>
-                    <td>{{ o.data.model || "—" }}</td>
-                    <td>
-                      {{ o.type === "observation" ? money(o.cost) : "—" }}
-                    </td>
-                    <td>
-                      <span
-                        :class="[
-                          'badge',
-                          o.data.status === 'error' ? 'danger' : 'success',
-                        ]"
-                        >{{ o.data.status || o.data.valueType }}</span
-                      >
-                    </td>
-                    <td>{{ date(o.started_at) }}</td>
-                  </tr>
-                  <tr v-if="!recent.length">
-                    <td colspan="6" class="empty-cell">
-                      {{
-                        t(
-                          "No events yet. Connect your application to get started.",
-                          "暂无事件，请接入应用开始采集。",
-                        )
-                      }}
-                      <RouterLink class="btn" to="/app/keys">{{
-                        t("Connect →", "开始接入 →")
-                      }}</RouterLink>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <QueryControls
-              :page="activityPage"
-              :size="activitySize"
-              :total="activityTotal"
-              :loading="loading"
-              @change="activityTurn"
-              @resize="
-                activitySize = $event;
-                activityTurn(0);
-              "
-            /></section
-        ></template>
+          <RequestExplorer :project="selected" :window="reportWindow" :refresh-token="loading" /></template>
         <template v-if="page === 'traces' && selected"
           ><DateRangeFilter class="trace-query-toolbar" :busy="loading" :value="reportWindow" @change="applyDates">
             <div class="trace-query-fields">
