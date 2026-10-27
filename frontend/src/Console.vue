@@ -69,6 +69,11 @@ import {
 } from "./lib";
 import { contextLoader } from "./context-loader";
 import { verificationFlow } from "./verification";
+function returnToRequests() {
+ const previous=router.options.history.state.back;
+ if(typeof previous==='string' && /^\/app\/(overview|traces)(?:[?#]|$)/.test(previous)) router.back();
+ else void router.push('/app/traces?project='+encodeURIComponent(selected.value));
+}
 const route = useRoute(),
   router = useRouter(),
   page = computed(() => String(route.params.page || "workspace"));
@@ -766,7 +771,7 @@ const usagePercent = computed(() =>
                       <RouterLink
                         class="btn"
                         :to="'/app/trace/' + o.trace_id + '?project='+selected"
-                        >{{ t("View", "查看") }}</RouterLink
+                        >{{ t("View full request", "查看完整请求") }}</RouterLink
                       >
                     </td>
                   </tr>
@@ -800,9 +805,9 @@ const usagePercent = computed(() =>
             /></section
         ></template>
         <template v-if="page === 'trace' && selected"
-          ><RouterLink class="back-link" :to="'/app/traces?project='+selected"
+          ><RouterLink class="back-link" :to="'/app/traces?project='+selected" @click.prevent="returnToRequests"
             ><ArrowLeft :size="16" />{{
-              t("All traces", "全部调用")
+              t("Back", "返回")
             }}</RouterLink
           >
           <div class="panel trace-title">

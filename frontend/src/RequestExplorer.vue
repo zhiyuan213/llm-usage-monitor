@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {computed,onBeforeUnmount,ref,watch} from 'vue';
-import {api,t,n,money,date,language,errorText} from './lib';
+import {api,t,n,money,date,errorText} from './lib';
 import QueryControls from './QueryControls.vue';
 import {usePageSize} from './page-size';
 import {requestSummary,stepWidth} from './request-explorer';
@@ -37,7 +37,7 @@ watch(()=>props.refreshToken,(value,old)=>{if(old&&!value)void load();});
 </script>
 <template>
 <div class="request-explorer">
- <section class="panel request-list"><div class="panel-heading"><h2>{{t('Explore requests','查看请求')}}</h2><div class="query-export"><a class="btn" :href="'/api/reports/traces/export?'+query+'&format=xlsx&lang='+language">{{t('Export Excel','导出 Excel')}}</a><a class="btn" :href="'/api/reports/traces/export?'+query+'&format=pdf&lang='+language">{{t('Export PDF','导出 PDF')}}</a></div></div>
+ <section class="panel request-list"><div class="panel-heading"><h2>{{t('Explore requests','查看请求')}}</h2></div>
  <div class="request-filters"><button v-for="f in [{id:'all',en:'All',zh:'全部'},{id:'slow',en:'Slow requests (≥ 5 s)',zh:'慢请求（≥ 5 秒）'},{id:'error',en:'Failed requests',zh:'失败请求'}]" :key="f.id" class="btn" :class="{primary:filter===f.id}" :aria-pressed="filter===f.id" @click="setFilter(f.id)">{{t(f.en,f.zh)}}</button></div>
  <p v-if="busy" role="status">{{t('Loading requests…','正在加载请求…')}}</p><div v-else-if="error" role="alert">{{error}} <button class="btn" @click="load()">{{t('Retry','重试')}}</button></div>
  <div v-else class="request-cards"><button v-for="row in items" :key="row.object_id" class="request-card" :class="{selected:selected?.object_id===row.object_id}" :aria-pressed="selected?.object_id===row.object_id" @click="choose(row)"><span><strong>{{row.data.name||row.object_id}}</strong><small>{{row.data.feature||t('No feature','未提供功能')}} · {{row.models||t('Model not reported','未上报模型')}}</small><small>{{date(row.started_at)}}</small></span><span>{{n(row.data.durationMs)}} ms<small>{{row.data.status==='success'?t('Success','成功'):row.data.status==='error'?t('Failed','失败'):row.data.status||'—'}}</small></span><span>{{money(row.estimated_cost)}}<small v-if="Number(row.unknown_costs)>0">{{t('Partial or unknown cost','费用不完整或未知')}}</small></span></button><p v-if="!items.length" class="empty-cell">{{t('No requests in this range.','该时间范围内暂无请求。')}}</p></div>
