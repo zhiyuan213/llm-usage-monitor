@@ -394,13 +394,13 @@ async function copy() {
           <article class="panel"><h3>{{ t('2. Inspect the requests', '2. 定位具体请求') }}</h3><p>{{ t('Inspect the trace and model calls. Check token usage, model selection and repeated steps to form a hypothesis.', '查看调用链及模型调用，核对 Token 用量、模型选择和重复步骤，判断是否与输入过长或重复调用有关。') }}</p></article>
           <article class="panel"><h3>{{ t('3. Compare after a change', '3. 验证修改后的表现') }}</h3><p>{{ t('Mark the release, then compare estimated cost, failures and latency before and after. Account for changes in traffic and pricing.', '记录发布标记，对比修改前后的估算费用、失败与耗时，并结合流量及模型价格变化判断效果。') }}</p></article>
         </div>
-        <RouterLink to="/demo" class="btn" @click="trackAction('open_demo','/')">{{ t('Explore the interactive demo', '查看交互演示') }}<ArrowRight :size="16" /></RouterLink>
+        <div class="home-demo-actions"><RouterLink to="/demo" class="btn" @click="trackAction('open_demo','/')">{{ t('Explore the interactive demo', '查看交互演示') }}<ArrowRight :size="16" /></RouterLink></div>
       </section>
-      <section class="home-learning panel">
-        <h2>{{ t('Choose the plan for your history and controls', '按历史数据需求与提醒方式选择套餐') }}</h2>
+      <section class="home-learning panel home-plan-summary">
+        <div class="home-plan-copy"><h2>{{ t('Choose the plan for your history and controls', '按历史数据需求与提醒方式选择套餐') }}</h2>
         <p>{{ t('Core includes cost diagnosis, release comparisons and weekly reports with 90-day rolling retention. Pro adds 3-year rolling retention and custom budget warning and slow-call thresholds. Both include 100,000 units per month; Pro does not add ingestion quota.', 'Core 提供费用诊断、发布对比和自动周报，滚动保留90天数据。Pro 适合需要长期追溯历史、自定义预算提醒线与慢调用阈值的用户，滚动保留3年数据。两者每月均含100,000 units，Pro 不增加接入额度。') }}</p>
-        <RouterLink to="/pricing">{{ t('Compare plans and retention terms →', '查看套餐与保留期限说明 →') }}</RouterLink>
-        <p><RouterLink to="/docs#performance">{{ t('See integration limits and performance test conditions →', '查看接入限制与性能测试条件 →') }}</RouterLink></p>
+        </div><div class="home-plan-actions"><RouterLink class="btn primary" to="/pricing">{{ t('Compare plans', '比较套餐') }}<ArrowRight :size="16" /></RouterLink>
+        <RouterLink class="plan-reference" to="/docs#performance">{{ t('Integration limits & test conditions →', '接入限制与测试条件 →') }}</RouterLink></div>
       </section>
       <section class="bottom-cta">
         <div>

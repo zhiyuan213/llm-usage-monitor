@@ -798,9 +798,18 @@
 .public-v2 .public-header { gap: 28px; }
 .public-v2 .public-header nav { gap: 22px; }
 .public-v2 .home-learning { width: calc(100% - 48px); max-width: 1280px; margin: 40px auto; }
+.public-v2 .home-plan-summary { display: flex; align-items: center; gap: 32px; padding: 32px; }
+.public-v2 .home-plan-copy { flex: 1; min-width: 0; }
+.public-v2 .home-plan-copy h2 { font-size: 22px; line-height: 1.5; margin: 0 0 12px; text-align: left; }
+.public-v2 .home-plan-copy p { margin: 0; max-width: 78ch; line-height: 1.85; }
+.public-v2 .home-plan-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; flex: 0 0 auto; }
+.public-v2 .home-plan-actions .plan-reference { font-size: 13px; line-height: 1.7; }
+.public-v2 .home-demo-actions { display: flex; justify-content: center; }
 .public-v2 .tutorial-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 28px 0; }
-.public-v2 .tutorial-grid .panel { padding: 24px; }
+.public-v2 .tutorial-grid .panel { padding: 24px; display: flex; flex-direction: column; min-width: 0; }
 .public-v2 .tutorial-grid h2, .public-v2 .tutorial-grid h3 { margin: 18px 0 12px; line-height: 1.5; }
+.public-v2 .tutorial-grid .panel > :is(h2,h3):first-child { margin-top: 0; text-align: left; }
+.public-v2 .tutorial-grid .panel > a:last-child { margin-top: auto; padding-top: 12px; }
 .public-v2 .tutorial-grid p { font-size: 14px; line-height: 1.8; }
 .public-v2 .tutorial-article { max-width: 880px; margin: 0 auto; line-height: 1.9; overflow-wrap: anywhere; }
 .public-v2 .tutorial-article h1 { font-size: 32px; line-height: 1.35; margin: 24px 0; }
@@ -843,6 +852,10 @@
   .public-v2 .demo-layout { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
+  .public-v2 .home-plan-summary { padding: 20px; flex-direction: column; align-items: stretch; gap: 24px; }
+  .public-v2 .home-plan-copy h2 { font-size: 20px; }
+  .public-v2 .home-plan-actions { align-items: stretch; }
+  .public-v2 .home-plan-actions .plan-reference { text-align: center; }
   .public-v2 .tutorial-grid { grid-template-columns: 1fr; }
   .public-v2 .demo-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .analytics-consent { left: 12px; right: 12px; padding: 16px; flex-direction: column; align-items: stretch; gap: 12px; }
