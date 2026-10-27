@@ -3,7 +3,7 @@ export type PolicySection = {heading:PolicyText; paragraphs:PolicyText[]};
 const section=(heading:PolicyText,...paragraphs:PolicyText[]):PolicySection=>({heading,paragraphs});
 export const policyDate='2026-10-27';
 export const policyContact='13428961230@163.com';
-export const policyOperator:PolicyText=['Chen Zhiyuan (陈志远), an individual developer based in Guangdong, China.','陈志远，个人开发者，所在地：中国广东省。'];
+export const policyOperator:PolicyText=['Chen Zhiyuan, an individual developer based in Guangdong, China.','陈志远，个人开发者，所在地：中国广东省。'];
 export const policies:Record<string,{title:PolicyText;sections:PolicySection[]}>= {
 terms:{title:['Terms of service','服务条款'],sections:[
 section(['Operator and contact','运营者与联系方式'],policyOperator,['MeterTrail is a hosted tool for tracking LLM application requests, model usage and estimated costs. For service, billing or privacy questions, email '+policyContact+'.','MeterTrail 是用于跟踪 LLM 应用请求、模型用量和估算费用的在线工具。服务、账单或隐私问题请联系 '+policyContact+'。']),
