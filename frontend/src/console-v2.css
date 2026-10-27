@@ -1251,3 +1251,13 @@
 .ui-v2 .workspace-status-help:hover > span, .ui-v2 .workspace-status-help:focus > span { display: block; }
 @media (min-width: 601px) and (max-width: 1600px) { .ui-v2 .workspace-summary-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 600px) { .ui-v2 .workspace-stat-copy .workspace-period-date { font-size: 18px; gap: 6px; } }
+
+/* Keep every workspace metric and its suffix typographically consistent. */
+.ui-v2 .workspace-stat-copy h2,
+.ui-v2 .workspace-stat-copy .workspace-period-date { font-size: 20px; font-weight: 700; line-height: 1.4; }
+.ui-v2 .workspace-inline-value > span,
+.ui-v2 .workspace-period-time { font-size: inherit; font-weight: inherit; line-height: inherit; }
+@media (max-width: 600px) {
+  .ui-v2 .workspace-stat-copy h2,
+  .ui-v2 .workspace-stat-copy .workspace-period-date { font-size: 16px; }
+}
