@@ -630,13 +630,7 @@ const usagePercent = computed(() =>
           </button>
         </div>
         <template v-if="page === 'overview' && selected"
-          ><DateRangeFilter :busy="loading" @change="applyDates" /><p class="muted">{{date(reportWindow.from)}} → {{date(reportWindow.to)}} · {{t("End exclusive; retained data only.","不含结束时刻；仅统计保留期内数据。")}}</p><div class="project-caption">
-            <span class="badge success">{{ project?.environment }}</span
-            ><strong>{{ project?.name }}</strong
-            ><span class="muted">{{
-              t("Retained data · UTC", "保留期内数据 · UTC")
-            }}</span>
-          </div>
+          ><DateRangeFilter :busy="loading" :value="reportWindow" @change="applyDates" />
           <div class="metrics">
             <article
               class="panel metric"
@@ -769,9 +763,6 @@ const usagePercent = computed(() =>
                   "
                   >{{ t("Export PDF", "导出 PDF") }}</a
                 >
-                <RouterLink class="btn" to="/app/traces">{{
-                  t("View traces", "查看调用")
-                }}</RouterLink>
               </div>
             </div>
             <div class="table-wrap">
@@ -846,7 +837,7 @@ const usagePercent = computed(() =>
             /></section
         ></template>
         <template v-if="page === 'traces' && selected"
-          ><DateRangeFilter :busy="loading" @change="applyDates" /><div class="muted range-hint">{{date(reportWindow.from)}} → {{date(reportWindow.to)}}<details><summary>{{t('Calculation details','统计口径')}}</summary>{{t("Known model usage is aggregated by trace; unknown costs are excluded from the subtotal.","模型用量按调用链汇总；已知费用不含未知费用部分。")}}</details></div><section class="panel">
+          ><DateRangeFilter :busy="loading" :value="reportWindow" @change="applyDates" /><section class="panel">
             <form
               class="filters trace-filters"
               @submit.prevent="
