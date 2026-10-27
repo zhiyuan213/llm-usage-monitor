@@ -206,6 +206,7 @@ async function verify(
   openVerification(action, target);
 }
 async function confirm() {
+  if (!deletionReady.value) return;
   if (verification.busy || (!firstKeyCreation.value && !verification.challengeId)) return;
   if (firstKeyCreation.value && !keyName.value.trim()) {
     verification.error = t("Enter a key name.", "请输入密钥名称。");
@@ -392,6 +393,7 @@ const firstKeyCreation = computed(() => verification.action === "key.create" && 
 const verificationKeyName = ref("");
 let verificationKeyProject = "";
 async function sendVerificationCode() {
+  if (!deletionReady.value) return;
   if (verification.action === "key.create") {
     if (!keyName.value.trim()) {
       verification.error = t("Enter a key name.", "请输入密钥名称。");
@@ -432,13 +434,17 @@ async function saveOverage() {
     await api("/billing/overage", { ...proof, cap, enabled, consent });
   });
 }
-async function deleteProject() {
-  const p = selected.value,
-    confirm = deleteConfirm.value;
-  await verify("project.delete", p, async (proof) => {
-    await api("/projects/" + p + "/delete", { ...proof, confirm });
-    selected.value = "";
-    router.push("/app/workspace");
+const deletionProject = ref<{id: string; name: string} | null>(null);
+const deletionReady = computed(() => verification.action !== 'project.delete' || deleteConfirm.value === deletionProject.value?.name);
+async function deleteProject(project: {id: string; name: string}) {
+  deletionProject.value = {...project};
+  deleteConfirm.value = '';
+  const id = project.id;
+  await verify("project.delete", id, async (proof) => {
+    if (!deletionReady.value) return;
+    await api("/projects/" + id + "/delete", { ...proof, confirm: deleteConfirm.value });
+    if (selected.value === id) selected.value = "";
+    await router.push("/app/workspace");
   });
 }
 async function copyKey() {
@@ -1435,29 +1441,7 @@ const usagePercent = computed(() =>
             :project="project"
             @saved="refresh()"
           />
-          <section class="panel form-panel danger-zone">
-            <h2>{{ t("Delete project", "删除项目") }}</h2>
-            <p>
-              {{
-                t(
-                  "Keys are revoked immediately. Analytics detail is removed asynchronously; billing identities and audit records remain. Type the project name to confirm.",
-                  "密钥立即撤销，分析明细异步移除；计费身份与审计记录保留。输入项目名称确认。",
-                )
-              }}
-            </p>
-            <form class="inline-form" @submit.prevent="deleteProject">
-              <input
-                v-model="deleteConfirm"
-                :placeholder="project?.name"
-                required
-              /><button
-                class="btn danger-button"
-                :disabled="deleteConfirm !== project?.name"
-              >
-                {{ t("Verify & delete", "验证并删除") }}
-              </button>
-            </form>
-          </section></template
+          </template
         >
         <template v-if="page === 'account'"
           ><section class="panel form-panel">
@@ -1540,6 +1524,7 @@ const usagePercent = computed(() =>
           :data="data"
           @create="showCreate = true"
           @select="openProject"
+          @delete="deleteProject"
         />
 
         <BatchHistory v-if="page === 'keys' && selected" :project="selected" />
@@ -1699,6 +1684,11 @@ const usagePercent = computed(() =>
           <p>{{ t('Key name: ', '密钥名称：') }}{{ verificationKeyName }}</p>
           <small>{{ t('Programs using this key will no longer be able to send data after revocation.', '撤销后，使用该密钥的程序将无法继续上报。') }}</small>
         </div>
+        <div v-else-if="verification.action === 'project.delete'" class="verification-target">
+          <strong>{{ t('Delete project', '删除项目') }}：{{ deletionProject?.name }}</strong>
+          <p>{{ t('Keys stop working immediately. Analytics data is deleted asynchronously. Billing and audit records are retained. This cannot be undone.', '密钥立即失效，分析数据将异步删除，账单和审计记录保留。此操作无法撤销。') }}</p>
+          <label>{{ t('Type the project name to confirm', '输入项目名称确认') }}<input v-model="deleteConfirm" :placeholder="deletionProject?.name" :disabled="verification.busy" autocomplete="off" /></label>
+        </div>
         <div v-else class="verification-target">
           <code>{{ verification.action }}</code
           ><small>{{ verification.target }}</small>
@@ -1725,19 +1715,19 @@ const usagePercent = computed(() =>
             )
           }}</small
           ><button
-            class="btn primary full"
-            :disabled="verification.busy || (!firstKeyCreation && !verification.challengeId)"
+            :class="verification.action === 'project.delete' ? 'btn danger-button full' : 'btn primary full'"
+            :disabled="verification.busy || !deletionReady || (!firstKeyCreation && !verification.challengeId)"
           >
             {{
               verification.busy
                 ? t("Please wait…", "请稍候…")
-                : firstKeyCreation ? t("Create key", "创建密钥") : t("Verify & confirm", "验证并确认")
+                : firstKeyCreation ? t("Create key", "创建密钥") : verification.action === "project.delete" ? t("Verify & delete", "验证并删除") : t("Verify & confirm", "验证并确认")
             }}</button
           ><button
             v-if="!firstKeyCreation"
             class="text-button"
             type="button"
-            :disabled="verification.busy"
+            :disabled="verification.busy || !deletionReady"
             @click="sendVerificationCode"
           >
             {{

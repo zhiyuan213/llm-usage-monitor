@@ -2,14 +2,19 @@
 import { Plus, Gem, Database, FolderKanban, CalendarDays } from "lucide-vue-next";
 import { t, n, money, date } from "./lib";
 defineProps<{ data: any }>();
-const emit = defineEmits<{ select: [id: string, page?: string]; create: [] }>();
+const emit = defineEmits<{ select: [id: string, page?: string]; create: []; delete: [project: {id: string; name: string}] }>();
 const actions = [
   ["traces", "Traces", "调用记录"],
   ["analytics", "Data analytics", "数据统计"],
   ["alerts", "Alert configuration", "告警配置"],
   ["settings", "Project settings", "项目设置"],
 ] as const;
-function more(event:Event,id:string){const select=event.target as HTMLSelectElement;if(select.value)emit('select',id,select.value);select.value='';}
+function more(event: Event, project: {id: string; name: string}) {
+  const select = event.target as HTMLSelectElement;
+  if (select.value === 'delete') emit('delete', project);
+  else if (select.value) emit('select', project.id, select.value);
+  select.value = '';
+}
 </script>
 <template>
   <section class="panel form-panel workspace-summary">
@@ -91,7 +96,7 @@ function more(event:Event,id:string){const select=event.target as HTMLSelectElem
           <td>{{ n(p.unknown_costs) }}</td>
           <td :title="t('Latest retained object start time','保留期内对象的最近开始时间')">{{ date(p.last_activity_at) }}</td>
           <td>
-            <div class="project-row-actions"><button class="text-button" @click="emit('select',p.id,'overview')">{{t('Open project','进入项目')}}</button><button class="text-button" @click="emit('select',p.id,'keys')">{{t('Connect','接入')}}</button><select :aria-label="p.name+' · '+t('More actions','更多操作')" @change="more($event,p.id)"><option value="">{{t('More','更多')}}</option><option v-for="action in actions" :key="action[0]" :value="action[0]">{{t(action[1],action[2])}}</option></select></div>
+            <div class="project-row-actions"><button class="text-button" @click="emit('select',p.id,'overview')">{{t('Open project','进入项目')}}</button><button class="text-button" @click="emit('select',p.id,'keys')">{{t('Connect','接入')}}</button><select :aria-label="p.name+' · '+t('More actions','更多操作')" @change="more($event,p)"><option value="">{{t('More','更多')}}</option><option v-for="action in actions" :key="action[0]" :value="action[0]">{{t(action[1],action[2])}}</option><option value="delete">{{t("Delete project","删除项目")}}</option></select></div>
           </td>
         </tr>
         <tr v-if="!data.projects?.length">
