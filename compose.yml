@@ -126,7 +126,9 @@ services:
   web:
     build: ./frontend
     ports: ["127.0.0.1:8088:8080"]
-    volumes: [./ops/nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro]
+    volumes:
+      - ./ops/nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
+      - ./.local/web-assets:/usr/share/nginx/html/retained-assets:ro
     depends_on:
       api-blue: {condition: service_healthy}
     restart: unless-stopped

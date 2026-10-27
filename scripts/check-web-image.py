@@ -8,6 +8,8 @@ import tarfile
 import time
 import urllib.request
 import uuid
+import tempfile
+import urllib.error
 
 ROOT = Path(__file__).resolve().parent.parent
 TAG = "metertrail-web:permissions-check"
@@ -35,10 +37,17 @@ def main():
                 else:
                     archive.addfile(item)
     docker("build", "--progress=plain", "-t", TAG, "-", input=context.getvalue(), timeout=600)
+    retained = tempfile.TemporaryDirectory(prefix="metertrail-assets-")
+    retained_path = Path(retained.name)
+    (retained_path / "assets").mkdir()
+    legacy = {"previous-release.js": b"window.previousRelease = true;", "previous-release.css": b"body { color: navy; }"}
+    for name, content in legacy.items():
+        (retained_path / "assets" / name).write_bytes(content)
     try:
         docker("run", "-d", "--name", NAME, "--add-host", "api-blue:127.0.0.1",
                "-p", "127.0.0.1::8080", "-v",
-               f"{ROOT / 'ops/nginx/upstream.conf'}:/etc/nginx/conf.d/upstream.conf:ro", TAG)
+               f"{ROOT / 'ops/nginx/upstream.conf'}:/etc/nginx/conf.d/upstream.conf:ro",
+               "-v", f"{retained_path}:/usr/share/nginx/html/retained-assets:ro", TAG)
         uid = docker("exec", NAME, "id", "-u", capture_output=True, text=True).stdout.strip()
         if uid == "0":
             raise AssertionError("Web server must run as non-root")
@@ -67,6 +76,21 @@ def main():
                 if path.startswith('/tutorials/') and b'Example request' not in content:
                     raise AssertionError("Tutorial initial HTML has no executable example")
         import gzip
+        for path in ["/", "/index.html", "/security", "/app/workspace", "/login"]:
+            with urllib.request.urlopen(origin + path, timeout=5) as response:
+                assert response.headers.get('Cache-Control') == 'no-store', path
+                assert response.headers.get('Content-Security-Policy'), path
+        for name, expected in legacy.items():
+            with urllib.request.urlopen(origin + '/assets/' + name, timeout=5) as response:
+                assert response.read() == expected, name
+                assert 'text/html' not in response.headers.get('Content-Type', ''), name
+                assert 'max-age=' in response.headers.get('Cache-Control', ''), name
+                assert response.headers.get('Content-Security-Policy'), name
+        try:
+            urllib.request.urlopen(origin + '/assets/not-a-release.js', timeout=5)
+            raise AssertionError('Missing asset must not return SPA HTML')
+        except urllib.error.HTTPError as error:
+            assert error.code == 404
         compressed_sizes = {}
         for path in assets:
             if not path.endswith(('.js', '.css')):
@@ -91,6 +115,7 @@ def main():
         print(json.dumps({"result": "passed", "runtime_uid": uid, "restrictive_context": "files 0600, directories 0700", "public_files_checked": paths, "private_headers_checked": 4, "static_compression": compressed_sizes}))
     finally:
         subprocess.run(["docker", "rm", "-f", NAME], check=False, timeout=30)
+        retained.cleanup()
 
 if __name__ == "__main__":
     main()

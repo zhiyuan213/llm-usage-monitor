@@ -1,5 +1,11 @@
 # CI failure records
 
+## 2026-10-27 cached entry references removed release assets
+
+- Production screenshot showed a blank console: old hashed JS returned 404 and CSS was served as HTML. Current HTML had no explicit Cache-Control, and each web image replaced previous assets.
+- Fix: no-store for resolved HTML, persistent read-only asset archive and a release preparation script that copies previous and candidate hashes before recreation. Recovery imports retained release images without changing application data.
+- Prevention: production-image acceptance tests cover old JS/CSS exact bytes and MIME type, unknown hash 404, HTML cache policy, security headers and compression through Via. Every web release must retain assets before replacing the container; preserve the archive on rollback.
+
 ## 2026-10-27 static compression behind the public reverse proxy
 
 - Commit `88b6dbb` passed local non-root image checks and all CI jobs, but public requests through Caddy returned uncompressed JS/CSS despite requesting gzip. Direct localhost Nginx requests compressed correctly; public HTTP/2 was already enabled.
