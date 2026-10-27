@@ -1238,3 +1238,16 @@
 .ui-v2 .verification-target label { display: grid; gap: 8px; margin-top: 12px; }
 .ui-v2 .verification-target input { width: 100%; min-width: 0; box-sizing: border-box; }
 .ui-v2 .verification-target p { margin: 8px 0; }
+
+/* Workspace summary: compact metrics with contextual ingestion help. */
+.ui-v2 .workspace-summary-metrics { margin-top: 20px; }
+.ui-v2 .workspace-inline-value { white-space: nowrap; }
+.ui-v2 .workspace-inline-value > span { font-size: 16px; font-weight: 500; }
+.ui-v2 .workspace-stat-copy .workspace-period-date { display: flex; align-items: baseline; gap: 8px; font-size: 20px; white-space: nowrap; }
+.ui-v2 .workspace-period-time { display: inline; margin: 0; font-weight: 400; white-space: nowrap; }
+.ui-v2 .workspace-status-label { display: flex; align-items: center; gap: 6px; }
+.ui-v2 .workspace-status-help { position: relative; cursor: help; color: #3156e8; }
+.ui-v2 .workspace-status-help > span { display: none; position: absolute; z-index: 5; top: 24px; left: -100px; width: 240px; padding: 12px; border: 1px solid #dce3ef; border-radius: 6px; background: white; color: #435570; box-shadow: 0 4px 16px #12213d18; font-size: 12px; line-height: 1.7; font-weight: 400; }
+.ui-v2 .workspace-status-help:hover > span, .ui-v2 .workspace-status-help:focus > span { display: block; }
+@media (min-width: 601px) and (max-width: 1600px) { .ui-v2 .workspace-summary-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 600px) { .ui-v2 .workspace-stat-copy .workspace-period-date { font-size: 18px; gap: 6px; } }

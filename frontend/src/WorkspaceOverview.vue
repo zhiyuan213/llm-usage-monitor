@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import IngestionNotice from "./IngestionNotice.vue";
 import { Plus, Gem, Database, FolderKanban, CalendarDays } from "lucide-vue-next";
 import { t, n, money, date } from "./lib";
 defineProps<{ data: any }>();
@@ -24,20 +23,11 @@ function more(event:Event,id:string){const select=event.target as HTMLSelectElem
         <p>{{ t("Workspace overview", "工作空间概览") }}</p>
       </div>
     </div>
-    <p>
-      {{
-        t(
-          "One shared subscription across all your projects. Model costs below include retained data; monthly units follow the current billing period.",
-          "所有项目共享一个订阅。模型成本包括保留期内的数据，月度 units 按当前账期统计。",
-        )
-      }}
-    </p>
-    <IngestionNotice :state="data.workspace?.ingestion" />
     <div class="workspace-summary-metrics">
       <div class="workspace-stat workspace-stat-plan">
         <span class="workspace-stat-icon" aria-hidden="true"><Gem :size="24" /></span>
         <div class="workspace-stat-copy">
-        <small>{{ t("New data ingestion", "新增接入状态") }}</small>
+        <small class="workspace-status-label">{{ t("New data ingestion", "新增接入状态") }}<span class="workspace-status-help" tabindex="0" :aria-label="t('When is ingestion paused?', '什么时候不可接入？')">ⓘ<span role="tooltip">{{t('New data is paused when quota is exhausted without available authorized overage, the overage cap is reached, or the subscription or billing period is inactive or payment needs confirmation.', '额度用尽且无可用的授权超额额度、达到超额上限、订阅或账期失效、付款待确认时，暂停新增接入。')}}</span></span></small>
         <h2>{{!data.workspace?.ingestion?t("Checking","待确认"):data.workspace.ingestion.can_accept_new?t("Available","可接入"):t("Paused","已暂停")}}</h2>
         </div>
       </div>
@@ -45,22 +35,21 @@ function more(event:Event,id:string){const select=event.target as HTMLSelectElem
         <span class="workspace-stat-icon" aria-hidden="true"><Database :size="24" /></span>
         <div class="workspace-stat-copy">
         <small>{{ t("Current-period units", "本账期 units") }}</small>
-        <h2>{{ n(data.workspace?.used_units) }}</h2><small>/ {{n((data.workspace?.plan==='Free'?50000:100000)+Number(data.workspace?.addon_units||0))}} {{t('included + purchased','套餐与加购额度')}}</small>
+        <h2 class="workspace-inline-value">{{ n(data.workspace?.used_units) }} <span>/ {{n((data.workspace?.plan==='Free'?50000:100000)+Number(data.workspace?.addon_units||0))}}</span></h2>
         </div>
       </div>
       <div class="workspace-stat workspace-stat-projects">
         <span class="workspace-stat-icon" aria-hidden="true"><FolderKanban :size="24" /></span>
         <div class="workspace-stat-copy">
         <small>{{ t("Projects with retained data", "有保留数据的项目") }}</small>
-        <h2>{{ data.projects?.filter((p:any)=>Number(p.objects)>0).length || 0 }}</h2>
+        <h2>{{ data.projects?.filter((p:any)=>Number(p.objects)>0).length || 0 }} / {{ data.projects?.length || 0 }}</h2>
         </div>
       </div>
       <div class="workspace-stat workspace-stat-period">
         <span class="workspace-stat-icon" aria-hidden="true"><CalendarDays :size="24" /></span>
         <div class="workspace-stat-copy">
         <small>{{ t("Period ends", "账期结束") }}</small>
-        <h2 class="workspace-period-date">{{ date(data.workspace?.period_end).split(' ')[0] }}</h2>
-        <span class="workspace-period-time" v-if="data.workspace?.period_end">{{ date(data.workspace.period_end).split(' ').slice(1).join(' ') }}</span>
+        <h2 class="workspace-period-date">{{ date(data.workspace?.period_end).split(' ')[0] }} <span class="workspace-period-time" v-if="data.workspace?.period_end">{{ date(data.workspace.period_end).split(' ').slice(1).join(' ') }}</span></h2>
         </div>
       </div>
     </div>
