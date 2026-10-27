@@ -256,7 +256,7 @@ export const sections = [
   },
   {
     en: "Body: data for type=trace or type=observation",
-    zh: "Body：type=trace 或 type=observation 的 data",
+    zh: "Body：type=trace 或 type=observation 的 data对象",
     rows: [
       [
         "events[n].data.name",
@@ -383,7 +383,7 @@ export const sections = [
   },
   {
     en: "Body: data.usage fields for type=trace or type=observation",
-    zh: "Body：type=trace 或 type=observation 的 data.usage 用量字段",
+    zh: "Body：type=trace 或 type=observation 的 data.usage对象",
     rows: [
       [
         "events[n].data.usage.inputTokens",
@@ -422,7 +422,7 @@ export const sections = [
   },
   {
     en: "Body: data for type=score",
-    zh: "Body：type=score 的 data",
+    zh: "Body：type=score 的 data对象",
     rows: [
       [
         "events[n].data.name",

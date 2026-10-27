@@ -1,0 +1,3 @@
+# Protocol section title wording
+
+Before commit: `npm test` passed (47 tests, 16 files); `npm run build` passed; `docker run --rm -v "${PWD}/frontend:/work" -w /work node:24 npm audit --audit-level=high --fetch-retries=0 --fetch-timeout=20000` passed with zero vulnerabilities. Local Windows npm audit failed because its npm installation raised a minipass-flush TypeError; the container audit above is the actual audit result. `node scripts/sync-doc-examples.mjs --check`, `node scripts/sync-scenario-examples.mjs --check`, and `node scripts/write-sdk-id-guides.mjs --check` passed. This is a Chinese heading-only change; no backend contract changed. Exact-commit CI and deployment are checked separately.
