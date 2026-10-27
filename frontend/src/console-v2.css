@@ -1216,4 +1216,9 @@
 .ui-v2 .trace-filters .search-field { flex: 0 1 320px; width: 320px; max-width: 360px; min-width: 220px; }
 .ui-v2 .trace-filters .search-field input { min-width: 0; width: 100%; }
 .ui-v2 .trace-filters .trace-export { margin-left: auto; }
+.ui-v2 .trace-query-fields { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-width: 0; }
+.ui-v2 .trace-query-fields .search-field { width: 260px; max-width: 100%; min-width: 0; }
+.ui-v2 .trace-query-fields .search-field input { width: 100%; min-width: 0; }
+.ui-v2 .trace-query-toolbar .trace-export { margin-left: auto; display: flex; flex-wrap: wrap; gap: 12px; }
+@media (max-width: 700px) { .ui-v2 .trace-query-fields { width: 100%; } .ui-v2 .trace-query-fields .search-field { width: 100%; } .ui-v2 .trace-query-toolbar .trace-export { margin-left: 0; } }
 @media (max-width: 700px) { .ui-v2 .trace-filters .search-field { flex:1 1 100%; width:100%; max-width:none; min-width:0; } .ui-v2 .trace-filters .trace-export { margin-left:0; flex-wrap:wrap; } }

@@ -837,14 +837,8 @@ const usagePercent = computed(() =>
             /></section
         ></template>
         <template v-if="page === 'traces' && selected"
-          ><DateRangeFilter :busy="loading" :value="reportWindow" @change="applyDates" /><section class="panel">
-            <form
-              class="filters trace-filters"
-              @submit.prevent="
-                tracePage = 0;
-                refresh(false);
-              "
-            >
+          ><DateRangeFilter class="trace-query-toolbar" :busy="loading" :value="reportWindow" @change="applyDates">
+            <div class="trace-query-fields">
               <div class="search-field">
                 <Search :size="17" /><input
                   v-model="search"
@@ -858,7 +852,9 @@ const usagePercent = computed(() =>
                 <option value="success">success</option>
                 <option value="error">error</option>
                 <option value="cancelled">cancelled</option></select
-              ><select v-model="costFilter" :aria-label="t('Cost completeness','费用完整性')" @change="costFilter!=='unknown'&&(costReasonFilter='')"><option value="all">{{t('All costs','全部费用状态')}}</option><option value="unknown">{{t('Has unknown cost','含未知费用')}}</option><option value="known">{{t('Fully priced model calls','模型调用全部已定价')}}</option></select><select v-if="costFilter==='unknown'" v-model="costReasonFilter" :aria-label="t('Unknown cost reason','未知费用原因')"><option value="">{{t('All reasons','全部原因')}}</option><option value="usage_missing">{{t('Usage missing','缺少用量')}}</option><option value="model_missing">{{t('Model or provider missing','缺少模型或供应商')}}</option><option value="pricing_evidence_missing">{{t('Pricing evidence missing','缺少计价证据')}}</option></select><button class="btn primary">{{ t("Search", "搜索") }}</button>
+              ><select v-model="costFilter" :aria-label="t('Cost completeness','费用完整性')" @change="costFilter!=='unknown'&&(costReasonFilter='')"><option value="all">{{t('All costs','全部费用状态')}}</option><option value="unknown">{{t('Has unknown cost','含未知费用')}}</option><option value="known">{{t('Fully priced model calls','模型调用全部已定价')}}</option></select><select v-if="costFilter==='unknown'" v-model="costReasonFilter" :aria-label="t('Unknown cost reason','未知费用原因')"><option value="">{{t('All reasons','全部原因')}}</option><option value="usage_missing">{{t('Usage missing','缺少用量')}}</option><option value="model_missing">{{t('Model or provider missing','缺少模型或供应商')}}</option><option value="pricing_evidence_missing">{{t('Pricing evidence missing','缺少计价证据')}}</option></select>
+            </div>
+            <template #actions>
               <div class="query-export trace-export">
                 <a
                   class="btn"
@@ -871,7 +867,8 @@ const usagePercent = computed(() =>
                   >{{ t("Export PDF", "导出 PDF") }}</a
                 >
               </div>
-            </form>
+            </template>
+          </DateRangeFilter><section class="panel">
             <div class="table-wrap">
               <table class="traces-table">
                 <thead>

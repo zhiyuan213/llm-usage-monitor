@@ -1,0 +1,5 @@
+# Unified trace query toolbar
+
+Moved name/status/cost filters into the date toolbar before the primary query button, with export links in the trailing actions slot. Removed the duplicate Search button. The shared toolbar is a form, so both the primary submit and Enter use the existing applyDates handler and all current filter refs; changing controls does not submit. Export endpoints and parameters, table columns, sorting and pagination remain unchanged. Desktop wraps at available width; narrow screens give the search field its own row and keep export actions accessible.
+
+Before commit: frontend npm test 39 tests / 14 files passed; production build with seven public pages passed; dependency audit zero vulnerabilities; generated-example synchronization passed; non-root image check passed including retained assets, HTML cache/security headers and proxy gzip. Existing source reviewed for no nested forms at component call sites. No backend contract or report export schema change. Live browser visual/interaction acceptance remains incomplete; no visual pass claimed. Exact-commit CI required before deployment.
