@@ -1230,6 +1230,8 @@
 .ui-v2 .analytics-top-controls .date-range-filter { margin-bottom: 0; }
 .ui-v2 .analytics-top-controls .analytics-filters { padding: 0; }
 .ui-v2 .analytics-report-heading .query-export { margin-left: auto; }
+.ui-v2 .analytics-query-toolbar .query-export { margin-left: auto; display: flex; gap: 12px; flex-wrap: wrap; }
+@media (max-width: 700px) { .ui-v2 .analytics-query-toolbar .query-export { margin-left: 0; } }
 .ui-v2 .trace-query-toolbar .trace-export { margin-left: auto; display: flex; flex-wrap: wrap; gap: 12px; }
 @media (max-width: 700px) { .ui-v2 .trace-query-fields { width: 100%; } .ui-v2 .trace-query-fields .search-field { width: 100%; } .ui-v2 .trace-query-toolbar .trace-export { margin-left: 0; } }
 @media (max-width: 700px) { .ui-v2 .trace-filters .search-field { flex:1 1 100%; width:100%; max-width:none; min-width:0; } .ui-v2 .trace-filters .trace-export { margin-left:0; flex-wrap:wrap; } }

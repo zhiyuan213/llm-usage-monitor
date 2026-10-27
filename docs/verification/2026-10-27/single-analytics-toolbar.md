@@ -1,0 +1,5 @@
+# Single analytics date toolbar
+
+Removed the independent natural-year/month/year controls and their query button. Analytics now uses the shared date form with a dimension slot and trailing export actions; there is one primary Search button. Initial applied range is current UTC month through now; the visible custom end date is month end. Explicit Search applies date and dimension together, resets pagination, and feeds one shared parameter source to the list, chart and exports. Backend and export column contracts unchanged.
+
+Before commit: frontend npm test 40 tests / 14 files passed; production build passed (ten static public pages); clean npm audit high threshold zero vulnerabilities; generated-example synchronization passed; non-root web image acceptance passed including static policies, retained assets, cache/security headers and proxy gzip. Existing date tests cover month boundaries, inclusive end and future clamping. Desktop/narrow toolbar CSS reviewed for wrapping and export alignment; live visual acceptance incomplete, not claimed. Exact-commit CI required before deployment.

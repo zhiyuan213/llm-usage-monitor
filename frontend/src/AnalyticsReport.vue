@@ -3,18 +3,18 @@ import {usePageSize} from "./page-size";
 import { computed, ref, watch } from 'vue';
 import { api, t, n, money, date, language, errorText } from './lib';
 import DateRangeFilter from './DateRangeFilter.vue';
+import {monthDates,customWindow as makeWindow,type ReportWindow} from './date-range';
 import QueryControls from './QueryControls.vue';
 const props=defineProps<{ project:string; refreshToken:any }>();
-const currentYear=new Date().getUTCFullYear();
-const years=Array.from({length:4},(_,i)=>currentYear-i);
-const draftDimension=ref('customerId'), period=ref('year'), year=ref(currentYear), month=ref(new Date().getUTCMonth()+1);
-const customWindow=ref<{from:string;to:string}|null>(null);
-const applied=ref({dimension:'customerId',year:currentYear,month:0});
+const draftDimension=ref('customerId');
+const dates=monthDates();
+const appliedWindow=ref(makeWindow(dates.from,dates.to)!);
+const appliedDimension=ref('customerId');
 const page=ref(0), size=usePageSize(), total=ref(0), rows=ref<any[]>([]), tokenChart=ref<any[]>([]), costChart=ref<any[]>([]), busy=ref(false), error=ref('');
 const metric=ref<'tokens'|'cost'>('tokens');
 const chart=computed(()=>metric.value==='tokens'?tokenChart.value:costChart.value);
 let version=0;
-const params=computed(()=>new URLSearchParams({project:props.project,dimension:applied.value.dimension,...(customWindow.value?customWindow.value:{year:String(applied.value.year),...(applied.value.month?{month:String(applied.value.month)}:{})})}).toString());
+const params=computed(()=>new URLSearchParams({project:props.project,dimension:appliedDimension.value,...appliedWindow.value}).toString());
 const exportUrl=computed(()=>'/api/reports/analytics/export?'+params.value+'&lang='+language.value);
 async function load(){
   if(!props.project)return;
@@ -28,7 +28,7 @@ async function load(){
   }catch(e){if(current===version){error.value=errorText(e);rows.value=[];tokenChart.value=[];costChart.value=[];total.value=0;}}
   finally{if(current===version)busy.value=false;}
 }
-function query(){customWindow.value=null;applied.value={dimension:draftDimension.value,year:year.value,month:period.value==='month'?month.value:0};page.value=0;load();}
+function query(value:ReportWindow){appliedWindow.value=value;appliedDimension.value=draftDimension.value;page.value=0;load();}
 watch(()=>props.project,()=>{page.value=0;load();},{immediate:true});
 watch(()=>props.refreshToken,()=>load());
 const chartWidth=computed(()=>Math.max(600,80+chart.value.length*84));
@@ -49,17 +49,11 @@ function tickLabel(value:number){return metric.value==='cost'?costNumber(value):
 </script>
 <template>
   <div class="analytics-report">
-    <div class="analytics-report-heading"><div class="query-export"><a class="btn" :aria-disabled="busy||!!error" :href="busy||error?undefined:exportUrl+'&format=xlsx'">{{t('Export Excel','导出 Excel')}}</a><a class="btn" :aria-disabled="busy||!!error" :href="busy||error?undefined:exportUrl+'&format=pdf'">{{t('Export PDF','导出 PDF')}}</a></div></div>
     <p v-if="error" class="notice error" role="alert">{{error}}</p>
-    <div class="analytics-top-controls">
-        <DateRangeFilter initial="" :busy="busy" @change="customWindow=$event;applied.dimension=draftDimension;page=0;load()" /><form class="analytics-filters" @submit.prevent="query">
-          <label>{{t('Dimension','统计维度')}}<select v-model="draftDimension" :disabled="busy"><option value="customerId">{{t('Customers','客户')}}</option><option value="userId">{{t('Users','用户')}}</option><option value="feature">{{t('Features','功能')}}</option></select></label>
-          <label>{{t('Period','时间维度')}}<select v-model="period" :disabled="busy"><option value="year">{{t('Year','年')}}</option><option value="month">{{t('Month','月')}}</option></select></label>
-          <label>{{t('Year','年份')}}<select v-model="year" :disabled="busy"><option v-for="value in years" :key="value" :value="value">{{value}}</option></select></label>
-          <label v-if="period==='month'">{{t('Month','月份')}}<select v-model="month" :disabled="busy"><option v-for="value in 12" :key="value" :value="value">{{value}}{{t('','月')}}</option></select></label>
-          <button class="btn primary" :disabled="busy">{{busy?t('Loading…','查询中…'):t('Search','查询')}}</button>
-        </form>
-    </div>
+    <DateRangeFilter class="analytics-query-toolbar" initial="custom" :busy="busy" @change="query">
+      <label>{{t('Dimension','统计维度')}}<select v-model="draftDimension" :disabled="busy"><option value="customerId">{{t('Customers','客户')}}</option><option value="userId">{{t('Users','用户')}}</option><option value="feature">{{t('Features','功能')}}</option></select></label>
+      <template #actions><div class="query-export"><a class="btn" :aria-disabled="busy||!!error" :href="busy||error?undefined:exportUrl+'&format=xlsx'">{{t('Export Excel','导出 Excel')}}</a><a class="btn" :aria-disabled="busy||!!error" :href="busy||error?undefined:exportUrl+'&format=pdf'">{{t('Export PDF','导出 PDF')}}</a></div></template>
+    </DateRangeFilter>
     <div class="analytics-report-grid">
       <section class="panel analytics-list-panel" :aria-busy="busy">
         <div class="table-wrap"><table><thead><tr><th>{{t('Identifier','标识')}}</th><th>{{t('Objects','对象数')}}</th><th>{{t('Known tokens','已知 Token')}}</th><th>{{t('Estimated cost','估算成本')}}</th><th>{{t('Unknown costs','未知成本调用')}}</th><th>{{t('Last activity (UTC)','最近活动时间（UTC）')}}</th></tr></thead><tbody>
