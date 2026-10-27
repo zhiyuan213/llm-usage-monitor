@@ -18,15 +18,15 @@ const server=createServer(async (req,res)=>{
     assert.equal(body.agent,undefined); assert.equal(body.events.length,2);
     const event=body.events[0]; assert.equal(event.type,'trace'); assert.equal(event.revision,undefined);
     assert.match(event.traceId,/^[a-f0-9]{32}$/); assert.match(event.eventId,/^[a-f0-9-]{36}$/);
-    assert.ok(Math.abs(Date.now()-Date.parse(event.startedAt))<60000); assert.equal(event.data.name,'Example request');
+    assert.ok(Math.abs(Date.now()-Date.parse(event.startedAt))<60000); assert.equal(event.data.name,'Document analysis');
     assert.equal(event.data.userId,'demo-user'); assert.equal(event.data.customerId,'demo-customer');
-    assert.equal(event.data.feature,'document-analysis');
+    assert.equal(event.data.feature,'document-analysis'); assert.equal(event.data.durationMs,2100);
     const model=body.events[1]; assert.equal(model.type,'observation');
     assert.equal(model.traceId,event.traceId); assert.notEqual(model.objectId,event.objectId);
     assert.notEqual(model.eventId,event.eventId); assert.equal(model.revision,undefined);
-    assert.equal(model.data.observationType,'generation');
+    assert.equal(model.data.observationType,'generation'); assert.equal(model.data.durationMs,2000);
     assert.equal(model.data.provider,'example'); assert.equal(model.data.model,'example-model');
-    assert.deepEqual(model.data.usage,{inputTokens:1500,outputTokens:400,cachedInputTokens:500});
+    assert.deepEqual(model.data.usage,{inputTokens:1500,outputTokens:400});
     received.push(body); res.writeHead(200,{'Content-Type':'application/json'}); res.end(JSON.stringify({batchId:'example',received:2,status:'pending'}));
   } catch(e) {res.writeHead(400); res.end(String(e));}
 });

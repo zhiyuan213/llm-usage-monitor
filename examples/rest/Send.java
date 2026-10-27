@@ -12,12 +12,12 @@ class Send {
     String batch = """
         {"events":[
           {"eventId":"%s","objectId":"%s","type":"trace","traceId":"%s","startedAt":"%s",
-           "data":{"name":"Example request","status":"success","durationMs":120,
+           "data":{"name":"Document analysis","status":"success","durationMs":2100,
                    "userId":"demo-user","customerId":"demo-customer","feature":"document-analysis"}},
           {"eventId":"%s","objectId":"%s","type":"observation","traceId":"%s","spanId":"%s","startedAt":"%s",
            "data":{"name":"Model response","observationType":"generation","status":"success",
-                   "durationMs":100,"provider":"example","model":"example-model",
-                   "usage":{"inputTokens":1500,"outputTokens":400,"cachedInputTokens":500}}}
+                   "durationMs":2000,"provider":"example","model":"example-model",
+                   "usage":{"inputTokens":1500,"outputTokens":400}}}
         ]}
         """.formatted(UUID.randomUUID(), UUID.randomUUID(), traceId, startedAt,
             UUID.randomUUID(), UUID.randomUUID(), traceId,

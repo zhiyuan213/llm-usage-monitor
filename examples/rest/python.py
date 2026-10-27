@@ -15,9 +15,9 @@ batch = {
             'traceId': trace_id,
             'startedAt': started_at,
             'data': {
-                'name': 'Example request',
+                'name': 'Document analysis',
                 'status': 'success',
-                'durationMs': 120,
+                'durationMs': 2100,
                 'userId': 'demo-user',
                 'customerId': 'demo-customer',
                 'feature': 'document-analysis',
@@ -29,9 +29,9 @@ batch = {
             'spanId': uuid.uuid4().hex[:16], 'startedAt': started_at,
             'data': {
                 'name': 'Model response', 'observationType': 'generation',
-                'status': 'success', 'durationMs': 100,
+                'status': 'success', 'durationMs': 2000,
                 'provider': 'example', 'model': 'example-model',
-                'usage': {'inputTokens': 1500, 'outputTokens': 400, 'cachedInputTokens': 500},
+                'usage': {'inputTokens': 1500, 'outputTokens': 400},
             },
         },
     ],

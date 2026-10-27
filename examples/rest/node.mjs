@@ -9,15 +9,15 @@ const batch = {
       type: "trace",
       traceId,
       startedAt,
-      data: { name: "Example request", status: "success", durationMs: 120,
+      data: { name: "Document analysis", status: "success", durationMs: 2100,
         userId: "demo-user", customerId: "demo-customer", feature: "document-analysis" },
     },
     {
       eventId: randomUUID(), objectId: randomUUID(), type: "observation",
       traceId, spanId: randomBytes(8).toString("hex"), startedAt,
       data: { name: "Model response", observationType: "generation", status: "success",
-        durationMs: 100, provider: "example", model: "example-model",
-        usage: { inputTokens: 1500, outputTokens: 400, cachedInputTokens: 500 } },
+        durationMs: 2000, provider: "example", model: "example-model",
+        usage: { inputTokens: 1500, outputTokens: 400 } },
     },
   ],
 };

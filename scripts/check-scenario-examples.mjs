@@ -37,7 +37,7 @@ try {
   const dependencies=(await readFile('sdk/java/target/scenario-classpath.txt','utf8')).trim();
   const classpath=resolve('sdk/java/target/classes')+delimiter+dependencies;
   let lastTrace;
-  for(const language of ['Node.js','Python','Java']) for(const kind of ['single','multiple','score']) {
+  for(const language of ['Node.js','Python','Java']) for(const kind of ['single','multiple','score','score-trace']) {
     received=[];
     let code=sources[language][kind];
     let command,args;
@@ -48,9 +48,9 @@ try {
     assert.deepEqual(received.map(b=>b.events.length),kind==='single'?[2]:kind==='multiple'?[1,1,2]:[1],output);
     const events=received.flatMap(b=>b.events);
     assert.equal(new Set(events.map(e=>e.eventId)).size,events.length);
-    if(kind==='score') {
-      assert.equal(events[0].data.targetId,`obs-${lastTrace}-1`);
-      assert.equal(events[0].data.targetType,'observation');
+    if(kind.startsWith('score')) {
+      assert.equal(events[0].data.targetId,kind==='score-trace'?`trace-${lastTrace}`:`obs-${lastTrace}-1`);
+      assert.equal(events[0].data.targetType,kind==='score-trace'?'trace':'observation');
     } else {
       lastTrace=events[0].traceId;
       assert.equal(new Set(events.map(e=>e.traceId)).size,1);
@@ -60,7 +60,7 @@ try {
     }
     // Compare every published event (besides SDK-generated IDs/defaults) to canonical REST content.
     const expected=batches(kind,lastTrace,events[0].startedAt).flat();
-    events.forEach((e,i)=>{const {eventId,revision,...rest}=e; if(kind==='score') expected[i].objectId=e.objectId; assert.deepEqual(rest,expected[i]);});
+    events.forEach((e,i)=>{const {eventId,revision,...rest}=e; if(kind.startsWith('score')) expected[i].objectId=e.objectId; assert.deepEqual(rest,expected[i]);});
     console.log(`PASS ${language} ${kind}: ${received.length} batch(es), ${events.length} events`);
   }
 } finally { await new Promise(r=>server.close(r)); await rm(folder,{recursive:true,force:true}); }

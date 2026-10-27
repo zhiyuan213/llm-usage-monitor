@@ -79,7 +79,7 @@ def main():
                     assert b'Deployment policy template' not in content, path
                 if path == "/googlecc6b6e16e288c986.html" and content != (ROOT / "frontend/public" / path[1:]).read_bytes():
                     raise AssertionError("Google verification file changed")
-                if path.startswith('/tutorials/') and b'Example request' not in content:
+                if path.startswith('/tutorials/') and b'Document analysis' not in content:
                     raise AssertionError("Tutorial initial HTML has no executable example")
         import gzip
         for path in ["/", "/index.html", "/security", "/app/workspace", "/login"]:

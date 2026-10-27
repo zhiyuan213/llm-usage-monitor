@@ -22,8 +22,8 @@ export const tutorials = [
     usage: ['Run on your backend after the AI request finishes. Each run creates a trace and a model-call observation (2 units). Reuse the unchanged payload and IDs for retries. This example does not call a model or send prompt content.', '在 AI 请求结束后由服务端上报。每次运行创建一条请求和一条模型调用，共 2 units。重试时保留原始数据和 ID。示例不调用模型，不发送提示词正文。'],
   },
   {
-    slug: 'rest', en: 'Send your first trace with REST and cURL', zh: '通过 REST 和 cURL 发送第一条调用记录',
-    summary: ['Try the HTTP API before adding an SDK. Generate a current request, send it, and optionally query batch status.', '先用 HTTP 接口验证接入，再决定是否使用 SDK。生成当前请求、发送数据，并按需查询处理状态。'],
+    slug: 'rest', en: 'Integrate directly through the HTTP API', zh: '直接通过 HTTP API 接入',
+    summary: ['No SDK required. Use Postman, cURL or any HTTP client; this tutorial demonstrates cURL.', '无需 SDK，可用 Postman、cURL 或任意语言的 HTTP 客户端调用，本教程以 cURL 演示。'],
     requirement: ['A POSIX shell (macOS, Linux or WSL), Python 3 and cURL, plus a project API key.', '需要 POSIX shell（macOS、Linux 或 WSL）、Python 3、cURL 和项目 API 密钥。'],
     filename: 'send.sh', command: 'sh send.sh',
     code: `#!/usr/bin/env sh

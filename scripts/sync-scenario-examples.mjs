@@ -5,9 +5,9 @@ export function batches(kind, id, time, scoreId = id) {
   const observation = (n, duration, input, output) => ({type:'observation',objectId:`obs-${id}-${n}`,traceId:id,spanId:String(n).padStart(16,'0'),startedAt:time,data:{observationType:'generation',status:'success',durationMs:duration,provider:'example',model:'example-model',usage:{inputTokens:input,outputTokens:output}}});
   if (kind === 'single') { trace.data.durationMs=2100; return [[trace, observation(1,2000,1500,400)]]; }
   if (kind === 'multiple') return [[observation(1,2000,2500,500)],[observation(2,1000,1000,200)],[observation(3,3000,2000,500),trace]];
-  return [[{type:'score',objectId:`score-${scoreId}`,startedAt:time,data:{name:'User satisfaction',targetType:'observation',targetId:`obs-${id}-1`,valueType:'numeric',value:1}}]];
+  return [[{type:'score',objectId:`score-${scoreId}`,startedAt:time,data:{name:'User satisfaction',targetType:kind==='score-trace'?'trace':'observation',targetId:kind==='score-trace'?`trace-${id}`:`obs-${id}-1`,valueType:'numeric',value:1}}]];
 }
-const kinds=['single','multiple','score'];
+const kinds=['single','multiple','score','score-trace'];
 export function source(language, kind) {
   const values=batches(kind,'@trace@','@time@','@score@');
   const json=JSON.stringify(values,null,2);
@@ -15,7 +15,7 @@ export function source(language, kind) {
 import { MeterTrail } from './node/index.mjs';
 
 // Run from the source SDK repository root. Set METERTRAIL_ENDPOINT and METERTRAIL_API_KEY.
-const traceId = ${kind==='score'?"process.env.METERTRAIL_TRACE_ID":"randomUUID().replaceAll('-', '')"};
+const traceId = ${kind.startsWith('score')?"process.env.METERTRAIL_TRACE_ID":"randomUUID().replaceAll('-', '')"};
 if (!/^[0-9a-f]{32}$/.test(traceId || '')) throw Error('Set METERTRAIL_TRACE_ID to the earlier request traceId');
 console.log('traceId:', traceId); // Keep this ID if a score will be sent later.
 const startedAt = new Date().toISOString(); // Use actual request/step start times in your app.
@@ -38,7 +38,7 @@ from datetime import datetime, timezone
 from python.metertrail import MeterTrail
 
 # Run from the source SDK repository root. Set METERTRAIL_ENDPOINT and METERTRAIL_API_KEY.
-trace_id = ${kind==='score'?"os.environ['METERTRAIL_TRACE_ID']":"uuid.uuid4().hex"}
+trace_id = ${kind.startsWith('score')?"os.environ['METERTRAIL_TRACE_ID']":"uuid.uuid4().hex"}
 if len(trace_id) != 32 or any(c not in '0123456789abcdef' for c in trace_id):
     raise ValueError('Use the earlier request traceId')
 print('traceId:', trace_id)  # Keep this ID for a later score.
@@ -65,7 +65,7 @@ import java.util.UUID;
 
 public class Scenario {
   public static void main(String[] args) throws Exception {
-    String traceId = ${kind==='score'?'System.getenv("METERTRAIL_TRACE_ID")':'UUID.randomUUID().toString().replace("-", "")'};
+    String traceId = ${kind.startsWith('score')?'System.getenv("METERTRAIL_TRACE_ID")':'UUID.randomUUID().toString().replace("-", "")'};
     if (traceId == null || !traceId.matches("[0-9a-f]{32}"))
       throw new IllegalArgumentException("Use the earlier request traceId in METERTRAIL_TRACE_ID");
     System.out.println("traceId: " + traceId); // Keep for a later score.
