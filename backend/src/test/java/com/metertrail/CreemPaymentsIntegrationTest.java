@@ -138,6 +138,21 @@ class CreemPaymentsIntegrationTest {
     send(invalid).andExpect(status().isBadRequest());
     assertEquals("Free",store.db.queryForObject("SELECT plan FROM workspaces WHERE id=?",String.class,workspace));
   }
+  @Test void replacementPaymentReactivatesCanceledSubscriptionButOldIntentCannotReplaceItAgain() throws Exception {
+    billingFixture();String oldSub="sub_previous";
+    store.db.update("UPDATE workspaces SET plan='Core',payment_provider='creem',subscription_id=?,subscription_status='canceled',used_units=17,retention_grace_until=now()+interval '30 days' WHERE id=?",oldSub,workspace);
+    store.db.update("UPDATE checkout_intents SET previous_subscription_id=? WHERE id=?",oldSub,intent);
+    start=java.time.Instant.now().minusSeconds(1);end=start.plusSeconds(2592000);
+    var at=java.time.Instant.now();send(event("subscription.paid",at)).andExpect(status().isOk());
+    var w=store.workspace(owner);assertEquals(sub,w.get("subscription_id"));assertEquals("active",w.get("subscription_status"));assertNull(w.get("retention_grace_until"));
+    var ingestion=IngestionStatus.describe(w,0,false,false,java.time.Instant.now());
+    assertEquals(true,ingestion.get("can_accept_new"));
+    String newSub=sub;
+    // Even after the new subscription ends, a delayed old checkout cannot take it over.
+    store.db.update("UPDATE workspaces SET subscription_status='canceled' WHERE id=?",workspace);
+    sub="sub_unrelated";send(event("subscription.paid",at.plusMillis(10))).andExpect(status().isConflict());
+    assertEquals(newSub,store.workspace(owner).get("subscription_id"));
+  }
   @Test void unrelatedDashboardTestEventsAreAcknowledgedWithoutGrantingAccess() throws Exception {
     billingFixture();var e=event("checkout.completed",java.time.Instant.now());var o=e.with("object");o.put("id","ch_DashboardTest");o.put("status","completed");o.remove("metadata");
     o.putObject("subscription").put("id","sub_Unknown");o.putObject("order").put("status","paid");
@@ -158,6 +173,8 @@ class CreemPaymentsIntegrationTest {
     assertEquals(1L,store.db.queryForObject("SELECT count(*) FROM payment_adjustments WHERE workspace_id=?",Long.class,workspace));
     var cancelled=event("subscription.canceled",at.plusMillis(20));cancelled.with("object").put("status","canceled");send(cancelled).andExpect(status().isOk());
     assertEquals("canceled",store.db.queryForObject("SELECT subscription_status FROM workspaces WHERE id=?",String.class,workspace));
+    assertEquals("Free",store.db.queryForObject("SELECT plan FROM workspaces WHERE id=?",String.class,workspace));
+    assertEquals("Core",store.db.queryForObject("SELECT retention_plan FROM workspaces WHERE id=?",String.class,workspace));
     assertNotNull(store.db.queryForObject("SELECT retention_grace_until FROM workspaces WHERE id=?",java.sql.Timestamp.class,workspace));
   }
 }

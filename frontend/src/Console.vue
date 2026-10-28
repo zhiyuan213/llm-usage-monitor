@@ -8,6 +8,7 @@ import DateRangeFilter from "./DateRangeFilter.vue";
 import SupportMessages from "./SupportMessages.vue";
 import AdminProjects from "./AdminProjects.vue";
 import AdminPayments from "./AdminPayments.vue";
+import {endedSubscription,planAction} from './billing-plan';
 import AnalyticsReport from "./AnalyticsReport.vue";
 import BusinessInsights from './BusinessInsights.vue';
 import BudgetReminders from './BudgetReminders.vue';
@@ -1182,10 +1183,10 @@ const usagePercent = computed(() =>
               <PlanFeatures :index="i" />
               <button
                 class="btn full"
-                :disabled="data.workspace?.plan === plan || plan === 'Free' || data.workspace?.payment_provider === 'creem'"
+                :disabled="['current','disabled'].includes(planAction(data.workspace,plan))"
                 @click="
                   run(async () => {
-                    if (data.workspace?.subscription_id) {
+                    if (planAction(data.workspace,plan)==='change') {
                       if(data.workspace.payment_provider==='creem') { const r=await api('/billing/portal',{});navigate(r.url); }
                       else changeTargetPlan = plan;
                     }
@@ -1194,9 +1195,9 @@ const usagePercent = computed(() =>
                 "
               >
                 {{
-                  data.workspace?.plan === plan
+                  planAction(data.workspace,plan)==='current'
                     ? t("Current plan", "当前套餐")
-                    : t("Choose ", "选择 ") + plan
+                    : endedSubscription(data.workspace) && (data.workspace?.retention_plan||data.workspace?.plan)===plan ? t('Reopen ','重新开通 ') + plan : t("Choose ", "选择 ") + plan
                 }}
               </button>
             </article>

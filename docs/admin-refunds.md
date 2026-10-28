@@ -10,6 +10,8 @@ After a confirmed full refund of the latest subscription payment, the applicatio
 
 Required Creem API permissions include transaction/subscription read, refunds write and subscriptions write. Test and production keys, products, webhook secrets and endpoints must match. Never put keys in Git or browser configuration.
 
+Updated cancellation behavior (2026-10-28): confirmed cancellation returns the current plan to Free immediately, preserving consumed usage and applying Free quota. Previous paid data retention remains separately protected by its existing grace deadline. Core and Pro can be purchased again using a checkout bound to the ended subscription. The earlier sandbox record below documents the behavior before this change.
+
 When a refund initially returns `pending`, use **Reconcile status** after provider confirmation to complete subscription cancellation. The list explicitly shows cancellation still requiring reconciliation until that operation succeeds.
 
 ## Verification — 2026-10-28

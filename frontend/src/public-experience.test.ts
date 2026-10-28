@@ -36,7 +36,8 @@ it('consent stays optional and a close control explicitly declines statistics',a
 
 it('publishes final distinct policies with the confirmed operator and seven-day refunds',async()=>{
  const terms=await render('/terms'),privacy=await render('/privacy'),refunds=await render('/refunds');
- for(const html of [terms,privacy,refunds]){expect(html).not.toContain('Deployment policy template');expect(html).toContain('13428961230@163.com');expect(html).toContain('2026-10-27');}
+ for(const html of [terms,privacy,refunds]){expect(html).not.toContain('Deployment policy template');expect(html).toContain('13428961230@163.com');expect(html).toContain('2026-10-28');}
+ expect(terms).toContain('Cancellation returns the account to Free quota');
  expect(terms).toContain('Chen Zhiyuan');expect(terms).not.toContain('(陈志远)');expect(terms).toContain('Guangdong, China');expect(terms).toContain('renew automatically');
  expect(privacy).toContain('password hashes');expect(privacy).toContain('Statistics preferences');expect(privacy).toContain('30-day renewal grace');
  expect(refunds).toContain('7 calendar days');expect(refunds).toContain('prior use alone does not disqualify');expect(refunds).toContain('original payment method');

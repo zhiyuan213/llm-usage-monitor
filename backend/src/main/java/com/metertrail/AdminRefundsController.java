@@ -131,6 +131,8 @@ class AdminRefundsController {
         if(subscription==null||!sub.equals(subscription.path("id").asText())||!"canceled".equals(subscription.path("status").asText()))throw new ApiError(503,"REFUND_PROVIDER_UNAVAILABLE");
         creem.mode(subscription);
         tx.executeWithoutResult(s->{
+          var current=store.db.queryForList("SELECT * FROM workspaces WHERE id=? AND subscription_id=? AND payment_provider='creem' FOR UPDATE",rowWorkspace(id),sub);
+          if(!current.isEmpty())SubscriptionRetention.endPaidAccess(store,current.get(0),Instant.now());
           store.db.update("UPDATE workspaces SET subscription_status='canceled',auto_overage=false,scheduled_change=NULL,retention_grace_until=coalesce(retention_grace_until,least(period_end,now())+interval '30 days'),payment_updated_at=greatest(coalesce(payment_updated_at,now()),now()) WHERE id=? AND subscription_id=? AND payment_provider='creem'",rowWorkspace(id),sub);
           store.db.update("UPDATE admin_refunds SET cancellation_status='completed',updated_at=now() WHERE transaction_id=?",id);
         });

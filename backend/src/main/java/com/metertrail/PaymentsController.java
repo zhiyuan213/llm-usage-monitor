@@ -107,13 +107,13 @@ class PaymentsController {
     String price = plan.equals("Core") ? core : pro;
     if (apiKey.isBlank() || price.isBlank() || !checkoutConfiguration.enabled) throw new ApiError(503, "PAYMENTS_NOT_CONFIGURED");
     var w = store.workspace(SessionFilter.uid(req));
-    if (w.get("subscription_id") != null) throw new ApiError(409, "USE_BILLING_PORTAL");
+    if (w.get("subscription_id") != null && !SubscriptionState.ended(w)) throw new ApiError(409, "USE_BILLING_PORTAL");
     UUID intent = UUID.randomUUID();
     store.db.update(
-        "INSERT INTO checkout_intents(id,workspace_id,plan) VALUES(?,?,?)",
+        "INSERT INTO checkout_intents(id,workspace_id,plan,previous_subscription_id) VALUES(?,?,?,?)",
         intent,
         w.get("id"),
-        plan);
+        plan,w.get("subscription_id"));
     JsonNode result =
         paddleClient
             .post()
@@ -216,8 +216,8 @@ class PaymentsController {
       workspaces =
           store.queries().queryForList(
               "SELECT w.* FROM workspaces w JOIN checkout_intents c ON c.workspace_id=w.id WHERE"
-                  + " c.id=? AND c.payment_provider='paddle' AND w.payment_provider='paddle' FOR UPDATE OF w",
-              intent);
+                  + " c.id=? AND c.payment_provider='paddle' AND ((w.payment_provider='paddle' AND w.subscription_id=?) OR (w.subscription_id IS NOT DISTINCT FROM c.previous_subscription_id AND (w.subscription_id IS NULL OR w.subscription_status IN ('canceled','expired')))) FOR UPDATE OF w",
+              intent,sub);
     }
     if (workspaces.isEmpty() && type.startsWith("adjustment."))
       workspaces =
@@ -294,7 +294,7 @@ class PaymentsController {
         if(newPeriod) ChargeLedger.close(store,w);
         store.db.update(
             "UPDATE workspaces SET"
-                + " retention_grace_until=NULL,plan=?,subscription_id=?,subscription_status=?,period_start=?,period_end=?,used_units=CASE"
+                + " payment_provider='paddle',retention_plan=NULL,retention_grace_until=NULL,plan=?,subscription_id=?,subscription_status=?,period_start=?,period_end=?,used_units=CASE"
                 + " WHEN ? THEN 0 ELSE used_units END,addon_units=CASE WHEN ? THEN 0 ELSE addon_units END,overage_units=CASE WHEN ? THEN 0 ELSE overage_units END,addon_consumed=CASE WHEN ? THEN 0 ELSE addon_consumed END,payment_updated_at=? WHERE id=?",
             plan,
             sub,
@@ -308,7 +308,7 @@ class PaymentsController {
             Timestamp.from(occurred),
             workspace);
       } else {
-        if(status.equals("canceled")) ChargeLedger.close(store,w);
+        if(java.util.Set.of("canceled","expired").contains(status)) SubscriptionRetention.endPaidAccess(store,w,occurred);
         store.db.update(
             "UPDATE workspaces SET retention_grace_until=coalesce(retention_grace_until,least(period_end,?::timestamptz)+interval '30 days'),subscription_status=?,auto_overage=false,payment_updated_at=?"
                 + " WHERE id=?",

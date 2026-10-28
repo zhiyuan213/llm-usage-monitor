@@ -84,9 +84,9 @@ class CreemPayments {
     if(!enabled())throw new ApiError(503,"PAYMENTS_NOT_CONFIGURED");
     String product=product(plan);
     var w=store.workspace(SessionFilter.uid(req));
-    if(w.get("subscription_id")!=null)throw new ApiError(409,"USE_BILLING_PORTAL");
+    if(w.get("subscription_id")!=null&&!SubscriptionState.ended(w))throw new ApiError(409,"USE_BILLING_PORTAL");
     UUID intent=UUID.randomUUID();
-    store.db.update("INSERT INTO checkout_intents(id,workspace_id,plan,payment_provider) VALUES(?,?,?,'creem')",intent,w.get("id"),plan);
+    store.db.update("INSERT INTO checkout_intents(id,workspace_id,plan,payment_provider,previous_subscription_id) VALUES(?,?,?,'creem',?)",intent,w.get("id"),plan,w.get("subscription_id"));
     JsonNode result=post("/v1/checkouts",Map.of("product_id",product,"request_id",intent.toString(),
         "success_url",publicUrl+"/app/billing","metadata",Map.of("metertrail_intent",intent.toString())));
     if(result==null)throw new ApiError(503,"CHECKOUT_UNAVAILABLE");
@@ -164,10 +164,11 @@ class CreemPayments {
     String metadata=object.path("metadata").path("metertrail_intent").asText(sub.path("metadata").path("metertrail_intent").asText());
     if(!metadata.isBlank()) {
       intent=Support.uuid(metadata);
-      var intents=store.queries().queryForList("SELECT c.*,w.subscription_id,w.payment_provider AS workspace_provider FROM checkout_intents c JOIN workspaces w ON w.id=c.workspace_id WHERE c.id=? AND c.payment_provider='creem' FOR UPDATE OF c,w",intent);
+      var intents=store.queries().queryForList("SELECT c.*,w.subscription_id,w.subscription_status,w.payment_provider AS workspace_provider FROM checkout_intents c JOIN workspaces w ON w.id=c.workspace_id WHERE c.id=? AND c.payment_provider='creem' FOR UPDATE OF c,w",intent);
       if(intents.isEmpty())return finish(eventId,type,hash,at,"ignored");
       var c=intents.get(0);
-      if(c.get("subscription_id")!=null && (!subscriptionId.equals(c.get("subscription_id")) || !"creem".equals(c.get("workspace_provider"))))
+      boolean replacement=paid&&SubscriptionState.ended(c)&&c.get("subscription_id")!=null&&Objects.equals(c.get("previous_subscription_id"),c.get("subscription_id"));
+      if(c.get("subscription_id")!=null && (!subscriptionId.equals(c.get("subscription_id")) || !"creem".equals(c.get("workspace_provider")))&&!replacement)
         throw new ApiError(409,"SUBSCRIPTION_CONFLICT");
       if(rows.isEmpty() && !product(c.get("plan").toString()).equals(id(sub.path("product"))))throw new ApiError(400,"UNKNOWN_PRICE");
       if(type.equals("checkout.completed")) {
@@ -207,7 +208,7 @@ class CreemPayments {
       Instant previousStart=((Timestamp)w.get("period_start")).toInstant();
       if(start.isBefore(previousStart) && !"Free".equals(w.get("plan")))return finish(eventId,type,hash,at,"stale");
       boolean reset="Free".equals(w.get("plan"))||start.isAfter(previousStart);
-      store.db.update("UPDATE workspaces SET payment_provider='creem',plan=?,subscription_id=?,customer_id=?,subscription_status='active',period_start=?,period_end=?,retention_grace_until=NULL,auto_overage=false,used_units=CASE WHEN ? THEN 0 ELSE used_units END,addon_units=CASE WHEN ? THEN 0 ELSE addon_units END,overage_units=CASE WHEN ? THEN 0 ELSE overage_units END,addon_consumed=CASE WHEN ? THEN 0 ELSE addon_consumed END,payment_updated_at=? WHERE id=?",
+      store.db.update("UPDATE workspaces SET payment_provider='creem',plan=?,subscription_id=?,customer_id=?,subscription_status='active',period_start=?,period_end=?,retention_plan=NULL,retention_grace_until=NULL,auto_overage=false,used_units=CASE WHEN ? THEN 0 ELSE used_units END,addon_units=CASE WHEN ? THEN 0 ELSE addon_units END,overage_units=CASE WHEN ? THEN 0 ELSE overage_units END,addon_consumed=CASE WHEN ? THEN 0 ELSE addon_consumed END,payment_updated_at=? WHERE id=?",
           plan,subscriptionId,id(sub.path("customer")),Timestamp.from(start),Timestamp.from(end),reset,reset,reset,reset,Timestamp.from(at),workspace);
       JsonNode order=type.equals("checkout.completed")?object.path("order"):sub.path("last_transaction");
       String transactionId=sub.path("last_transaction_id").asText(id(order.path("transaction")));
@@ -217,6 +218,7 @@ class CreemPayments {
             transactionId,workspace,order.hasNonNull("amount")?PaymentsController.fromMinorUnits(order.path("amount_paid").asText(order.path("amount").asText()),currency):null,currency,Timestamp.from(at));
       }
     } else if(Set.of("canceled","past_due","unpaid","expired","paused","trialing").contains(providerStatus)) {
+      if(Set.of("canceled","expired").contains(providerStatus))SubscriptionRetention.endPaidAccess(store,w,at);
       store.db.update("UPDATE workspaces SET subscription_status=?,auto_overage=false,retention_grace_until=coalesce(retention_grace_until,least(period_end,?::timestamptz)+interval '30 days'),payment_updated_at=? WHERE id=?",
           providerStatus,Timestamp.from(at),Timestamp.from(at),workspace);
     } else if(!"active".equals(w.get("subscription_status"))) {

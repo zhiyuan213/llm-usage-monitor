@@ -13,6 +13,7 @@ class IngestionStatus {
  @GetMapping("/api/ingestion-status") Map<String,Object> get(HttpServletRequest req){
   var w=store.workspace(SessionFilter.uid(req));
   long remaining=store.queries().queryForObject("SELECT coalesce(sum(units-consumed_units),0) FROM usage_charges WHERE workspace_id=? AND period_start=? AND kind='addon' AND credited AND NOT revoked AND status='paid'",Long.class,w.get("id"),w.get("period_start"));
+  if("Free".equals(w.get("plan")))remaining=0;
   boolean blocked=!store.queries().queryForList("SELECT id FROM usage_charges WHERE workspace_id=? AND kind='overage' AND amount>0 AND status IN ('failed','unknown','processing','submitted') LIMIT 1",w.get("id")).isEmpty();
   return describe(w,remaining,collection,blocked,Instant.now());
  }

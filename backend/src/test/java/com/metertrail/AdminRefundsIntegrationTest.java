@@ -55,6 +55,8 @@ class AdminRefundsIntegrationTest {
     submit().andExpect(status().isOk()).andExpect(jsonPath("$.status").value("succeeded")).andExpect(jsonPath("$.cancellation_status").value("completed"));submit().andExpect(status().isOk());
     verify(creem,times(1)).post(eq("/v1/refunds"),any());verify(creem,times(1)).post(eq("/v1/subscriptions/"+sub+"/cancel"),any());
     assertEquals("canceled",store.db.queryForObject("SELECT subscription_status FROM workspaces WHERE id=?",String.class,workspace));assertEquals(17L,store.db.queryForObject("SELECT used_units FROM workspaces WHERE id=?",Long.class,workspace));
+    assertEquals("Free",store.db.queryForObject("SELECT plan FROM workspaces WHERE id=?",String.class,workspace));
+    assertEquals(true,IngestionStatus.describe(store.db.queryForMap("SELECT * FROM workspaces WHERE id=?",workspace),0,false,false,Instant.now()).get("can_accept_new"));
     assertEquals(1L,store.db.queryForObject("SELECT count(*) FROM audit_logs WHERE action='payment.refund.request' AND target=?",Long.class,id));
   }
   @Test void uncertainProviderResponseIsNotResubmittedAndCanReconcile()throws Exception{

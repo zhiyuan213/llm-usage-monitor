@@ -891,6 +891,9 @@ class IngestIntegrationTest {
     tx.executeWithoutResult(x->payments.applyEvent(event));
     var deadline=store.workspace(user).get("retention_grace_until");
     assertNotNull(deadline);
+    assertEquals("Free",store.workspace(user).get("plan"));
+    assertEquals("Core",store.workspace(user).get("retention_plan"));
+    assertEquals(true,IngestionStatus.describe(store.workspace(user),0,false,false,Instant.now()).get("can_accept_new"));
     event.put("event_id","evt_"+UUID.randomUUID()).put("occurred_at",occurred.plusSeconds(1).toString());
     tx.executeWithoutResult(x->payments.applyEvent(event));
     assertEquals(deadline,store.workspace(user).get("retention_grace_until"));
@@ -899,6 +902,25 @@ class IngestIntegrationTest {
     tx.executeWithoutResult(x->payments.applyEvent(event));
     assertNull(store.workspace(user).get("retention_grace_until"));
     assertEquals("Core",store.workspace(user).get("plan"));
+  }
+
+  @Test void endedSubscriptionUsesFreeQuotaWithoutResettingUsageAndNewCheckoutReplacesOnlyItsBoundSubscription() {
+    pack();store.db.update("UPDATE workspaces SET subscription_status='canceled',used_units=49999 WHERE id=?",workspace);
+    SubscriptionRetention.reconcile(store,tx);
+    var w=store.workspace(user);assertEquals("Free",w.get("plan"));assertEquals(49999L,w.get("used_units"));
+    assertEquals(1L,IngestionStatus.describe(w,0,false,false,Instant.now()).get("quota_remaining"));
+    ingest.accept(project,batch(event("trace","free-last-unit",1)));
+    assertThrows(ApiError.class,()->ingest.accept(project,batch(event("trace","free-no-extra",1))));
+    UUID intent=UUID.randomUUID();String old=(String)w.get("subscription_id");
+    store.db.update("INSERT INTO checkout_intents(id,workspace_id,plan,previous_subscription_id) VALUES(?,?,'Core',?)",intent,workspace,old);
+    var renewal=renewalEvent(Instant.now().minusSeconds(1),Instant.now().plusSeconds(2592000));
+    ((ObjectNode)renewal.path("data")).put("id","sub_new").putObject("custom_data").put("metertrail_intent",intent.toString());
+    tx.executeWithoutResult(x->payments.applyEvent(renewal));
+    assertEquals("Core",store.workspace(user).get("plan"));assertEquals("sub_new",store.workspace(user).get("subscription_id"));assertNull(store.workspace(user).get("retention_plan"));
+    var delayed=renewalEvent(Instant.now(),Instant.now().plusSeconds(2592000));
+    ((ObjectNode)delayed.path("data")).putObject("custom_data").put("metertrail_intent",intent.toString());
+    tx.executeWithoutResult(x->payments.applyEvent(delayed));
+    assertEquals("sub_new",store.workspace(user).get("subscription_id"));
   }
 
   @Test void gracePreservesPaidHistoryThenPurgesOnlyOldAnalytics() {

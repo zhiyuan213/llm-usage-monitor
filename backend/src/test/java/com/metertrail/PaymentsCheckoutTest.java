@@ -11,11 +11,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 class PaymentsCheckoutTest {
-  @Test void createsServerSelectedPriceAndBindsReceiptToWorkspaceWithoutActivatingPlan() throws Exception {
+  @ParameterizedTest @ValueSource(strings={"new","canceled","expired"})
+  void createsServerSelectedPriceAndBindsReceiptToWorkspaceWithoutActivatingPlan(String state) throws Exception {
     var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
     var submitted = new AtomicReference<JsonNode>();
     var authorization = new AtomicReference<String>();
@@ -32,7 +35,9 @@ class PaymentsCheckoutTest {
     try {
       UUID user = UUID.randomUUID(), workspace = UUID.randomUUID();
       JdbcTemplate db = mock(JdbcTemplate.class);
-      when(db.queryForList(anyString(), eq(user))).thenReturn(List.of(Map.of("id", workspace)));
+      String previous=state.equals("new")?null:"sub_previous";
+      var w=new HashMap<String,Object>();w.put("id",workspace);w.put("subscription_status",state);w.put("subscription_id",previous);
+      when(db.queryForList(anyString(), eq(user))).thenReturn(List.of(w));
       Store store = new Store(db, mock(Secrets.class));
       var controller = new PaymentsController(store, new SimpleMeterRegistry(),
           new CheckoutConfiguration("test_example", "https://sandbox-api.paddle.com"),
@@ -48,7 +53,7 @@ class PaymentsCheckoutTest {
       assertEquals(1, body.path("items").get(0).path("quantity").asInt());
       assertEquals("https://metertrail.test/pay", body.path("checkout").path("url").asText());
       UUID intent = UUID.fromString(body.path("custom_data").path("metertrail_intent").asText());
-      verify(db).update("INSERT INTO checkout_intents(id,workspace_id,plan) VALUES(?,?,?)", intent, workspace, "Core");
+      verify(db).update("INSERT INTO checkout_intents(id,workspace_id,plan,previous_subscription_id) VALUES(?,?,?,?)", intent, workspace, "Core",previous);
       verify(db).update("UPDATE checkout_intents SET transaction_id=? WHERE id=?", "txn_synthetic", intent);
       verify(db).queryForList("SELECT * FROM workspaces WHERE owner_id=?", user);
       verifyNoMoreInteractions(db);
