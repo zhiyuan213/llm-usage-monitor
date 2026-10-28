@@ -164,6 +164,7 @@ const activityPage = ref(0),
   activitySize=usePageSize(),
   activityTotal = ref(0),
   reportPage = ref(0),
+  auditSize = ref(10),
   reportSize=usePageSize();
 const reportExportUrl = computed(
   () =>
@@ -300,7 +301,7 @@ async function refresh(force = true) {
     }
     else if (page.value === "audit")
       data.value = await request(
-        "/reports/audit?page=" + reportPage.value + "&size=" + reportSize.value,
+        "/reports/audit?page=" + reportPage.value + "&size=" + auditSize.value,
       );
     else if (["account", "messages", "admin-messages", "admin-projects", "admin-payments"].includes(page.value)) {
       /* Account is included in context. */
@@ -1554,9 +1555,9 @@ const usagePercent = computed(() =>
             </div>
             <QueryControls
               :page="reportPage"
-              :size="reportSize"
+              :size="auditSize"
               @resize="
-                reportSize = $event;
+                auditSize = $event;
                 reportPage = 0;
                 refresh(false);
               "
