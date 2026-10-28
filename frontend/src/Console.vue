@@ -516,7 +516,7 @@ const usagePercent = computed(() =>
   Math.min(
     100,
     (100 * Number(session.value?.workspace.used_units || 0)) /
-      (session.value?.workspace.plan === "Free" ? 50000 : 100000),
+      (session.value?.workspace.plan === "Free" ? 50000 : session.value?.workspace.plan === "Pro" ? 1000000 : 100000),
   ),
 );
 </script>

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 final class Billing {
   static long included(String plan) {
-    return plan.equals("Free") ? 50_000 : 100_000;
+    return plan.equals("Free") ? 50_000 : plan.equals("Pro") ? 1_000_000 : 100_000;
   }
 
   static int retention(String plan) {

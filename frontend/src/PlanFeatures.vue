@@ -9,7 +9,7 @@ defineProps<{ index: number }>();
   </p>
   <ul>
     <li>
-      <Check :size="16" />{{ index === 0 ? "50,000" : "100,000" }} units /
+      <Check :size="16" />{{ ["50,000", "100,000", "1,000,000"][index] }} units /
       {{ t("month", "月") }}
     </li>
     <li>

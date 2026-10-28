@@ -330,6 +330,21 @@ class DurableIngestIntegrationTest {
   }
 
   @Test
+  void proIncludesOneMillionUnitsInQuotaAndDurableAdmission() throws Exception {
+    store.db.update("UPDATE workspaces SET plan='Pro',subscription_status='active',used_units=999999 WHERE id=?", workspace);
+    mvc.perform(get("/v1/quota").header("Authorization", "Bearer " + key))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.available_units").value(1));
+    var last = enqueue(body(event("pro-last-unit", 1)));
+    var over = enqueue(body(event("pro-over-limit", 1)));
+    pipeline.processOne();
+    assertEquals(200, result(last).status());
+    assertEquals(429, result(over).status());
+    assertEquals(1000000, units());
+    mvc.perform(get("/v1/quota").header("Authorization", "Bearer " + key))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.available_units").value(0));
+  }
+
+  @Test
   void quotaBoundaryDoesNotTurnRejectedClientIntoHttp200() throws Exception {
     store.db.update("UPDATE workspaces SET used_units=49999 WHERE id=?", workspace);
     var a = enqueue(body(event("last-unit", 1)));

@@ -9,6 +9,12 @@ import org.junit.jupiter.api.Test;
 
 class ProtocolTest {
   @Test
+  void includedQuotaMatchesEachPlan() {
+    assertEquals(50_000, Billing.included("Free"));
+    assertEquals(100_000, Billing.included("Core"));
+    assertEquals(1_000_000, Billing.included("Pro"));
+  }
+  @Test
   void preflightRejectsScalarEventsWithoutLeakingPayload() {
     var invalid = assertThrows(Protocol.InvalidEvents.class,
         () -> Protocol.validateEvents(Support.parse("{\"events\":[null,1,\"private-content\"]}")));

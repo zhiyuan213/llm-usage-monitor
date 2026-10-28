@@ -82,7 +82,7 @@ The workspace row lock serializes reservations across all its projects, so concu
 
 Worker results can also be `quarantined` (durable, awaiting repair/replay), `failed` (explicit permanent failure), or `deleted` (project removed). Email-verified cancellation of a quarantined batch releases each eligible reservation once. A corrected higher revision with a new event ID re-reserves a previously released object once. Settled objects and objects with other pending updates are not refunded. Closed-period adjustments require operator review. SDKs surface non-completed terminal states instead of claiming successful settlement.
 
-Tier rates are exact decimal values: 100k–1m $8/100k; 1m–10m $7/100k; 10m–50m $6.5/100k; above 50m $6/100k. Free 50k, Core/Pro 100k included; Core $29, Pro $199. Add-on packs are unavailable pending product decisions.
+Tier rates are exact decimal values: 100k–1m $8/100k; 1m–10m $7/100k; 10m–50m $6.5/100k; above 50m $6/100k. Free 50k, Core 100k, Pro 1m included; Core $29, Pro $199. Add-on packs are unavailable pending product decisions.
 
 ## Cost evidence
 

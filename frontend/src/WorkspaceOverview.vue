@@ -40,7 +40,7 @@ function more(event: Event, project: {id: string; name: string}) {
         <span class="workspace-stat-icon" aria-hidden="true"><Database :size="24" /></span>
         <div class="workspace-stat-copy">
         <small>{{ t("Current-period units", "本账期 units") }}</small>
-        <h2 class="workspace-inline-value">{{ n(data.workspace?.used_units) }} <span>/ {{n((data.workspace?.plan==='Free'?50000:100000)+Number(data.workspace?.addon_units||0))}}</span></h2>
+        <h2 class="workspace-inline-value">{{ n(data.workspace?.used_units) }} <span>/ {{n((data.workspace?.plan==='Free'?50000:data.workspace?.plan==='Pro'?1000000:100000)+Number(data.workspace?.addon_units||0))}}</span></h2>
         </div>
       </div>
       <div class="workspace-stat workspace-stat-projects">

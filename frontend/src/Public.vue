@@ -401,7 +401,7 @@ import LegalPolicy from './LegalPolicy.vue';
       </section>
       <section class="home-learning panel home-plan-summary">
         <div class="home-plan-copy"><h2>{{ t('Choose the plan for your history and controls', '按历史数据需求与提醒方式选择套餐') }}</h2>
-        <p>{{ t('Core includes cost diagnosis, release comparisons and weekly reports with 90-day rolling retention. Pro adds 3-year rolling retention and custom budget warning and slow-call thresholds. Both include 100,000 units per month; Pro does not add ingestion quota.', 'Core 提供费用诊断、发布对比和自动周报，滚动保留90天数据。Pro 适合需要长期追溯历史、自定义预算提醒线与慢调用阈值的用户，滚动保留3年数据。两者每月均含100,000 units，Pro 不增加接入额度。') }}</p>
+        <p>{{ t('Core includes cost diagnosis, release comparisons and weekly reports with 90-day rolling retention. Pro adds 3-year rolling retention and custom budget warning and slow-call thresholds. Core includes 100,000 units per month; Pro includes 1,000,000 units per month.', 'Core 提供费用诊断、发布对比和自动周报，滚动保留90天数据。Pro 适合需要长期追溯历史、自定义预算提醒线与慢调用阈值的用户，滚动保留3年数据。Core 每月含100,000 units，Pro 每月含1,000,000 units。') }}</p>
         </div><div class="home-plan-actions"><RouterLink class="btn primary" to="/pricing">{{ t('Compare plans', '比较套餐') }}<ArrowRight :size="16" /></RouterLink>
         <RouterLink class="plan-reference" to="/docs#performance">{{ t('Integration limits & test conditions →', '接入限制与测试条件 →') }}</RouterLink></div>
       </section>
@@ -485,7 +485,7 @@ import LegalPolicy from './LegalPolicy.vue';
         <table>
           <thead>
             <tr>
-              <th>{{ t("Monthly units", "当月累计 units") }}</th>
+              <th>{{ t("Billable overage units", "超出套餐与加购额度的 units") }}</th>
               <th>
                 {{ t("Price per 100,000 units", "每 100,000 units 价格") }}
               </th>
@@ -494,10 +494,10 @@ import LegalPolicy from './LegalPolicy.vue';
           <tbody>
             <tr
               v-for="row in [
-                ['100,001 – 1,000,000', '$8'],
-                ['1,000,001 – 10,000,000', '$7'],
-                ['10,000,001 – 50,000,000', '$6.50'],
-                ['50,000,001 +', '$6'],
+                ['1 – 900,000', '$8'],
+                ['900,001 – 9,900,000', '$7'],
+                ['9,900,001 – 49,900,000', '$6.50'],
+                ['49,900,001 +', '$6'],
               ]"
             >
               <td>{{ row[0] }}</td>
