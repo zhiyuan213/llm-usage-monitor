@@ -1,5 +1,7 @@
-import {readFileSync,writeFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,readdirSync} from 'node:fs';
 const files={'cURL':'examples/rest/curl.sh','Python':'examples/rest/python.py','Node.js':'examples/rest/node.mjs','Java':'examples/rest/java/src/main/java/com/metertrail/example/Send.java','Go':'examples/rest/main.go','C#':'examples/rest/csharp/Program.cs','PHP':'examples/rest/send.php'};
 const output='// Generated from executable REST examples. Run node scripts/sync-doc-examples.mjs.\nexport const examples: Record<string,string> = '+JSON.stringify(Object.fromEntries(Object.entries(files).map(([name,path])=>[name,readFileSync(path,'utf8').replace(/\r\n/g,'\n')])),null,2)+';\n';
-const completeOutput=output+'export const javaTutorialPom = '+JSON.stringify(readFileSync('examples/rest/java/pom.xml','utf8').replace(/\r\n/g,'\n'))+';\n';
+function javaFiles(dir){return readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?javaFiles(dir+'/'+entry.name):[dir+'/'+entry.name]).sort();}
+const javaTutorialFiles=javaFiles('examples/rest/java/src/main/java').filter(path=>!path.endsWith('/Send.java')).map(path=>({filename:path.replace('examples/rest/java/',''),code:readFileSync(path,'utf8').replace(/\r\n/g,'\n')}));
+const completeOutput=output+'export const javaTutorialPom = '+JSON.stringify(readFileSync('examples/rest/java/pom.xml','utf8').replace(/\r\n/g,'\n'))+';\nexport const javaTutorialFiles = '+JSON.stringify(javaTutorialFiles)+';\n';
 const path='frontend/src/examples.ts';if(process.argv.includes('--check')){if(readFileSync(path,'utf8').replace(/\r\n/g,'\n')!==completeOutput)throw Error('Documentation examples are out of sync')}else writeFileSync(path,completeOutput);

@@ -1,4 +1,4 @@
-import { examples, javaTutorialPom } from './examples';
+import { examples, javaTutorialPom, javaTutorialFiles } from './examples';
 export const tutorials = [
   {
     slug: 'nodejs', en: 'Track your first AI request with Node.js', zh: '用 Node.js 记录第一条 AI 请求',
@@ -19,7 +19,7 @@ export const tutorials = [
     summary: ['Use the Java HTTP client to send a request and model usage, check the receipt and find it in the console.', '使用 Java HTTP 客户端上报请求和模型用量，检查接收结果，并在控制台查看。'],
     requirement: ['JDK 17 or later, Maven 3.9 or later, a MeterTrail account and a project API key. The provided pom.xml includes Jackson.', '需要 JDK 17 或更新版本、Maven 3.9 或更新版本、MeterTrail 账号和项目 API 密钥。下方 pom.xml 已包含 Jackson 依赖。'],
     filename: 'src/main/java/com/metertrail/example/Send.java', command: 'mvn -q compile exec:java', code: examples.Java,
-    additionalFiles: [{filename:'pom.xml',code:javaTutorialPom}],
+    additionalFiles: [{filename:'pom.xml',code:javaTutorialPom},...javaTutorialFiles],
     usage: ['Run on your backend after the AI request finishes. Each run creates a trace and a model-call observation (2 units). Reuse the unchanged payload and IDs for retries. This example does not call a model or send prompt content.', '在 AI 请求结束后由服务端上报。每次运行创建一条请求和一条模型调用，共 2 units。重试时保留原始数据和 ID。示例不调用模型，不发送提示词正文。'],
   },
   {
@@ -27,17 +27,7 @@ export const tutorials = [
     summary: ['No SDK required. Use Postman, cURL or any HTTP client; this tutorial demonstrates cURL.', '无需 SDK，可用 Postman、cURL 或任意语言的 HTTP 客户端调用，本教程以 cURL 演示。'],
     requirement: ['A POSIX shell (macOS, Linux or WSL), Python 3 and cURL, plus a project API key.', '需要 POSIX shell（macOS、Linux 或 WSL）、Python 3、cURL 和项目 API 密钥。'],
     filename: 'send.sh', command: 'sh send.sh',
-    code: `#!/usr/bin/env sh
-set -eu
-: "\${METERTRAIL_API_KEY:?Set your project API key}"
-: "\${METERTRAIL_ENDPOINT:?Set endpoint}"
-"\${PYTHON:-python3}" - <<'PY' > batch.json
-${examples.Python.split('request = urllib.request.Request(')[0]}
-print(json.dumps(batch))
-PY
-curl --fail-with-body --max-time 10 "$METERTRAIL_ENDPOINT/v1/events/batch" \\
-  -H "Authorization: Bearer $METERTRAIL_API_KEY" \\
-  -H 'Content-Type: application/json' --data @batch.json`,
+    code: examples['cURL'],
     usage: ['Each run sends one request and one model-call observation (2 monitoring units). For a network retry, resend the same batch.json unchanged instead of generating new IDs. This is a sample trace, not a real model request.', '每次运行上报一条请求及一条模型调用，共 2 个监控 units。网络重试时原样重发同一份 batch.json，不要重新生成 ID。这是一条示例调用记录，不会请求模型。'],
   },
 ];

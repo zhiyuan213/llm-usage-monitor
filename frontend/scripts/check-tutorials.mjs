@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 const vite = await viteServer({server:{middlewareMode:true},appType:'custom'});
 const directory = await mkdtemp(join(tmpdir(),'metertrail-tutorials-'));
 const received=[];
+let rejectUploads=false;
 const server=createServer(async (req,res)=>{
   let raw=''; for await(const chunk of req) raw+=chunk;
   try {
@@ -27,6 +28,7 @@ const server=createServer(async (req,res)=>{
     assert.equal(model.data.observationType,'generation'); assert.equal(model.data.durationMs,2000);
     assert.equal(model.data.provider,'example'); assert.equal(model.data.model,'example-model');
     assert.deepEqual(model.data.usage,{inputTokens:1500,outputTokens:400,cachedInputTokens:0});
+    if(rejectUploads){res.writeHead(400,{'Content-Type':'application/json'});res.end(JSON.stringify({code:'SYNTHETIC_VALIDATION_FAILURE'}));return;}
     received.push(body); res.writeHead(202,{'Content-Type':'application/json'}); res.end(JSON.stringify({batchId:'example',received:2,status:'pending'}));
   } catch(e) {res.writeHead(400); res.end(String(e));}
 });
@@ -46,12 +48,18 @@ try {
   for (const tutorial of tutorials) {
     await mkdir(dirname(join(directory,tutorial.filename)),{recursive:true});
     await writeFile(join(directory,tutorial.filename),tutorial.code);
-    for(const file of tutorial.additionalFiles||[])await writeFile(join(directory,file.filename),file.code);
+    for(const file of tutorial.additionalFiles||[]){await mkdir(dirname(join(directory,file.filename)),{recursive:true});await writeFile(join(directory,file.filename),file.code);}
     const command=tutorial.slug==='nodejs'?process.execPath:tutorial.slug==='python'?(process.env.PYTHON||'python3'):tutorial.slug==='java'?(process.env.MVN||'mvn'):(process.env.BASH||'sh');
     // REST's embedded generator invokes python3; callers must provide it in PATH.
     await run(command,tutorial.slug==='java'?['-q','compile','exec:java']:[tutorial.filename],env);
     assert.equal(received.length,tutorials.indexOf(tutorial)+1);
     console.log(`PASS: ${tutorial.slug} published code returned HTTP 202 / pending`);
+    rejectUploads=true;
+    await assert.rejects(run(command,tutorial.slug==='java'?['-q','compile','exec:java']:[tutorial.filename],env));
+    if(tutorial.slug==='python')await run(command,['-c',"import send; assert send.to_wire(send.Usage(1500, None, None)) == {'inputTokens':1500,'outputTokens':None,'cachedInputTokens':None}; print('pending: import-only contract passed')"],env);
+    if(tutorial.slug==='nodejs')await run(command,['--input-type=module','-e',"await import('./send.mjs'); console.log('pending: import-only contract passed')"],env);
+    rejectUploads=false;
+    console.log(`PASS: ${tutorial.slug} rejects HTTP 400 instead of reporting success`);
   }
   assert.equal(new Set(received.map(b=>b.events[0].eventId)).size,tutorials.length);
 } finally { await vite.close(); await new Promise(resolve=>server.close(resolve)); await rm(directory,{recursive:true,force:true}); }

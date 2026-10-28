@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 test('REST documentation generation is identical for CRLF and LF sources', () => {
  const root = mkdtempSync(join(tmpdir(), 'metertrail-examples-'));
  const script = resolve('scripts/sync-doc-examples.mjs');
- const files = ['curl.sh','python.py','node.mjs','java/src/main/java/com/metertrail/example/Send.java','java/pom.xml','main.go','csharp/Program.cs','send.php'];
+ const files = ['curl.sh','python.py','node.mjs','java/src/main/java/com/metertrail/example/Send.java','java/src/main/java/com/metertrail/example/model/Agent.java','java/pom.xml','main.go','csharp/Program.cs','send.php'];
  try {
   mkdirSync(join(root,'examples/rest/csharp'),{recursive:true});
   mkdirSync(join(root,'frontend/src'),{recursive:true});

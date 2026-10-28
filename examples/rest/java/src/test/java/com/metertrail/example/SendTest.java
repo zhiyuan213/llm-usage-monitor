@@ -4,6 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.metertrail.example.model.BatchRequest;
+import com.metertrail.example.model.Event;
+import com.metertrail.example.model.ObservationData;
+import com.metertrail.example.model.TraceData;
+import com.metertrail.example.model.Usage;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -11,16 +16,20 @@ class SendTest {
     @Test
     void unknownUsageRetainsRequiredNullFieldsWhileOptionalEventFieldsAreOmitted() {
         ObjectMapper mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        var observation = new Send.Event<>("550e8400-e29b-41d4-a716-446655440000", 1,
-                "observation", "model-call", "0123456789abcdef0123456789abcdef",
-                "0123456789abcdef", "2026-10-28T00:00:00Z",
-                new Send.ObservationData("Model response", "generation", "success", 2000,
-                        "example", "example-model", new Send.Usage(1500L, null, null)));
-        var trace = new Send.Event<>("550e8400-e29b-41d4-a716-446655440001", 1,
-                "trace", "request", "0123456789abcdef0123456789abcdef", null,
-                "2026-10-28T00:00:00Z", new Send.TraceData("Request", "success", 2100, null, null, null));
-        var body = mapper.valueToTree(new Send.BatchRequest("1.0",
-                new Send.Agent("document-api", "test", "demo-1"), List.of(trace, observation)));
+        Usage input = new Usage();
+        input.setInputTokens(1500L);
+        input.setOutputTokens(null);
+        input.setCachedInputTokens(null);
+        ObservationData data = new ObservationData();
+        data.setUsage(input);
+        Event<ObservationData> observation = new Event<>();
+        observation.setData(data);
+        Event<TraceData> trace = new Event<>();
+        trace.setData(new TraceData());
+        BatchRequest request = new BatchRequest();
+        request.setSchemaVersion("1.0");
+        request.setEvents(List.of(trace, observation));
+        var body = mapper.valueToTree(request);
         var usage = body.path("events").get(1).path("data").path("usage");
         assertEquals(3, usage.size());
         assertEquals(1500, usage.path("inputTokens").asLong());
