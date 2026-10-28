@@ -2,6 +2,10 @@
 
 Implemented from the supplied 1920 × 1080 design viewport and design specification on 2026-10-22.
 
+The 2026-10-28 metric-card refresh adds subtle gradients, tinted icon tiles, fine accent borders and decorative corner rings to the workspace and project overview. Values remain dark, including the full period timestamp. Preserve the existing responsive grids and real data; decoration does not imply trends or progress.
+
+Local verification: frontend tests (49) and production build passed; dependency audit reported zero vulnerabilities; all three generated-example checks passed. Browser checks at 1920px confirmed matching request-panel top/bottom edges and 404.5px heights with unequal fixture content, a 25.5px heading without nested padding, and matching date/time text colors. At 390px the panels form separate natural-height rows, no page overflow was present, and the slow-request filter remained functional. Preview data was local fixture data; these changes have not yet been deployed.
+
 - Shared Noto Sans SC font, bundled locally as WOFF2 with its OFL license.
 - Sidebar 224 px; navigation 14 px with 18 px icons and 42 px rows.
 - Page titles 24 px, section titles 16 px, body/controls 14 px, supporting text 12 px.

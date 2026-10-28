@@ -55,6 +55,8 @@ import {
   X,
   ShieldCheck,
   Clock,
+  CircleAlert,
+  Coins,
   ArrowLeft,
   BarChart3,
 } from "lucide-vue-next";
@@ -660,7 +662,8 @@ const usagePercent = computed(() =>
           ><DateRangeFilter :busy="loading" :value="reportWindow" @change="applyDates" />
           <div class="metrics overview-metrics">
             <article
-              class="panel metric"
+              class="panel metric overview-stat"
+              :class="'overview-stat-'+i"
               v-for="(v, i) in [
                 [
                   t('Requests', '请求数'),
@@ -693,8 +696,9 @@ const usagePercent = computed(() =>
               <div>
                 <span>{{ v[0] }}</span
                 ><component
-                  :is="[Activity, LayersIcon, BarChart3, Clock][i] || BarChart3"
-                  :size="18"
+                  :is="[Activity, Clock, CircleAlert, LayersIcon, Coins][i]"
+                  :size="20"
+                  aria-hidden="true"
                 />
               </div>
               <strong>{{ v[1] }}</strong

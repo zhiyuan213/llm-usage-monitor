@@ -1115,7 +1115,7 @@
 .ui-v2 .workspace-stat-period { background: #fff8ee; }
 .ui-v2 .workspace-stat-period .workspace-stat-icon { background: #ffefd5; color: #c77912; }
 .ui-v2 .workspace-stat-copy .workspace-period-date { font-size: 24px; white-space: nowrap; }
-.ui-v2 .workspace-period-time { display: block; margin-top: 6px; color: #73849e; font-size: 12px; }
+.ui-v2 .workspace-period-time { display: block; margin-top: 6px; color: inherit; font-size: 12px; }
 @media (max-width: 1250px) { .ui-v2 .workspace-summary-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) {
   .ui-v2 .workspace-summary { padding: 16px; }
@@ -1261,7 +1261,7 @@
   .ui-v2 .workspace-stat-copy h2,
   .ui-v2 .workspace-stat-copy .workspace-period-date { font-size: 16px; }
 }
-.ui-v2 .request-explorer {display:grid;grid-template-columns:1.2fr 1fr;gap:20px;align-items:start;margin-top:20px;}
+.ui-v2 .request-explorer {display:grid;grid-template-columns:1.2fr 1fr;gap:20px;align-items:stretch;margin-top:20px;}
 .ui-v2 .request-explorer>.panel {padding:24px;min-width:0;}
 .ui-v2 .request-filters {display:flex;gap:8px;flex-wrap:wrap;margin:16px 0;}
 .ui-v2 .request-cards {display:grid;gap:10px;}
@@ -1332,3 +1332,28 @@
 .ui-v2 .admin-payments-panel table { min-width: 960px; }
 .ui-v2 .admin-payments-panel .text-action { color: var(--blue); background: transparent; border: 0; cursor: pointer; font: inherit; padding: 6px 0; white-space: nowrap; }
 @media(max-width: 600px) { .ui-v2 .admin-refund-buttons .btn { flex: 1; } }
+
+/* Shared visual treatment for the workspace summary and project overview. */
+.ui-v2 .request-list > .panel-heading { padding: 0; margin: 0; min-height: 0; border-bottom: 0; }
+.ui-v2 .request-list > .request-filters { margin: 12px 0 14px; }
+.ui-v2 .workspace-summary { background: linear-gradient(120deg,#fff 65%,#f4f7ff); border-color: #dce4f2; box-shadow: 0 4px 18px #12213d05; }
+.ui-v2 .workspace-summary-heading { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #e8edf6; }
+.ui-v2 .workspace-avatar { background: linear-gradient(145deg,#5874f4,#3156e8); box-shadow: 0 6px 14px #3156e822; border: 1px solid #ffffff80; }
+.ui-v2 .workspace-plan-badge { border: 1px solid #dce4ff; background: #f0f3ff; }
+.ui-v2 .workspace-stat { border: 1px solid #e2e9f7; background: linear-gradient(125deg,#f0f4ff,#fafbff); align-items: center; min-height: 106px; }
+.ui-v2 .workspace-stat-usage { border-color: #dceee8; background: linear-gradient(125deg,#edf8f4,#fbfdfc); }
+.ui-v2 .workspace-stat-projects { border-color: #e6e2f7; background: linear-gradient(125deg,#f2efff,#fcfbff); }
+.ui-v2 .workspace-stat-period { border-color: #f1e6d5; background: linear-gradient(125deg,#fff7e9,#fffdfa); }
+.ui-v2 .workspace-stat-icon { border-radius: 12px; border: 1px solid #ffffffb3; box-shadow: 0 3px 8px #12213d06; }
+.ui-v2 .overview-stat { --stat-color: #3156e8; --stat-tint: #edf2ff; position: relative; isolation: isolate; overflow: hidden; border-color: #e0e7f2; border-top: 3px solid var(--stat-color); background: linear-gradient(130deg,#fff 55%,var(--stat-tint)); box-shadow: 0 3px 12px #12213d04; }
+.ui-v2 .overview-stat-1 { --stat-color: #b77913; --stat-tint: #fff6e6; }
+.ui-v2 .overview-stat-2 { --stat-color: #ce5366; --stat-tint: #fff0f2; }
+.ui-v2 .overview-stat-3 { --stat-color: #7953cb; --stat-tint: #f3efff; }
+.ui-v2 .overview-stat-4 { --stat-color: #148773; --stat-tint: #eaf8f3; }
+.ui-v2 .overview-stat::after { content: ''; position: absolute; z-index: -1; width: 100px; height: 100px; border: 18px solid var(--stat-tint); border-radius: 50%; right: -50px; bottom: -55px; pointer-events: none; }
+.ui-v2 .overview-stat > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #65758e; min-height: 36px; }
+.ui-v2 .overview-stat > div svg { display: block; flex: 0 0 36px; width: 36px; height: 36px; padding: 8px; border-radius: 10px; color: var(--stat-color); background: var(--stat-tint); }
+.ui-v2 .overview-stat strong { display: block; font-variant-numeric: tabular-nums; letter-spacing: -.5px; color: #1d2c44; overflow-wrap: anywhere; }
+.ui-v2 .overview-stat small { color: #73829a; }
+.ui-v2 .overview-stat > a { display: inline-block; margin-top: 6px; font-size: 12px; }
+@media(max-width:600px) { .ui-v2 .workspace-summary-heading { padding-bottom:16px; margin-bottom:16px; } .ui-v2 .workspace-stat { min-height:96px; } }
