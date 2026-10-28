@@ -1704,11 +1704,16 @@ class IngestIntegrationTest {
     store.db.update("UPDATE users SET password_hash=? WHERE id=?",new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(4).encode(password),user);
     var cookies=new ArrayList<jakarta.servlet.http.Cookie>();
     for(int i=0;i<2;i++){String token=Support.token();store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(token),user,"csrf-email");cookies.add(new jakarta.servlet.http.Cookie("mt_session",token));}
-    UUID oldChallenge=challenges.issue(user,"email.old",newEmail,null);
-    String oldCode=syntheticMailCode(oldEmail);
-    store.db.update("UPDATE verification_challenges SET created_at=now()-interval '61 seconds' WHERE id=?",oldChallenge);
-    UUID newChallenge=challenges.issue(user,"email.new",newEmail,null);
-    String newCode=syntheticMailCode(newEmail);
+    String response=mvc.perform(post("/api/account/email/challenge").cookie(cookies.get(0)).header("X-CSRF-Token","csrf-email").contentType("application/json").content(new ObjectMapper().writeValueAsString(Map.of("email",newEmail))))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.oldChallengeId").exists()).andExpect(jsonPath("$.newChallengeId").exists()).andReturn().getResponse().getContentAsString();
+    var pair=new ObjectMapper().readTree(response);
+    UUID oldChallenge=UUID.fromString(pair.path("oldChallengeId").asText()),newChallenge=UUID.fromString(pair.path("newChallengeId").asText());
+    assertNotEquals(oldChallenge,newChallenge);
+    String oldCode=syntheticMailCode(oldEmail),newCode=syntheticMailCode(newEmail);
+    assertEquals(2,store.db.queryForObject("SELECT count(*) FROM verification_challenges WHERE user_id=? AND target=? AND consumed=false",Integer.class,user,newEmail));
+    mvc.perform(post("/api/account/email/challenge").cookie(cookies.get(0)).header("X-CSRF-Token","csrf-email").contentType("application/json").content(new ObjectMapper().writeValueAsString(Map.of("email",newEmail))))
+        .andExpect(status().isTooManyRequests());
+    assertEquals(2,store.db.queryForObject("SELECT count(*) FROM verification_challenges WHERE user_id=? AND target=?",Integer.class,user,newEmail));
     var body=new ObjectMapper().valueToTree(Map.of("email",newEmail,"oldChallengeId",oldChallenge,"oldCode",oldCode,"newChallengeId",newChallenge,"newCode",newCode));
     mvc.perform(post("/api/account/email").cookie(cookies.get(0)).header("X-CSRF-Token","csrf-email").contentType("application/json").content(body.toString())).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("sign_in_required"));
     assertEquals(0,store.db.queryForObject("SELECT count(*) FROM sessions WHERE user_id=?",Integer.class,user));

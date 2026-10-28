@@ -23,6 +23,22 @@ class Challenges {
             Integer.class,
             user);
     if (recent > 0) throw new ApiError(429, "RATE_LIMITED");
+    return create(user, action, target, req, u);
+  }
+
+  @Transactional
+  public Map<String, UUID> issueEmailPair(UUID user, String target, HttpServletRequest req) {
+    var u = store.queries().queryForMap("SELECT * FROM users WHERE id=? FOR UPDATE", user);
+    Integer recent = store.queries().queryForObject(
+        "SELECT count(*) FROM verification_challenges WHERE user_id=? AND created_at>now()-interval '60 seconds'",
+        Integer.class, user);
+    if (recent > 0) throw new ApiError(429, "RATE_LIMITED");
+    UUID oldId = create(user, "email.old", target, req, u);
+    UUID newId = create(user, "email.new", target, req, u);
+    return Map.of("oldChallengeId", oldId, "newChallengeId", newId);
+  }
+
+  private UUID create(UUID user, String action, String target, HttpServletRequest req, Map<String, Object> u) {
     store.db.update(
         "UPDATE verification_challenges SET consumed=true WHERE user_id=? AND action=?",
         user,

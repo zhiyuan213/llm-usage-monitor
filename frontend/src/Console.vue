@@ -123,7 +123,13 @@ const navGroups = computed(() => [
   },
   ...(session.value?.isAdmin ? [{en: "Administrator", zh: "管理员", items: nav.filter((item) => ["admin-messages", "admin-projects", "admin-payments"].includes(item[0]))}] : []),
 ]);
+const modelPricesLink = computed(() => ({path: "/app/model-prices", query: {project: selected.value, returnTo: route.fullPath}}));
+const modelPricesBack = computed(() => {
+ const origin = route.query.returnTo;
+ return typeof origin === "string" && /^\/app\/(overview|settings)(?:[?#]|$)/.test(origin) ? origin : "/app/settings?project="+encodeURIComponent(selected.value);
+});
 const title = computed(() => {
+  if (page.value === "model-prices") return t("Public model prices", "公共模型价格表");
   const item = nav.find((v) => v[0] === page.value);
   return item ? t(item[1], item[2]) : t("Trace detail", "调用详情");
 });
@@ -155,7 +161,7 @@ function refreshPage(){if(page.value==='traces'||page.value==='overview'){report
 async function copyRecordId(value:string){try{await navigator.clipboard.writeText(value);notice.value=t('ID copied.','ID 已复制。');}catch{error.value=t('Could not copy. Select the full ID from its tooltip or detail page.','复制失败，请从提示或详情页获取完整 ID。');}}
 function applyDates(value:{from:string;to:string},policy?:WindowPolicy){reportWindow.value=value;reportPolicy.value=policy??inferWindowPolicy(value);tracePage.value=0;activityPage.value=0;refresh(false);}
 function sortTraces(value:string){traceDirection.value=traceSort.value===value&&traceDirection.value==='desc'?'asc':'desc';traceSort.value=value;tracePage.value=0;refresh(false);}
-const pageDescription=computed(()=>({overview:t('Request performance, known model cost and usage for the selected period.','查看所选时间内的请求表现、已知模型费用和用量。'),traces:t('Find requests by name or status, then compare latency and model usage.','检索请求，比较耗时、模型用量与已知费用。'),trace:t('Inspect request steps, model usage and pricing evidence.','查看请求步骤、模型用量与计费依据。'),analytics:t('Compare usage by customer, user or feature.','按客户、用户或功能比较用量。'),'cost-insights':t('Find cost drivers and compare equal-length periods.','定位费用来源，对比等长时间段的变化。'),releases:t('Mark releases and compare before and after.','记录发布时间，对比修改前后的表现。'),weekly:t('Manage weekly email summaries and delivery history.','管理每周邮件摘要与发送记录。'),billing:t('Manage your plan, quota and payment records.','管理套餐、额度和付款记录。'),keys:t('Create and revoke project API keys.','创建与撤销项目接入密钥。'),settings:t('Manage project details and model price versions.','管理项目资料与模型价格版本。'),account:t('Manage sign-in methods and account security.','管理登录方式与账号安全。'),messages:t('Send feedback and follow replies.','提交问题与建议，查看回复。'),workspace:t('Manage projects and shared workspace usage.','管理项目与工作空间共享用量。'),budgets:t('Set model spending reminders.','设置模型费用预算提醒。'),reliability:t('Investigate failed and slow requests.','排查失败请求与慢调用。'),alerts:t('Configure notifications for project activity.','配置项目用量与异常通知。'),audit:t('Review account and workspace actions.','查看账号与工作空间操作记录。') } as Record<string,string>)[page.value]||t('Review and manage this section.','查看与管理本栏目内容。'));
+const pageDescription=computed(()=>({'model-prices':t('Browse current public model rates and time-of-day pricing.','查看当前公共模型价格与分时费率。'),overview:t('Request performance, known model cost and usage for the selected period.','查看所选时间内的请求表现、已知模型费用和用量。'),traces:t('Find requests by name or status, then compare latency and model usage.','检索请求，比较耗时、模型用量与已知费用。'),trace:t('Inspect request steps, model usage and pricing evidence.','查看请求步骤、模型用量与计费依据。'),analytics:t('Compare usage by customer, user or feature.','按客户、用户或功能比较用量。'),'cost-insights':t('Find cost drivers and compare equal-length periods.','定位费用来源，对比等长时间段的变化。'),releases:t('Mark releases and compare before and after.','记录发布时间，对比修改前后的表现。'),weekly:t('Manage weekly email summaries and delivery history.','管理每周邮件摘要与发送记录。'),billing:t('Manage your plan, quota and payment records.','管理套餐、额度和付款记录。'),keys:t('Create and revoke project API keys.','创建与撤销项目接入密钥。'),settings:t('Manage project details and model price versions.','管理项目资料与模型价格版本。'),account:t('Manage sign-in methods and account security.','管理登录方式与账号安全。'),messages:t('Send feedback and follow replies.','提交问题与建议，查看回复。'),workspace:t('Manage projects and shared workspace usage.','管理项目与工作空间共享用量。'),budgets:t('Set model spending reminders.','设置模型费用预算提醒。'),reliability:t('Investigate failed and slow requests.','排查失败请求与慢调用。'),alerts:t('Configure notifications for project activity.','配置项目用量与异常通知。'),audit:t('Review account and workspace actions.','查看账号与工作空间操作记录。') } as Record<string,string>)[page.value]||t('Review and manage this section.','查看与管理本栏目内容。'));
 function fieldLabel(key:string){return ({name:t('Name','名称'),status:t('Status','状态'),model:t('Model','模型'),provider:t('Provider','供应商'),usage:t('Token usage','Token 用量'),durationMs:t('Duration (ms)','耗时（毫秒）'),observationType:t('Step type','步骤类型'),userId:t('User','用户'),customerId:t('Customer','客户'),feature:t('Feature','功能'),metadata:t('Metadata','附加信息'),input:t('Input','输入'),output:t('Output','输出'),tags:t('Tags','标签'),error:t('Error','错误信息'),value:t('Value','评分值'),valueType:t('Value type','评分类型'),targetId:t('Target ID','关联对象 ID'),targetType:t('Target type','关联对象类型')} as Record<string,string>)[key]||key;}
 function objectLabel(value:string){return ({trace:t('Request','请求'),observation:t('Step','步骤'),score:t('Score','评分'),generation:t('Model generation','模型生成'),tool:t('Tool','工具'),retrieval:t('Retrieval','检索')} as Record<string,string>)[value]||value;}
 function costReason(o:any){return ({usage_missing:t('Missing input, output or cached token usage; report zero cached tokens when there are none.','缺少输入、输出或缓存 Token 用量；没有缓存时请上报0。'),model_missing:t('Missing model or provider','缺少模型或供应商'),pricing_evidence_missing:t('No usable pricing evidence was recorded when this revision was processed. Check the model, provider and effective price date.','处理此修订时未记录可用计价证据，请核对模型、供应商与价格生效时间。')} as Record<string,string>)[o.cost_reason]||t('Unknown cost: reason needs confirmation','费用未知：原因待确认');}
@@ -331,6 +337,10 @@ async function refresh(force = true) {
       else if (page.value === "keys") data.value = await request(path("/keys"));
       else if (page.value === "alerts")
         data.value = await request(path("/alerts"));
+      else if (page.value === "model-prices") {
+        pricingStatus.value = await request(path("/pricing-status"));
+        data.value = {};
+      }
       else if (page.value === "settings") {
         const [prices, pricing] = await Promise.all([request(path("/prices")),request(path("/pricing-status"))]);
         data.value = prices; pricingStatus.value = pricing;
@@ -711,7 +721,7 @@ const usagePercent = computed(() =>
                 /></span>
               <div class="overview-stat-copy"><span>{{ v[0] }}</span>
               <strong>{{ v[1] }}</strong
-              ><small>{{ v[2] }}</small><RouterLink v-if="i===4" :to="'/app/settings?project='+selected">{{t('Review model rates →','查看模型价格 →')}}</RouterLink></div>
+              ><small>{{ v[2] }}</small><RouterLink v-if="i===4" :to="modelPricesLink">{{t('Review model rates →','查看模型价格 →')}}</RouterLink></div>
             </article>
           </div>
           <RequestExplorer :project="selected" :window="reportWindow" :refresh-token="loading" /></template>
@@ -1283,12 +1293,17 @@ const usagePercent = computed(() =>
             <BillingHistory kind="adjustments" :workspace="data.workspace" />
           </div></template
         >
+        <template v-if="page === 'model-prices' && selected">
+          <RouterLink class="back-link" :to="modelPricesBack"><ArrowLeft :size="16" />{{t('Back','返回')}}</RouterLink>
+          <PublicModelPrices :project="selected" :refresh-key="data" :public-pricing="pricingStatus.public_pricing" />
+        </template>
         <template v-if="page === 'settings' && selected"
           ><section class="panel form-panel">
             <h2>{{ t("Model pricing", "模型价格") }}</h2>
+            <RouterLink class="btn" :to="modelPricesLink">{{t("View model prices", "查看模型价格")}}</RouterLink>
             <ModelPricePolicy :status="pricingStatus" @change="(enabled)=>run(async()=>{await api(path('/pricing-policy'),{publicPricing:enabled});await refresh()})" />
           </section>
-          <PublicModelPrices :project="selected" :refresh-key="data" :public-pricing="pricingStatus.public_pricing" />
+
           <section class="panel form-panel">
             <h2>{{t('Custom price override','自定义价格覆盖')}}</h2>
             <p>

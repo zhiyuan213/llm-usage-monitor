@@ -28,17 +28,18 @@ async function run(fn: () => Promise<void>) {
     busy.value = false;
   }
 }
-async function emailCode(action: string) {
+async function emailCode() {
+  const target = email.email;
   await run(async () => {
-    const r = await api("/account/email/challenge", {
-      email: email.email,
-      action,
-    });
-    if (action === "email.old") email.oldChallengeId = r.challengeId;
-    else email.newChallengeId = r.challengeId;
+    const r = await api("/account/email/challenge", {email: target});
+    if (email.email !== target) return;
+    email.oldChallengeId = r.oldChallengeId;
+    email.newChallengeId = r.newChallengeId;
+    email.oldCode = '';
+    email.newCode = '';
     notice.value = t(
-      "Code sent. Wait 60 seconds before requesting the other code. Both expire after 5 minutes.",
-      "验证码已发送，请等待 60 秒再发送另一封验证码。两者均为 5 分钟内有效。",
+      "Codes sent to both email addresses. Valid for 5 minutes; resend after 60 seconds.",
+      "验证码已发送至新老邮箱，5分钟内有效，60秒后可重新发送。",
     );
   });
 }
@@ -78,20 +79,8 @@ async function emailCode(action: string) {
             "
         /></label>
         <div class="inline-form">
-          <button
-            class="btn"
-            type="button"
-            :disabled="props.disabled || busy || !email.email"
-            @click="emailCode('email.old')"
-          >
-            {{ t("Send to current email", "发送至旧邮箱") }}</button
-          ><button
-            class="btn"
-            type="button"
-            :disabled="props.disabled || busy || !email.email"
-            @click="emailCode('email.new')"
-          >
-            {{ t("Send to new email", "发送至新邮箱") }}
+          <button class="btn" type="button" :disabled="props.disabled || busy || !email.email" @click="emailCode">
+            {{ t("Send codes to both email addresses", "发送验证码至新老邮箱") }}
           </button>
         </div>
         <div class="form-grid">

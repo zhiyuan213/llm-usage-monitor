@@ -21,10 +21,14 @@ class AccountController {
   @PostMapping("/api/account/email/challenge")
   Map<String, Object> emailChallenge(@RequestBody JsonNode b, HttpServletRequest req) {
     String email = AuthController.email(b), action = b.path("action").asText();
-    Support.require(Set.of("email.old", "email.new").contains(action), "INVALID_ACTION");
+    Support.require(action.isEmpty() || Set.of("email.old", "email.new").contains(action), "INVALID_ACTION");
     rates.check("email-change:" + req.getRemoteAddr(), 10);
     if (!store.queries().queryForList("SELECT id FROM users WHERE email=?", email).isEmpty())
       throw new ApiError(409, "EMAIL_UNAVAILABLE");
+    if (action.isEmpty()) {
+      var pair = challenges.issueEmailPair(SessionFilter.uid(req), email, req);
+      return Map.of("oldChallengeId", pair.get("oldChallengeId"), "newChallengeId", pair.get("newChallengeId"));
+    }
     return Map.of("challengeId", challenges.issue(SessionFilter.uid(req), action, email, req));
   }
 
