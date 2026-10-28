@@ -5,6 +5,7 @@ import { api, t, n, money, date, language, errorText } from './lib';
 import DateRangeFilter from './DateRangeFilter.vue';
 import {monthDates,customWindow as makeWindow,type ReportWindow} from './date-range';
 import QueryControls from './QueryControls.vue';
+import {useChartWidth} from './chart-width';
 const props=defineProps<{ project:string; refreshToken:any }>();
 const draftDimension=ref('customerId');
 const dates=monthDates();
@@ -31,7 +32,8 @@ async function load(){
 function query(value:ReportWindow){appliedWindow.value=value;appliedDimension.value=draftDimension.value;page.value=0;load();}
 watch(()=>props.project,()=>{page.value=0;load();},{immediate:true});
 watch(()=>props.refreshToken,()=>load());
-const chartWidth=computed(()=>Math.max(600,80+chart.value.length*84));
+const {chartContainer,containerWidth}=useChartWidth();
+const chartWidth=computed(()=>Math.max(600,containerWidth.value,80+chart.value.length*84));
 const maximum=computed(()=>{
   const max=Math.max(0,...chart.value.filter(r=>value(r)!=null).map(r=>Number(value(r))));
   if(max===0)return metric.value==='tokens'?4:1;
@@ -64,7 +66,7 @@ function tickLabel(value:number){return metric.value==='cost'?costNumber(value):
       </section>
       <section class="panel analytics-chart-panel" :aria-busy="busy">
         <div class="analytics-chart-heading"><h2>{{metric==='tokens'?t('Token usage by identifier','各标识 Token 用量'):t('Estimated cost by identifier','各标识估算成本')}}</h2><label><span class="muted">{{t('Chart metric','图表指标')}}</span><select v-model="metric" :disabled="busy" :aria-label="t('Chart metric','图表指标')"><option value="tokens">{{t('Token usage','Token用量')}}</option><option value="cost">{{t('Estimated cost (USD)','估算成本（USD）')}}</option></select></label></div><p class="muted">{{metric==='tokens'?t('Top 20 identifiers by known Token usage; independent of list pagination.','展示所选时间范围内已知 Token 用量最高的前20个标识，不随列表翻页变化。'):t('Top 20 identifiers by known estimated cost; missing costs are not zero.','展示所选时间范围内已知估算成本最高的前20个标识；缺失成本不按零处理。')}}</p>
-        <div v-if="chart.length" class="analytics-chart-scroll">
+        <div v-if="chart.length" ref="chartContainer" class="analytics-chart-scroll">
           <svg class="analytics-token-chart" :width="chartWidth" height="400" :viewBox="`0 0 ${chartWidth} 400`" role="img" :aria-label="metric==='tokens'?t('Token usage bar chart','Token 用量柱状图'):t('Estimated cost bar chart','估算成本柱状图')">
             <defs><linearGradient id="token-usage-bar-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7b91f5" /><stop offset="100%" stop-color="#4967db" /></linearGradient></defs>
             <text x="12" y="18" class="chart-axis-title">{{metric==='tokens'?'Token':'USD'}}</text>
