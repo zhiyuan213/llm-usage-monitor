@@ -693,16 +693,13 @@ const usagePercent = computed(() =>
               ]"
               :key="i"
             >
-              <div>
-                <span>{{ v[0] }}</span
-                ><component
+              <span class="overview-stat-icon" aria-hidden="true"><component
                   :is="[Activity, Clock, CircleAlert, LayersIcon, Coins][i]"
-                  :size="20"
-                  aria-hidden="true"
-                />
-              </div>
+                  :size="24"
+                /></span>
+              <div class="overview-stat-copy"><span>{{ v[0] }}</span>
               <strong>{{ v[1] }}</strong
-              ><small>{{ v[2] }}</small><RouterLink v-if="i===4" :to="'/app/settings?project='+selected">{{t('Review model rates →','查看模型价格 →')}}</RouterLink>
+              ><small>{{ v[2] }}</small><RouterLink v-if="i===4" :to="'/app/settings?project='+selected">{{t('Review model rates →','查看模型价格 →')}}</RouterLink></div>
             </article>
           </div>
           <RequestExplorer :project="selected" :window="reportWindow" :refresh-token="loading" /></template>

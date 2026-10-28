@@ -2,7 +2,7 @@
 
 Implemented from the supplied 1920 × 1080 design viewport and design specification on 2026-10-22.
 
-The 2026-10-28 metric-card refresh adds subtle gradients, tinted icon tiles, fine accent borders and decorative corner rings to the workspace and project overview. Values remain dark, including the full period timestamp. Preserve the existing responsive grids and real data; decoration does not imply trends or progress.
+The 2026-10-28 metric-card refresh uses the workspace summary as the shared baseline: icons on the left, labels and values on the right, subtle pastel backgrounds and fine borders. Project overview uses the same 44px icon tile and dark 20px values, with no accent top borders or decorative rings. Full period timestamps remain dark. Preserve existing responsive grids, real data, supporting descriptions and rate links.
 
 Local verification: frontend tests (49) and production build passed; dependency audit reported zero vulnerabilities; all three generated-example checks passed. Browser checks at 1920px confirmed matching request-panel top/bottom edges and 404.5px heights with unequal fixture content, a 25.5px heading without nested padding, and matching date/time text colors. At 390px the panels form separate natural-height rows, no page overflow was present, and the slow-request filter remained functional. Preview data was local fixture data; these changes have not yet been deployed.
 
