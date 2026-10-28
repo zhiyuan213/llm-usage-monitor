@@ -61,6 +61,17 @@ export const money = (v: any) =>
 export const date = (v: string) =>
   v ? new Date(v).toISOString().replace("T", " ").slice(0, 19) + " UTC" : "—";
 const errors: Record<string, [string, string]> = {
+  REFUND_CONFIRMATION_REQUIRED: ["Enter the transaction ID to confirm.", "请输入完整交易编号确认。"],
+  REFUND_REASON_REQUIRED: ["Enter a refund reason.", "请填写退款原因。"],
+  REFUND_WINDOW_EXPIRED: ["The payment is outside the seven-day refund window. Review it in the provider dashboard.", "此付款不在7天退款期限内，请到支付平台人工核查。"],
+  REFUND_PROVIDER_UNSUPPORTED: ["Process this payment in its provider dashboard.", "请到此订单对应的支付平台处理。"],
+  REFUND_PAYMENT_MISMATCH: ["The provider payment does not match this account. No refund was submitted.", "支付平台付款与账号不匹配，未提交退款。"],
+  PAYMENT_NOT_REFUNDABLE: ["This payment is unpaid, already refunded, or has a refund in progress.", "此订单未付款、已退款或已有退款处理中。"],
+  REFUND_NEWER_PAYMENT_EXISTS: ["A newer payment exists for this subscription. Review it in Creem.", "该订阅已有更新的付款，请到 Creem 核查。"],
+  REFUND_QUOTE_CHANGED: ["Payment details changed. Close this dialog and review again.", "付款信息已变化，请关闭弹窗并重新核对。"],
+  REFUND_PROVIDER_UNAVAILABLE: ["Could not verify the provider result. Reconcile status before retrying.", "无法核实支付平台结果，请先核对状态。"],
+  REFUND_NOT_FOUND: ["No refund request was found.", "未找到退款申请。"],
+  PAYMENT_NOT_FOUND: ["Payment not found.", "未找到付款记录。"],
     WEEKLY_NOT_ENABLED: ['Enable weekly reports before sending.', '请先开启周报，再点击发送。'],
     INVALID_BUDGET_SETTINGS: ['Enter a positive USD budget (up to 1 billion, at most 6 decimal places) and a warning from 50% to 95%.', '请输入有效的美元预算（大于零、最多 10 亿、最多 6 位小数），提醒线为 50%～95%。'],
     PRO_CUSTOM_RULES_REQUIRED: ['Custom warning and slow-call thresholds require Pro.', '自定义提醒线或慢调用阈值需要 Pro 套餐。'],

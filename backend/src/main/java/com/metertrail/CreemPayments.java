@@ -191,6 +191,8 @@ class CreemPayments {
       store.db.update("INSERT INTO payment_adjustments(id,workspace_id,transaction_id,action,status,amount,currency,updated_at) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET status=excluded.status,amount=excluded.amount,updated_at=excluded.updated_at WHERE payment_adjustments.updated_at<excluded.updated_at",
           id(object),workspace,transactionId,refund?"refund":"dispute",refund?("succeeded".equals(object.path("status").asText())?"approved":object.path("status").asText()):"pending_approval",
           PaymentsController.fromMinorUnits(amount,currency),currency,Timestamp.from(at));
+      if(refund && "succeeded".equals(object.path("status").asText()))
+        store.db.update("UPDATE admin_refunds r SET status='succeeded',updated_at=now() WHERE transaction_id=? AND workspace_id=? AND amount<=(SELECT coalesce(sum(a.amount),0) FROM payment_adjustments a WHERE a.transaction_id=r.transaction_id AND a.workspace_id=r.workspace_id AND a.action='refund' AND a.status='approved' AND a.currency=r.currency)",transactionId,workspace);
       return finish(eventId,type,hash,at,"processed");
     }
     if(w.get("payment_updated_at")!=null && at.isBefore(((Timestamp)w.get("payment_updated_at")).toInstant()))

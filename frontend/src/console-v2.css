@@ -1321,3 +1321,14 @@
  .ui-v2 .request-card > span:last-child { grid-column:1 / -1; text-align:left; }
  .ui-v2 .request-filters .btn { min-width:0; padding-inline:12px; }
 }
+.ui-v2 .admin-refund-action { color: #b42318; background: transparent; border: 0; cursor: pointer; font: inherit; padding: 6px 0; }
+.ui-v2 .admin-refund-action:disabled { opacity: .5; cursor: wait; }
+.ui-v2 .admin-refund-modal { max-height: calc(100dvh - 40px); overflow-y: auto; overflow-wrap: anywhere; }
+.ui-v2 .admin-refund-modal form { display: grid; gap: 16px; }
+.ui-v2 .admin-refund-modal label { display: grid; gap: 6px; }
+.ui-v2 .admin-refund-modal textarea { min-height: 80px; resize: vertical; }
+.ui-v2 .admin-refund-buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+.ui-v2 .admin-payments-panel .table-wrap { overflow-x: auto; }
+.ui-v2 .admin-payments-panel table { min-width: 960px; }
+.ui-v2 .admin-payments-panel .text-action { color: var(--blue); background: transparent; border: 0; cursor: pointer; font: inherit; padding: 6px 0; white-space: nowrap; }
+@media(max-width: 600px) { .ui-v2 .admin-refund-buttons .btn { flex: 1; } }
