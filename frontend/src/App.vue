@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { language, setLanguage } from "./lib";
 import AnalyticsConsent from './AnalyticsConsent.vue';
+import ConsoleToast from './ConsoleToast.vue';
 </script>
 <template>
   <RouterView />
+  <ConsoleToast v-if="$route.path.startsWith('/app')" />
   <AnalyticsConsent />
   <div
     class="language-floating"

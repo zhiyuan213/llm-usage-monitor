@@ -1,0 +1,412 @@
+{
+  "phases": [
+    {
+      "name": "single-500",
+      "target_eps": 500,
+      "batch": 1,
+      "duration_s": 60,
+      "exit_code": 99,
+      "elapsed_s": 62.5,
+      "received_events": 28312,
+      "http_requests": 28312,
+      "non202": 0,
+      "p95_ms": 516.0589785499997,
+      "avg_ms": 99.22856766791524,
+      "dropped_iterations": 1689,
+      "before": {
+        "used": 377709,
+        "receipts": 115314,
+        "business_errors": 0,
+        "accepted": 377709,
+        "duplicates": 0,
+        "rejected": 0,
+        "pending_batches": 0,
+        "objects": 377709,
+        "ledger": 377709,
+        "generation_costs": 188627,
+        "redis_events": 0,
+        "redis_requests": 0,
+        "time": 1793196158.7005188,
+        "phase": "single-500-before",
+        "resources": [
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "6.19%",
+            "Container": "mt-redis-batch-final-probe-api",
+            "ID": "f40e97a62511",
+            "MemPerc": "26.22%",
+            "MemUsage": "201.4MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-api",
+            "NetIO": "16.1kB / 13.2kB",
+            "PIDs": "59"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "13.14%",
+            "Container": "mt-redis-batch-final-probe-worker",
+            "ID": "f4e9c25ecf2b",
+            "MemPerc": "26.13%",
+            "MemUsage": "200.7MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-worker",
+            "NetIO": "33.9kB / 42.1kB",
+            "PIDs": "61"
+          },
+          {
+            "BlockIO": "2.68MB / 0B",
+            "CPUPerc": "1.14%",
+            "Container": "mt-redis-batch-final-probe-redis",
+            "ID": "e4ff42d6a0e1",
+            "MemPerc": "2.39%",
+            "MemUsage": "12.25MiB / 512MiB",
+            "Name": "mt-redis-batch-final-probe-redis",
+            "NetIO": "28.2kB / 8.99kB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "138MB / 28.7kB",
+            "CPUPerc": "0.26%",
+            "Container": "mt-redis-batch-final-probe-db",
+            "ID": "64405b8d69fb",
+            "MemPerc": "21.55%",
+            "MemUsage": "220.7MiB / 1GiB",
+            "Name": "mt-redis-batch-final-probe-db",
+            "NetIO": "39.4kB / 41.4kB",
+            "PIDs": "14"
+          }
+        ]
+      },
+      "after": {
+        "used": 406021,
+        "receipts": 143626,
+        "business_errors": 0,
+        "accepted": 406021,
+        "duplicates": 0,
+        "rejected": 0,
+        "pending_batches": 0,
+        "objects": 406021,
+        "ledger": 406021,
+        "generation_costs": 202734,
+        "redis_events": 0,
+        "redis_requests": 0,
+        "time": 1793196224.1515725,
+        "phase": "single-500-after",
+        "resources": [
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "0.95%",
+            "Container": "mt-redis-batch-final-probe-api",
+            "ID": "f40e97a62511",
+            "MemPerc": "41.28%",
+            "MemUsage": "317.1MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-api",
+            "NetIO": "31.3MB / 55.6MB",
+            "PIDs": "249"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "3.65%",
+            "Container": "mt-redis-batch-final-probe-worker",
+            "ID": "f4e9c25ecf2b",
+            "MemPerc": "29.81%",
+            "MemUsage": "228.9MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-worker",
+            "NetIO": "50.6MB / 73.7MB",
+            "PIDs": "59"
+          },
+          {
+            "BlockIO": "2.68MB / 106MB",
+            "CPUPerc": "0.65%",
+            "Container": "mt-redis-batch-final-probe-redis",
+            "ID": "e4ff42d6a0e1",
+            "MemPerc": "1.27%",
+            "MemUsage": "6.508MiB / 512MiB",
+            "Name": "mt-redis-batch-final-probe-redis",
+            "NetIO": "37.2MB / 25.7MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "288MB / 951MB",
+            "CPUPerc": "0.78%",
+            "Container": "mt-redis-batch-final-probe-db",
+            "ID": "64405b8d69fb",
+            "MemPerc": "52.29%",
+            "MemUsage": "535.4MiB / 1GiB",
+            "Name": "mt-redis-batch-final-probe-db",
+            "NetIO": "75.5MB / 31MB",
+            "PIDs": "21"
+          }
+        ]
+      },
+      "drained": true,
+      "recovery_s": 2.0150000000003274,
+      "final": {
+        "used": 406021,
+        "receipts": 143626,
+        "business_errors": 0,
+        "accepted": 406021,
+        "duplicates": 0,
+        "rejected": 0,
+        "pending_batches": 0,
+        "objects": 406021,
+        "ledger": 406021,
+        "generation_costs": 202734,
+        "redis_events": 0,
+        "redis_requests": 0,
+        "time": 1793196226.882905,
+        "phase": "single-500-drain",
+        "resources": [
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "1.89%",
+            "Container": "mt-redis-batch-final-probe-api",
+            "ID": "f40e97a62511",
+            "MemPerc": "41.32%",
+            "MemUsage": "317.4MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-api",
+            "NetIO": "31.3MB / 55.6MB",
+            "PIDs": "249"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "3.99%",
+            "Container": "mt-redis-batch-final-probe-worker",
+            "ID": "f4e9c25ecf2b",
+            "MemPerc": "29.71%",
+            "MemUsage": "228.2MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-worker",
+            "NetIO": "50.6MB / 73.8MB",
+            "PIDs": "59"
+          },
+          {
+            "BlockIO": "2.68MB / 106MB",
+            "CPUPerc": "1.18%",
+            "Container": "mt-redis-batch-final-probe-redis",
+            "ID": "e4ff42d6a0e1",
+            "MemPerc": "1.38%",
+            "MemUsage": "7.07MiB / 512MiB",
+            "Name": "mt-redis-batch-final-probe-redis",
+            "NetIO": "37.3MB / 25.7MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "288MB / 960MB",
+            "CPUPerc": "1.97%",
+            "Container": "mt-redis-batch-final-probe-db",
+            "ID": "64405b8d69fb",
+            "MemPerc": "52.37%",
+            "MemUsage": "536.2MiB / 1GiB",
+            "Name": "mt-redis-batch-final-probe-db",
+            "NetIO": "75.5MB / 31MB",
+            "PIDs": "21"
+          }
+        ]
+      },
+      "intake_eps": 471.8666666666667,
+      "processed_during_load_eps": 471.8666666666667
+    },
+    {
+      "name": "single-500-warm",
+      "target_eps": 500,
+      "batch": 1,
+      "duration_s": 60,
+      "exit_code": 99,
+      "elapsed_s": 64.92200000000048,
+      "received_events": 29876,
+      "http_requests": 29876,
+      "non202": 0,
+      "p95_ms": 34.54672275,
+      "avg_ms": 20.37612399708803,
+      "dropped_iterations": 124,
+      "before": {
+        "used": 406021,
+        "receipts": 143626,
+        "business_errors": 0,
+        "accepted": 406021,
+        "duplicates": 0,
+        "rejected": 0,
+        "pending_batches": 0,
+        "objects": 406021,
+        "ledger": 406021,
+        "generation_costs": 202734,
+        "redis_events": 0,
+        "redis_requests": 0,
+        "time": 1793196251.316801,
+        "phase": "single-500-warm-before",
+        "resources": [
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "1.48%",
+            "Container": "mt-redis-batch-final-probe-api",
+            "ID": "f40e97a62511",
+            "MemPerc": "41.32%",
+            "MemUsage": "317.3MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-api",
+            "NetIO": "31.3MB / 55.6MB",
+            "PIDs": "249"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "15.82%",
+            "Container": "mt-redis-batch-final-probe-worker",
+            "ID": "f4e9c25ecf2b",
+            "MemPerc": "29.52%",
+            "MemUsage": "226.7MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-worker",
+            "NetIO": "50.8MB / 74.1MB",
+            "PIDs": "59"
+          },
+          {
+            "BlockIO": "2.68MB / 106MB",
+            "CPUPerc": "1.02%",
+            "Container": "mt-redis-batch-final-probe-redis",
+            "ID": "e4ff42d6a0e1",
+            "MemPerc": "1.48%",
+            "MemUsage": "7.602MiB / 512MiB",
+            "Name": "mt-redis-batch-final-probe-redis",
+            "NetIO": "37.5MB / 25.8MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "356MB / 1.03GB",
+            "CPUPerc": "3.78%",
+            "Container": "mt-redis-batch-final-probe-db",
+            "ID": "64405b8d69fb",
+            "MemPerc": "56.45%",
+            "MemUsage": "578MiB / 1GiB",
+            "Name": "mt-redis-batch-final-probe-db",
+            "NetIO": "75.5MB / 31.1MB",
+            "PIDs": "22"
+          }
+        ]
+      },
+      "after": {
+        "used": 435897,
+        "receipts": 173502,
+        "business_errors": 0,
+        "accepted": 435897,
+        "duplicates": 0,
+        "rejected": 0,
+        "pending_batches": 0,
+        "objects": 435897,
+        "ledger": 435897,
+        "generation_costs": 217620,
+        "redis_events": 0,
+        "redis_requests": 0,
+        "time": 1793196319.0965245,
+        "phase": "single-500-warm-after",
+        "resources": [
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "0.99%",
+            "Container": "mt-redis-batch-final-probe-api",
+            "ID": "f40e97a62511",
+            "MemPerc": "42.10%",
+            "MemUsage": "323.3MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-api",
+            "NetIO": "65.6MB / 113MB",
+            "PIDs": "249"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "2.61%",
+            "Container": "mt-redis-batch-final-probe-worker",
+            "ID": "f4e9c25ecf2b",
+            "MemPerc": "29.15%",
+            "MemUsage": "223.9MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-worker",
+            "NetIO": "104MB / 150MB",
+            "PIDs": "59"
+          },
+          {
+            "BlockIO": "2.68MB / 232MB",
+            "CPUPerc": "1.05%",
+            "Container": "mt-redis-batch-final-probe-redis",
+            "ID": "e4ff42d6a0e1",
+            "MemPerc": "1.43%",
+            "MemUsage": "7.332MiB / 512MiB",
+            "Name": "mt-redis-batch-final-probe-redis",
+            "NetIO": "76.6MB / 53.3MB",
+            "PIDs": "7"
+          },
+          {
+            "BlockIO": "413MB / 2.56GB",
+            "CPUPerc": "1.06%",
+            "Container": "mt-redis-batch-final-probe-db",
+            "ID": "64405b8d69fb",
+            "MemPerc": "67.79%",
+            "MemUsage": "694.1MiB / 1GiB",
+            "Name": "mt-redis-batch-final-probe-db",
+            "NetIO": "153MB / 63.5MB",
+            "PIDs": "21"
+          }
+        ]
+      },
+      "drained": true,
+      "recovery_s": 2.030999999999949,
+      "final": {
+        "used": 435897,
+        "receipts": 173502,
+        "business_errors": 0,
+        "accepted": 435897,
+        "duplicates": 0,
+        "rejected": 0,
+        "pending_batches": 0,
+        "objects": 435897,
+        "ledger": 435897,
+        "generation_costs": 217620,
+        "redis_events": 0,
+        "redis_requests": 0,
+        "time": 1793196321.1170316,
+        "phase": "single-500-warm-drain",
+        "resources": [
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "0.94%",
+            "Container": "mt-redis-batch-final-probe-api",
+            "ID": "f40e97a62511",
+            "MemPerc": "42.04%",
+            "MemUsage": "322.8MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-api",
+            "NetIO": "65.6MB / 113MB",
+            "PIDs": "249"
+          },
+          {
+            "BlockIO": "0B / 0B",
+            "CPUPerc": "2.39%",
+            "Container": "mt-redis-batch-final-probe-worker",
+            "ID": "f4e9c25ecf2b",
+            "MemPerc": "29.08%",
+            "MemUsage": "223.4MiB / 768MiB",
+            "Name": "mt-redis-batch-final-probe-worker",
+            "NetIO": "104MB / 150MB",
+            "PIDs": "59"
+          },
+          {
+            "BlockIO": "2.68MB / 232MB",
+            "CPUPerc": "1.04%",
+            "Container": "mt-redis-batch-final-probe-redis",
+            "ID": "e4ff42d6a0e1",
+            "MemPerc": "1.37%",
+            "MemUsage": "7.02MiB / 512MiB",
+            "Name": "mt-redis-batch-final-probe-redis",
+            "NetIO": "76.6MB / 53.3MB",
+            "PIDs": "7"
+          },
+          {
+            "BlockIO": "413MB / 2.57GB",
+            "CPUPerc": "0.46%",
+            "Container": "mt-redis-batch-final-probe-db",
+            "ID": "64405b8d69fb",
+            "MemPerc": "67.81%",
+            "MemUsage": "694.4MiB / 1GiB",
+            "Name": "mt-redis-batch-final-probe-db",
+            "NetIO": "153MB / 63.5MB",
+            "PIDs": "21"
+          }
+        ]
+      },
+      "intake_eps": 497.93333333333334,
+      "processed_during_load_eps": 497.93333333333334
+    }
+  ]
+}

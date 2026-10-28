@@ -427,6 +427,7 @@ class Worker {
     store.db.update(
         "UPDATE ingest_events e SET payload='{}' FROM projects p WHERE e.project_id=p.id AND"
             + " p.deleted_at IS NOT NULL AND e.processed");
+    store.db.update("DELETE FROM redis_ingest_results WHERE created_at<now()-interval '8 days'");
     store.db.update(
         "DELETE FROM ingest_events WHERE created_at<now()-interval '8 days' AND processed");
     store.db.update(

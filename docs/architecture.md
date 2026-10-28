@@ -8,7 +8,8 @@ flowchart LR
   Browser[Vue console] --> Nginx
   Nginx --> API[Spring Boot API blue or green]
   API --> PG[(PostgreSQL)]
-  API --> Redis[(Redis rate limits)]
+  API --> Redis[(Redis Streams and rate limits)]
+  Redis --> Worker
   Worker[Worker] --> PG
   Worker --> SMTP[Transactional email]
   Paddle[Paddle signed webhooks] --> API
@@ -19,13 +20,13 @@ flowchart LR
 
 ## Persistence and transaction boundaries
 
-The API and worker share an image. Compose sets `WORKER_ENABLED=false` for API slots and true for the worker. PostgreSQL is the source of truth; Redis failure blocks rate-limited ingress rather than losing data or acting as a durable queue.
+The API and worker share an image. Redis Streams buffers new requests; PostgreSQL remains authoritative for all business decisions and results. See [Redis ingestion](redis-ingestion.md) for configuration, recovery and rollout.
 
-1. Authenticate project key and bound the compressed/uncompressed payload.
-2. Validate the envelope, then acquire the workspace quota row lock.
-3. Validate each event; compare transport and object identity; reserve new units in array order.
-4. Commit batch, immutable transport payload, object revision placeholder, and usage ledger.
-5. Return 200. The Worker locks a pending batch using `SKIP LOCKED`, upserts only higher object revisions, and marks events/batch complete in the same transaction.
+1. Authenticate the key, enforce rate/body limits and validate field shapes.
+2. Atomically buffer the request and pending receipt in AOF-backed Redis, then return HTTP 202 with a stable batchId.
+3. A consumer revalidates the key and runs quota/identity/version acceptance inside a database transaction. Save the business result and actual batch reference in the same transaction.
+4. Acknowledge the Redis message only after commit; reclaim abandoned deliveries and fence replays using the committed database receipt.
+5. The materialization Worker locks pending database batches, computes cost snapshots, writes queryable objects and marks completion. Query batchId for the final per-event outcomes.
 
 The transaction lock is the worker lease. A crash/connection loss rolls back work and releases it immediately. There is no externally expiring lease that could let a second worker process an uncommitted batch simultaneously. Work transactions are limited to at most 500 small events. No frontend acknowledgement precedes durable persistence.
 

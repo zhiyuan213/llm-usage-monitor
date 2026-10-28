@@ -1396,3 +1396,15 @@
   .ui-v2 .admin-payments-panel > p,
   .ui-v2 .admin-payments-panel > .insight-toolbar { padding-left: 16px; padding-right: 16px; }
 }
+
+/* Operation feedback is teleported outside the console layout, without shifting page content. */
+.console-toast {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 10000; display: flex; align-items: center; gap: 10px;
+  width: max-content; max-width: calc(100vw - 32px); box-sizing: border-box;
+  padding: 16px 22px; border: 1px solid #dce4ee; border-radius: 8px;
+  background: #fff; color: #12213d; box-shadow: 0 12px 40px #12213d26;
+  font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; pointer-events: none;
+}
+.console-toast svg { flex-shrink: 0; color: #279c78; }
+.console-toast-error svg { color: #dc4c64; }

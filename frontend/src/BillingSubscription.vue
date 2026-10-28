@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { useToastNotice } from "./toast";
 import { ref, watch, onBeforeUnmount } from 'vue';
 import { api, date, errorText, language, t } from './lib';
 const props = defineProps<{ data: any; targetPlan: string; checkoutId: string }>();
 const emit = defineEmits(['update:targetPlan', 'refresh']);
-const quote = ref<any>(null), busy = ref(false), error = ref(''), notice = ref('');
+const quote = ref<any>(null), busy = ref(false), error = ref(''), notice = useToastNotice();
 const pendingPlan = ref('');
 let timer: ReturnType<typeof setTimeout> | undefined, attempts=0;
 onBeforeUnmount(()=>clearTimeout(timer));
@@ -83,7 +84,7 @@ async function confirm() {
     <p v-if="data.workspace.payment_provider==='creem'" class="muted">{{t('Creem manages renewal and cancellation in the billing portal. Plan changes and additional usage billing are not enabled yet.','可在账单门户管理 Creem 续费与取消。套餐切换和额外用量计费暂未开放。')}}</p>
     <p v-else class="muted">{{t('Core / Pro changes apply immediately with Paddle proration. Review the amount before confirming; failed payments prevent the change. Current-period usage is preserved.','Core / Pro 立即切换，由 Paddle 按剩余账期折算差价。确认前请核对金额；付款失败不变更套餐，当前账期已用额度不会清零。')}}</p>
   </section>
-  <p v-if="notice" class="notice" role="status">{{notice}}</p>
+
   <section v-if="targetPlan" class="panel billing-subscription" aria-live="polite">
     <h2>{{t('Review plan change','确认套餐变更')}} → {{targetPlan}}</h2>
     <p v-if="busy">{{t('Please wait…','请稍候…')}}</p>

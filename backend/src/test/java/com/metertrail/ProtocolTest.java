@@ -9,6 +9,20 @@ import org.junit.jupiter.api.Test;
 
 class ProtocolTest {
   @Test
+  void sharedJsonParsingPreservesConcurrentCanonicalizationAndStrictInput() throws Exception {
+    var pool=java.util.concurrent.Executors.newFixedThreadPool(8);
+    try {
+      var work=new java.util.ArrayList<java.util.concurrent.Callable<Void>>();
+      for(int i=0;i<200;i++) {
+        int value=i;
+        work.add(()->{assertEquals("{\"a\":{\"b\":true},\"z\":"+value+"}",
+            Support.canonical(Support.parse("{\"z\":"+value+",\"a\":{\"b\":true}}")));return null;});
+      }
+      for(var result:pool.invokeAll(work))result.get();
+    } finally {pool.shutdownNow();}
+    assertEquals("INVALID_JSON",assertThrows(ApiError.class,()->Support.parse("{} {} nothing")).code);
+  }
+  @Test
   void includedQuotaMatchesEachPlan() {
     assertEquals(50_000, Billing.included("Free"));
     assertEquals(100_000, Billing.included("Core"));

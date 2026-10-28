@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 final class Support {
   static final SecureRandom RANDOM = new SecureRandom();
+  private static final ObjectMapper JSON = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
   static String token() {
     byte[] b = new byte[32];
@@ -64,7 +65,7 @@ final class Support {
 
   static JsonNode parse(String s) {
     try {
-      return new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readTree(s);
+      return JSON.readTree(s);
     } catch (Exception e) {
       throw new ApiError(400, "INVALID_JSON");
     }

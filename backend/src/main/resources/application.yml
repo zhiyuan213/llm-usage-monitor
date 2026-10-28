@@ -12,6 +12,8 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost}
+      timeout: ${REDIS_TIMEOUT:3s}
+      connect-timeout: ${REDIS_CONNECT_TIMEOUT:3s}
   mail:
     host: ${SMTP_HOST:localhost}
     port: ${SMTP_PORT:1025}
@@ -46,6 +48,9 @@ metertrail:
     read-pool-size: ${DATABASE_READ_POOL_SIZE:8}
     read-connection-timeout-ms: ${DATABASE_READ_CONNECTION_TIMEOUT_MS:1000}
   ingest:
+    redis:
+      enabled: ${INGEST_REDIS_ENABLED:false}
+      consumer-enabled: ${INGEST_REDIS_CONSUMER_ENABLED:false}
     max-inflight: ${INGEST_MAX_INFLIGHT:4}
     pipeline:
       enabled: ${INGEST_PIPELINE_ENABLED:true}

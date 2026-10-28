@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useToastNotice } from "./toast";
 import PublicModelPrices from "./PublicModelPrices.vue";
 import ModelPricePolicy from "./ModelPricePolicy.vue";
 import RequestExplorer from "./RequestExplorer.vue";
@@ -132,7 +133,7 @@ const projects = ref<any[]>([]),
   contextReady = ref(false),
   signingOut = ref(false),
   error = ref(""),
-  notice = ref(""),
+  notice = useToastNotice(),
   data = ref<any>({}),
   overview = ref<any>({}),
   recent = ref<any[]>([]);
@@ -646,7 +647,7 @@ const usagePercent = computed(() =>
         </div>
         <IngestionNotice v-if="contextReady && !loading && session?.workspace?.ingestion?.can_accept_new===false && page!=='billing'" :state="session.workspace.ingestion" prominent />
         <div v-if="error" class="notice error" role="alert">{{ error }}</div>
-        <div v-if="notice" class="notice success">{{ notice }}</div>
+
         <div
           v-if="
             !loading &&

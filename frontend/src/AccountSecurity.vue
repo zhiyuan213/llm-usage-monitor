@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { useToastNotice } from "./toast";
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { api, t, errorText, session } from "./lib";
 const props = defineProps<{ disabled?: boolean }>();
 const router = useRouter(),
   error = ref(""),
-  notice = ref(""),
+  notice = useToastNotice(),
   busy = ref(false);
 const email = reactive({
     email: "",
@@ -55,7 +56,7 @@ async function emailCode(action: string) {
         }}
       </p>
       <div v-if="error" class="notice error">{{ error }}</div>
-      <div v-if="notice" class="notice">{{ notice }}</div>
+
       <form
         @submit.prevent="
           run(async () => {

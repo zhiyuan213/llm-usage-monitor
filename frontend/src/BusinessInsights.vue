@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useToastNotice } from "./toast";
 import {usePageSize} from "./page-size";
 import { onBeforeUnmount, ref, watch } from 'vue';
 import { api, ApiError, errorText, t, date, language } from './lib';
@@ -7,7 +8,7 @@ import WeeklySummary from './WeeklySummary.vue';
 import DateRangeFilter from './DateRangeFilter.vue';
 import QueryControls from './QueryControls.vue';
 const props=defineProps<{project:string;mode:string;refreshToken?:boolean}>();
-const busy=ref(false),error=ref(''),notice=ref(''),locked=ref(false),report=ref<any>(null),items=ref<any[]>([]),total=ref(0),page=ref(0),size=usePageSize();
+const busy=ref(false),error=ref(''),notice=useToastNotice(),locked=ref(false),report=ref<any>(null),items=ref<any[]>([]),total=ref(0),page=ref(0),size=usePageSize();
 function currentLocalTime(){
   const now=new Date(), pad=(value:number)=>String(value).padStart(2,'0');
   return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -82,7 +83,7 @@ const delivery=(value:string)=>({sent:t('Accepted by mail service','邮件服务
 </script>
 <template>
   <section class="business-insights" :aria-busy="busy">
-    <div v-if="error" class="notice error" role="alert">{{ error }}</div><div v-if="notice" class="notice success" role="status">{{ notice }}</div>
+    <div v-if="error" class="notice error" role="alert">{{ error }}</div>
     <section v-if="locked" class="panel"><h2>{{ t('Available with Core and Pro','Core 与 Pro 可使用') }}</h2><p>{{ t('Diagnose model costs, compare releases and subscribe to weekly reports.','诊断模型费用、对比发布前后表现，并订阅运营周报。') }}</p><RouterLink class="btn primary" to="/app/billing">{{ t('View plans','查看套餐') }}</RouterLink></section>
     <template v-else><p v-if="mode==='cost-insights'" class="muted">{{t('Custom periods support up to 30 days and compare the preceding equal-length period. Prices are captured when events are processed; adding a price does not rewrite old calls. See call details for missing usage and the matched price version.','自定义区间最长30天，与之前等长区间比较。价格在处理事件时记录；补充价格不会改写历史费用。缺失用量及命中价格版本可在调用详情中查看。')}}</p>
       <DateRangeFilter v-if="mode==='cost-insights'" :busy="busy" @change="customWindow=$event;report=null;load()"><label>{{ t('Group by','费用分组') }}<select v-model="dimension" :disabled="busy"><option value="feature">{{ t('Feature','功能') }}</option><option value="model">{{ t('Model','模型') }}</option><option value="customerId">{{ t('Customer','客户') }}</option></select></label></DateRangeFilter>

@@ -44,6 +44,8 @@ x-app: &app
     PADDLE_API_URL: ${PADDLE_API_URL:-https://sandbox-api.paddle.com}
     USAGE_COLLECTION_ENABLED: ${USAGE_COLLECTION_ENABLED:-false}
     INGEST_MAX_INFLIGHT: ${INGEST_MAX_INFLIGHT:-4}
+    INGEST_REDIS_ENABLED: ${INGEST_REDIS_ENABLED:-true}
+    INGEST_REDIS_CONSUMER_ENABLED: 'false'
     DATABASE_WRITE_POOL_SIZE: ${DATABASE_WRITE_POOL_SIZE:-8}
     DATABASE_READ_POOL_SIZE: ${DATABASE_READ_POOL_SIZE:-8}
     DATABASE_WRITE_CONNECTION_TIMEOUT_MS: ${DATABASE_WRITE_CONNECTION_TIMEOUT_MS:-1000}
@@ -110,12 +112,13 @@ services:
     mem_limit: 1g
   redis:
     image: redis:7-alpine
-    command: [redis-server, --maxmemory, 128mb, --maxmemory-policy, noeviction]
+    command: [redis-server, --appendonly, 'yes', --appendfsync, always, --maxmemory, 384mb, --maxmemory-policy, noeviction]
+    volumes: [redis-data:/data]
     healthcheck:
       test: [CMD, redis-cli, ping]
       interval: 5s
       retries: 10
-    mem_limit: 192m
+    mem_limit: 512m
     restart: unless-stopped
   api-blue: *app
   api-green:
@@ -126,6 +129,7 @@ services:
     environment:
       <<: *app-env
       WORKER_ENABLED: 'true'
+      INGEST_REDIS_CONSUMER_ENABLED: 'true'
       INGEST_PIPELINE_ENABLED: 'false'
       INGEST_ACCEPTOR_ENABLED: 'false'
   web:
@@ -143,4 +147,5 @@ services:
     ports: ["127.0.0.1:8025:8025"]
     mem_limit: 128m
 volumes:
+  redis-data:
   postgres-data:

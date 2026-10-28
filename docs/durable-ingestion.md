@@ -1,5 +1,7 @@
 # Durable aggregated ingestion
 
+Historical PostgreSQL transport design. The Compose default is now [Redis reception and buffering](redis-ingestion.md); this legacy acceptor remains available to drain existing requests.
+
 ## Contract and data flow
 
 `POST /v1/events/batch` still returns HTTP **200**, with `status: pending`, only

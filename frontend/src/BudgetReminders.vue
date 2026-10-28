@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { useToastNotice } from "./toast";
 import {usePageSize} from "./page-size";
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { api, errorText, t, date, money, n } from './lib';
 import QueryControls from './QueryControls.vue';
 const props=defineProps<{project:string;refreshToken?:boolean}>();
-const busy=ref(false),error=ref(''),notice=ref(''),data=ref<any>(null),enabled=ref(false),forecast=ref(true),amount=ref('100'),warning=ref(80),page=ref(0),size=usePageSize();
+const busy=ref(false),error=ref(''),notice=useToastNotice(),data=ref<any>(null),enabled=ref(false),forecast=ref(true),amount=ref('100'),warning=ref(80),page=ref(0),size=usePageSize();
 const available=computed(()=>data.value?.available===true),custom=computed(()=>data.value?.custom_rules===true);
 const pct=(value:any)=>value==null?'—':`${n(Number(value)*100)}%`;
 let epoch=0,alive=true;onBeforeUnmount(()=>{alive=false;++epoch;});
@@ -28,7 +29,7 @@ const state=(v:string)=>({queued:t('Waiting to send','等待发送'),sent:t('Acc
 </script>
 <template>
   <section class="business-insights" :aria-busy="busy">
-    <div v-if="error" class="notice error" role="alert">{{ error }}</div><div v-if="notice" class="notice success" role="status">{{ notice }}</div><p v-if="busy" role="status">{{ t('Loading…','正在加载…') }}</p>
+    <div v-if="error" class="notice error" role="alert">{{ error }}</div><p v-if="busy" role="status">{{ t('Loading…','正在加载…') }}</p>
     <template v-if="data">
       <section class="panel"><h2>{{ t('Monthly model-cost budget','每月模型费用预算') }}</h2><p>{{ t('Per-project calendar month in UTC. This is an email reminder, not a spending cap: it does not stop data ingestion or charge your payment method. MeterTrail subscription fees are excluded.','按项目、UTC 自然月统计。此功能只发邮件提醒，不会停止数据接入或从支付方式扣款，也不包含 MeterTrail 订阅费。') }}</p>
         <p v-if="!data.configured" class="notice"><strong>{{t('Not configured: amounts below are an unsaved draft; no budget reminder is active.','尚未配置：下方金额只是未保存草稿，预算提醒尚未生效。')}}</strong></p><form class="insight-toolbar" @submit.prevent="save">

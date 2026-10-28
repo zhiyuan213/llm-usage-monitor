@@ -1,0 +1,1619 @@
+# HELP application_ready_time_seconds Time taken for the application to be ready to service requests
+# TYPE application_ready_time_seconds gauge
+application_ready_time_seconds{main_application_class="com.metertrail.Application"} 7.291
+# HELP application_started_time_seconds Time taken to start the application
+# TYPE application_started_time_seconds gauge
+application_started_time_seconds{main_application_class="com.metertrail.Application"} 7.214
+# HELP disk_free_bytes Usable space for path
+# TYPE disk_free_bytes gauge
+disk_free_bytes{path="/app/."} 9.39827789824E11
+# HELP disk_total_bytes Total space for path
+# TYPE disk_total_bytes gauge
+disk_total_bytes{path="/app/."} 1.081101176832E12
+# HELP executor_active_threads The approximate number of threads that are actively executing tasks
+# TYPE executor_active_threads gauge
+executor_active_threads{name="budgetAlertsScheduler"} 0.0
+executor_active_threads{name="ingestWorkerScheduler"} 0.0
+executor_active_threads{name="modelPriceScheduler"} 0.0
+executor_active_threads{name="taskScheduler"} 0.0
+executor_active_threads{name="usageBillingScheduler"} 0.0
+executor_active_threads{name="weeklyInsightsScheduler"} 0.0
+# HELP executor_completed_tasks_total The approximate total number of tasks that have completed execution
+# TYPE executor_completed_tasks_total counter
+executor_completed_tasks_total{name="budgetAlertsScheduler"} 4.0
+executor_completed_tasks_total{name="ingestWorkerScheduler"} 15369.0
+executor_completed_tasks_total{name="modelPriceScheduler"} 1.0
+executor_completed_tasks_total{name="taskScheduler"} 3195.0
+executor_completed_tasks_total{name="usageBillingScheduler"} 2.0
+executor_completed_tasks_total{name="weeklyInsightsScheduler"} 4.0
+# HELP executor_pool_core_threads The core number of threads for the pool
+# TYPE executor_pool_core_threads gauge
+executor_pool_core_threads{name="budgetAlertsScheduler"} 1.0
+executor_pool_core_threads{name="ingestWorkerScheduler"} 1.0
+executor_pool_core_threads{name="modelPriceScheduler"} 1.0
+executor_pool_core_threads{name="taskScheduler"} 1.0
+executor_pool_core_threads{name="usageBillingScheduler"} 1.0
+executor_pool_core_threads{name="weeklyInsightsScheduler"} 1.0
+# HELP executor_pool_max_threads The maximum allowed number of threads in the pool
+# TYPE executor_pool_max_threads gauge
+executor_pool_max_threads{name="budgetAlertsScheduler"} 2.147483647E9
+executor_pool_max_threads{name="ingestWorkerScheduler"} 2.147483647E9
+executor_pool_max_threads{name="modelPriceScheduler"} 2.147483647E9
+executor_pool_max_threads{name="taskScheduler"} 2.147483647E9
+executor_pool_max_threads{name="usageBillingScheduler"} 2.147483647E9
+executor_pool_max_threads{name="weeklyInsightsScheduler"} 2.147483647E9
+# HELP executor_pool_size_threads The current number of threads in the pool
+# TYPE executor_pool_size_threads gauge
+executor_pool_size_threads{name="budgetAlertsScheduler"} 1.0
+executor_pool_size_threads{name="ingestWorkerScheduler"} 1.0
+executor_pool_size_threads{name="modelPriceScheduler"} 1.0
+executor_pool_size_threads{name="taskScheduler"} 1.0
+executor_pool_size_threads{name="usageBillingScheduler"} 1.0
+executor_pool_size_threads{name="weeklyInsightsScheduler"} 1.0
+# HELP executor_queue_remaining_tasks The number of additional elements that this queue can ideally accept without blocking
+# TYPE executor_queue_remaining_tasks gauge
+executor_queue_remaining_tasks{name="budgetAlertsScheduler"} 2.147483647E9
+executor_queue_remaining_tasks{name="ingestWorkerScheduler"} 2.147483647E9
+executor_queue_remaining_tasks{name="modelPriceScheduler"} 2.147483647E9
+executor_queue_remaining_tasks{name="taskScheduler"} 2.147483647E9
+executor_queue_remaining_tasks{name="usageBillingScheduler"} 2.147483647E9
+executor_queue_remaining_tasks{name="weeklyInsightsScheduler"} 2.147483647E9
+# HELP executor_queued_tasks The approximate number of tasks that are queued for execution
+# TYPE executor_queued_tasks gauge
+executor_queued_tasks{name="budgetAlertsScheduler"} 2.0
+executor_queued_tasks{name="ingestWorkerScheduler"} 1.0
+executor_queued_tasks{name="modelPriceScheduler"} 1.0
+executor_queued_tasks{name="taskScheduler"} 10.0
+executor_queued_tasks{name="usageBillingScheduler"} 1.0
+executor_queued_tasks{name="weeklyInsightsScheduler"} 2.0
+# HELP hikaricp_connections Total connections
+# TYPE hikaricp_connections gauge
+hikaricp_connections{pool="metertrail-read"} 2.0
+hikaricp_connections{pool="metertrail-write"} 3.0
+# HELP hikaricp_connections_acquire_seconds Connection acquire time
+# TYPE hikaricp_connections_acquire_seconds summary
+hikaricp_connections_acquire_seconds_count{pool="metertrail-read"} 66
+hikaricp_connections_acquire_seconds_sum{pool="metertrail-read"} 0.05040411
+hikaricp_connections_acquire_seconds_count{pool="metertrail-write"} 735
+hikaricp_connections_acquire_seconds_sum{pool="metertrail-write"} 0.057456946
+# HELP hikaricp_connections_acquire_seconds_max Connection acquire time
+# TYPE hikaricp_connections_acquire_seconds_max gauge
+hikaricp_connections_acquire_seconds_max{pool="metertrail-read"} 0.014846042
+hikaricp_connections_acquire_seconds_max{pool="metertrail-write"} 0.01409742
+# HELP hikaricp_connections_active Active connections
+# TYPE hikaricp_connections_active gauge
+hikaricp_connections_active{pool="metertrail-read"} 0.0
+hikaricp_connections_active{pool="metertrail-write"} 0.0
+# HELP hikaricp_connections_creation_seconds Connection creation time
+# TYPE hikaricp_connections_creation_seconds summary
+hikaricp_connections_creation_seconds_count{pool="metertrail-read"} 1
+hikaricp_connections_creation_seconds_sum{pool="metertrail-read"} 0.069
+hikaricp_connections_creation_seconds_count{pool="metertrail-write"} 1
+hikaricp_connections_creation_seconds_sum{pool="metertrail-write"} 0.116
+# HELP hikaricp_connections_creation_seconds_max Connection creation time
+# TYPE hikaricp_connections_creation_seconds_max gauge
+hikaricp_connections_creation_seconds_max{pool="metertrail-read"} 0.069
+hikaricp_connections_creation_seconds_max{pool="metertrail-write"} 0.116
+# HELP hikaricp_connections_idle Idle connections
+# TYPE hikaricp_connections_idle gauge
+hikaricp_connections_idle{pool="metertrail-read"} 2.0
+hikaricp_connections_idle{pool="metertrail-write"} 3.0
+# HELP hikaricp_connections_max Max connections
+# TYPE hikaricp_connections_max gauge
+hikaricp_connections_max{pool="metertrail-read"} 8.0
+hikaricp_connections_max{pool="metertrail-write"} 8.0
+# HELP hikaricp_connections_min Min connections
+# TYPE hikaricp_connections_min gauge
+hikaricp_connections_min{pool="metertrail-read"} 1.0
+hikaricp_connections_min{pool="metertrail-write"} 1.0
+# HELP hikaricp_connections_pending Pending threads
+# TYPE hikaricp_connections_pending gauge
+hikaricp_connections_pending{pool="metertrail-read"} 0.0
+hikaricp_connections_pending{pool="metertrail-write"} 0.0
+# HELP hikaricp_connections_timeout_total Connection timeout total count
+# TYPE hikaricp_connections_timeout_total counter
+hikaricp_connections_timeout_total{pool="metertrail-read"} 0.0
+hikaricp_connections_timeout_total{pool="metertrail-write"} 0.0
+# HELP hikaricp_connections_usage_seconds Connection usage time
+# TYPE hikaricp_connections_usage_seconds summary
+hikaricp_connections_usage_seconds_count{pool="metertrail-read"} 66
+hikaricp_connections_usage_seconds_sum{pool="metertrail-read"} 0.614
+hikaricp_connections_usage_seconds_count{pool="metertrail-write"} 735
+hikaricp_connections_usage_seconds_sum{pool="metertrail-write"} 33.65
+# HELP hikaricp_connections_usage_seconds_max Connection usage time
+# TYPE hikaricp_connections_usage_seconds_max gauge
+hikaricp_connections_usage_seconds_max{pool="metertrail-read"} 0.082
+hikaricp_connections_usage_seconds_max{pool="metertrail-write"} 0.884
+# HELP jdbc_connections_active Current number of active connections that have been allocated from the data source.
+# TYPE jdbc_connections_active gauge
+jdbc_connections_active{name="dataSource"} 0.0
+# HELP jdbc_connections_idle Number of established but idle connections.
+# TYPE jdbc_connections_idle gauge
+jdbc_connections_idle{name="dataSource"} 3.0
+# HELP jdbc_connections_max Maximum number of active connections that can be allocated at the same time.
+# TYPE jdbc_connections_max gauge
+jdbc_connections_max{name="dataSource"} 8.0
+jdbc_connections_max{name="read"} 8.0
+# HELP jdbc_connections_min Minimum number of idle connections in the pool.
+# TYPE jdbc_connections_min gauge
+jdbc_connections_min{name="dataSource"} 1.0
+jdbc_connections_min{name="read"} 1.0
+# HELP jvm_info JVM version info
+# TYPE jvm_info gauge
+jvm_info{runtime="OpenJDK Runtime Environment",vendor="Eclipse Adoptium",version="17.0.20.1+1"} 1
+# HELP jvm_buffer_count_buffers An estimate of the number of buffers in the pool
+# TYPE jvm_buffer_count_buffers gauge
+jvm_buffer_count_buffers{id="direct"} 10.0
+jvm_buffer_count_buffers{id="mapped"} 0.0
+jvm_buffer_count_buffers{id="mapped - 'non-volatile memory'"} 0.0
+# HELP jvm_buffer_memory_used_bytes An estimate of the memory that the Java virtual machine is using for this buffer pool
+# TYPE jvm_buffer_memory_used_bytes gauge
+jvm_buffer_memory_used_bytes{id="direct"} 4316404.0
+jvm_buffer_memory_used_bytes{id="mapped"} 0.0
+jvm_buffer_memory_used_bytes{id="mapped - 'non-volatile memory'"} 0.0
+# HELP jvm_buffer_total_capacity_bytes An estimate of the total capacity of the buffers in this pool
+# TYPE jvm_buffer_total_capacity_bytes gauge
+jvm_buffer_total_capacity_bytes{id="direct"} 4316403.0
+jvm_buffer_total_capacity_bytes{id="mapped"} 0.0
+jvm_buffer_total_capacity_bytes{id="mapped - 'non-volatile memory'"} 0.0
+# HELP jvm_classes_loaded_classes The number of classes that are currently loaded in the Java virtual machine
+# TYPE jvm_classes_loaded_classes gauge
+jvm_classes_loaded_classes 14390.0
+# HELP jvm_classes_unloaded_classes_total The number of classes unloaded in the Java virtual machine
+# TYPE jvm_classes_unloaded_classes_total counter
+jvm_classes_unloaded_classes_total 0.0
+# HELP jvm_compilation_time_ms_total The approximate accumulated elapsed time spent in compilation
+# TYPE jvm_compilation_time_ms_total counter
+jvm_compilation_time_ms_total{compiler="HotSpot 64-Bit Tiered Compilers"} 19945.0
+# HELP jvm_gc_live_data_size_bytes Size of long-lived heap memory pool after reclamation
+# TYPE jvm_gc_live_data_size_bytes gauge
+jvm_gc_live_data_size_bytes 3.5592808E7
+# HELP jvm_gc_max_data_size_bytes Max size of long-lived heap memory pool
+# TYPE jvm_gc_max_data_size_bytes gauge
+jvm_gc_max_data_size_bytes 3.76111104E8
+# HELP jvm_gc_memory_allocated_bytes_total Incremented for an increase in the size of the (young) heap memory pool after one GC to before the next
+# TYPE jvm_gc_memory_allocated_bytes_total counter
+jvm_gc_memory_allocated_bytes_total 2.5903104E9
+# HELP jvm_gc_memory_promoted_bytes_total Count of positive increases in the size of the old generation memory pool before GC to after GC
+# TYPE jvm_gc_memory_promoted_bytes_total counter
+jvm_gc_memory_promoted_bytes_total 6.683252E7
+# HELP jvm_gc_overhead An approximation of the percent of CPU time used by GC activities over the last lookback period or since monitoring began, whichever is shorter, in the range [0..1]
+# TYPE jvm_gc_overhead gauge
+jvm_gc_overhead 0.003255677716985406
+# HELP jvm_gc_pause_seconds Time spent in GC pause
+# TYPE jvm_gc_pause_seconds summary
+jvm_gc_pause_seconds_count{action="end of major GC",cause="Allocation Failure",gc="MarkSweepCompact"} 3
+jvm_gc_pause_seconds_sum{action="end of major GC",cause="Allocation Failure",gc="MarkSweepCompact"} 0.223
+jvm_gc_pause_seconds_count{action="end of minor GC",cause="Allocation Failure",gc="Copy"} 114
+jvm_gc_pause_seconds_sum{action="end of minor GC",cause="Allocation Failure",gc="Copy"} 0.326
+# HELP jvm_gc_pause_seconds_max Time spent in GC pause
+# TYPE jvm_gc_pause_seconds_max gauge
+jvm_gc_pause_seconds_max{action="end of major GC",cause="Allocation Failure",gc="MarkSweepCompact"} 0.097
+jvm_gc_pause_seconds_max{action="end of minor GC",cause="Allocation Failure",gc="Copy"} 0.033
+# HELP jvm_memory_committed_bytes The amount of memory in bytes that is committed for the Java virtual machine to use
+# TYPE jvm_memory_committed_bytes gauge
+jvm_memory_committed_bytes{area="heap",id="Eden Space"} 2.3855104E7
+jvm_memory_committed_bytes{area="heap",id="Survivor Space"} 2949120.0
+jvm_memory_committed_bytes{area="heap",id="Tenured Gen"} 5.9322368E7
+jvm_memory_committed_bytes{area="nonheap",id="CodeHeap 'non-nmethods'"} 2555904.0
+jvm_memory_committed_bytes{area="nonheap",id="CodeHeap 'non-profiled nmethods'"} 6946816.0
+jvm_memory_committed_bytes{area="nonheap",id="CodeHeap 'profiled nmethods'"} 1.7235968E7
+jvm_memory_committed_bytes{area="nonheap",id="Compressed Class Space"} 9502720.0
+jvm_memory_committed_bytes{area="nonheap",id="Metaspace"} 7.2613888E7
+# HELP jvm_memory_max_bytes The maximum amount of memory in bytes that can be used for memory management
+# TYPE jvm_memory_max_bytes gauge
+jvm_memory_max_bytes{area="heap",id="Eden Space"} 1.50536192E8
+jvm_memory_max_bytes{area="heap",id="Survivor Space"} 1.8743296E7
+jvm_memory_max_bytes{area="heap",id="Tenured Gen"} 3.76111104E8
+jvm_memory_max_bytes{area="nonheap",id="CodeHeap 'non-nmethods'"} 5828608.0
+jvm_memory_max_bytes{area="nonheap",id="CodeHeap 'non-profiled nmethods'"} 1.22916864E8
+jvm_memory_max_bytes{area="nonheap",id="CodeHeap 'profiled nmethods'"} 1.22912768E8
+jvm_memory_max_bytes{area="nonheap",id="Compressed Class Space"} 1.073741824E9
+jvm_memory_max_bytes{area="nonheap",id="Metaspace"} -1.0
+# HELP jvm_memory_usage_after_gc The percentage of long-lived heap pool used after the last GC event, in the range [0..1]
+# TYPE jvm_memory_usage_after_gc gauge
+jvm_memory_usage_after_gc{area="heap",pool="long-lived"} 0.14238054508489065
+# HELP jvm_memory_used_bytes The amount of used memory
+# TYPE jvm_memory_used_bytes gauge
+jvm_memory_used_bytes{area="heap",id="Eden Space"} 2932744.0
+jvm_memory_used_bytes{area="heap",id="Survivor Space"} 530872.0
+jvm_memory_used_bytes{area="heap",id="Tenured Gen"} 5.3550904E7
+jvm_memory_used_bytes{area="nonheap",id="CodeHeap 'non-nmethods'"} 1393024.0
+jvm_memory_used_bytes{area="nonheap",id="CodeHeap 'non-profiled nmethods'"} 6584576.0
+jvm_memory_used_bytes{area="nonheap",id="CodeHeap 'profiled nmethods'"} 1.4759296E7
+jvm_memory_used_bytes{area="nonheap",id="Compressed Class Space"} 9173112.0
+jvm_memory_used_bytes{area="nonheap",id="Metaspace"} 7.1934896E7
+# HELP jvm_threads_daemon_threads The current number of live daemon threads
+# TYPE jvm_threads_daemon_threads gauge
+jvm_threads_daemon_threads 38.0
+# HELP jvm_threads_live_threads The current number of live threads including both daemon and non-daemon threads
+# TYPE jvm_threads_live_threads gauge
+jvm_threads_live_threads 51.0
+# HELP jvm_threads_peak_threads The peak live thread count since the Java virtual machine started or peak was reset
+# TYPE jvm_threads_peak_threads gauge
+jvm_threads_peak_threads 53.0
+# HELP jvm_threads_started_threads_total The total number of application threads started in the JVM
+# TYPE jvm_threads_started_threads_total counter
+jvm_threads_started_threads_total 56.0
+# HELP jvm_threads_states_threads The current number of threads
+# TYPE jvm_threads_states_threads gauge
+jvm_threads_states_threads{state="blocked"} 0.0
+jvm_threads_states_threads{state="new"} 0.0
+jvm_threads_states_threads{state="runnable"} 13.0
+jvm_threads_states_threads{state="terminated"} 0.0
+jvm_threads_states_threads{state="timed-waiting"} 16.0
+jvm_threads_states_threads{state="waiting"} 22.0
+# HELP lettuce_command_completion_seconds Latency between command send and command completion (complete response received
+# TYPE lettuce_command_completion_seconds summary
+lettuce_command_completion_seconds_count{command="CLIENT",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 2
+lettuce_command_completion_seconds_sum{command="CLIENT",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.003312592
+lettuce_command_completion_seconds_count{command="CONFIG",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 2
+lettuce_command_completion_seconds_sum{command="CONFIG",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.001387481
+lettuce_command_completion_seconds_count{command="EVALSHA",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 61
+lettuce_command_completion_seconds_sum{command="EVALSHA",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.267730396
+lettuce_command_completion_seconds_count{command="HELLO",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 1
+lettuce_command_completion_seconds_sum{command="HELLO",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.010406106
+lettuce_command_completion_seconds_count{command="HGETALL",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 34
+lettuce_command_completion_seconds_sum{command="HGETALL",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.015464707
+lettuce_command_completion_seconds_count{command="XGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 1
+lettuce_command_completion_seconds_sum{command="XGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.001100564
+lettuce_command_completion_seconds_count{command="XPENDING",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 2914
+lettuce_command_completion_seconds_sum{command="XPENDING",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 1.326505319
+lettuce_command_completion_seconds_count{command="XREADGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 2915
+lettuce_command_completion_seconds_sum{command="XREADGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 1.042959637
+# HELP lettuce_command_completion_seconds_max Latency between command send and command completion (complete response received
+# TYPE lettuce_command_completion_seconds_max gauge
+lettuce_command_completion_seconds_max{command="CLIENT",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.001791504
+lettuce_command_completion_seconds_max{command="CONFIG",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 9.12653E-4
+lettuce_command_completion_seconds_max{command="EVALSHA",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.012171522
+lettuce_command_completion_seconds_max{command="HELLO",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.010406106
+lettuce_command_completion_seconds_max{command="HGETALL",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.001296876
+lettuce_command_completion_seconds_max{command="XGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.001100564
+lettuce_command_completion_seconds_max{command="XPENDING",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.003114481
+lettuce_command_completion_seconds_max{command="XREADGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.015169582
+# HELP lettuce_command_firstresponse_seconds Latency between command send and first response (first response received)
+# TYPE lettuce_command_firstresponse_seconds summary
+lettuce_command_firstresponse_seconds_count{command="CLIENT",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 2
+lettuce_command_firstresponse_seconds_sum{command="CLIENT",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.003204286
+lettuce_command_firstresponse_seconds_count{command="CONFIG",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 2
+lettuce_command_firstresponse_seconds_sum{command="CONFIG",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.001027561
+lettuce_command_firstresponse_seconds_count{command="EVALSHA",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 61
+lettuce_command_firstresponse_seconds_sum{command="EVALSHA",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.266330819
+lettuce_command_firstresponse_seconds_count{command="HELLO",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 1
+lettuce_command_firstresponse_seconds_sum{command="HELLO",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.00532921
+lettuce_command_firstresponse_seconds_count{command="HGETALL",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 34
+lettuce_command_firstresponse_seconds_sum{command="HGETALL",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.014000124
+lettuce_command_firstresponse_seconds_count{command="XGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 1
+lettuce_command_firstresponse_seconds_sum{command="XGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 9.71856E-4
+lettuce_command_firstresponse_seconds_count{command="XPENDING",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 2914
+lettuce_command_firstresponse_seconds_sum{command="XPENDING",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 1.294199513
+lettuce_command_firstresponse_seconds_count{command="XREADGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 2915
+lettuce_command_firstresponse_seconds_sum{command="XREADGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.983300454
+# HELP lettuce_command_firstresponse_seconds_max Latency between command send and first response (first response received)
+# TYPE lettuce_command_firstresponse_seconds_max gauge
+lettuce_command_firstresponse_seconds_max{command="CLIENT",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.001773103
+lettuce_command_firstresponse_seconds_max{command="CONFIG",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 6.42938E-4
+lettuce_command_firstresponse_seconds_max{command="EVALSHA",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.012148721
+lettuce_command_firstresponse_seconds_max{command="HELLO",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.00532921
+lettuce_command_firstresponse_seconds_max{command="HGETALL",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.001213971
+lettuce_command_firstresponse_seconds_max{command="XGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 9.71856E-4
+lettuce_command_firstresponse_seconds_max{command="XPENDING",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.00308388
+lettuce_command_firstresponse_seconds_max{command="XREADGROUP",local="local:any",remote="mt-redis-batch-final-probe-redis/192.168.32.3:6379"} 0.0085992
+# HELP logback_events_total Number of log events that were enabled by the effective log level
+# TYPE logback_events_total counter
+logback_events_total{level="debug"} 0.0
+logback_events_total{level="error"} 0.0
+logback_events_total{level="info"} 15.0
+logback_events_total{level="trace"} 0.0
+logback_events_total{level="warn"} 0.0
+# HELP metertrail_events_accepted_total  
+# TYPE metertrail_events_accepted_total counter
+metertrail_events_accepted_total 30050.0
+# HELP metertrail_ingest_buffered_bytes  
+# TYPE metertrail_ingest_buffered_bytes gauge
+metertrail_ingest_buffered_bytes 0.0
+# HELP metertrail_ingest_group_events  
+# TYPE metertrail_ingest_group_events summary
+metertrail_ingest_group_events_count 61
+metertrail_ingest_group_events_sum 30050.0
+# HELP metertrail_ingest_group_events_max  
+# TYPE metertrail_ingest_group_events_max gauge
+metertrail_ingest_group_events_max 500.0
+# HELP metertrail_ingest_group_requests  
+# TYPE metertrail_ingest_group_requests summary
+metertrail_ingest_group_requests_count 61
+metertrail_ingest_group_requests_sum 601.0
+# HELP metertrail_ingest_group_requests_max  
+# TYPE metertrail_ingest_group_requests_max gauge
+metertrail_ingest_group_requests_max 10.0
+# HELP metertrail_ingest_groups_total  
+# TYPE metertrail_ingest_groups_total counter
+metertrail_ingest_groups_total 61.0
+# HELP metertrail_ingest_inflight  
+# TYPE metertrail_ingest_inflight gauge
+metertrail_ingest_inflight 0.0
+# HELP metertrail_ingest_inflight_limit  
+# TYPE metertrail_ingest_inflight_limit gauge
+metertrail_ingest_inflight_limit 4.0
+# HELP metertrail_ingest_phase_seconds  
+# TYPE metertrail_ingest_phase_seconds histogram
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.001"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.001048576"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.001398101"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.001747626"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.002097151"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.002446676"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.002796201"} 2
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.003145726"} 2
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.003495251"} 2
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.003844776"} 4
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.004194304"} 5
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.005592405"} 6
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.006990506"} 16
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.008388607"} 20
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.009786708"} 27
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.011184809"} 28
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.01258291"} 31
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.013981011"} 33
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.015379112"} 37
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.016777216"} 38
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.022369621"} 42
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.027962026"} 50
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.033554431"} 55
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.039146836"} 57
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.044739241"} 59
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.050331646"} 59
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.055924051"} 59
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.061516456"} 60
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.067108864"} 60
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.089478485"} 60
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.111848106"} 60
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.134217727"} 60
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.156587348"} 60
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.178956969"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.20132659"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.223696211"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.246065832"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.268435456"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.357913941"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.447392426"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.536870911"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.626349396"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.715827881"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.805306366"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.894784851"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="0.984263336"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="1.073741824"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="1.431655765"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="1.789569706"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="2.147483647"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="2.505397588"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="2.863311529"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="3.22122547"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="3.579139411"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="3.937053352"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="4.294967296"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="5.726623061"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="7.158278826"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="8.589934591"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="10.021590356"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="11.453246121"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="12.884901886"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="14.316557651"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="15.748213416"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="17.179869184"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="22.906492245"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="28.633115306"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="30.0"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_identity_lookup",le="+Inf"} 61
+metertrail_ingest_phase_seconds_count{phase="event_identity_lookup"} 61
+metertrail_ingest_phase_seconds_sum{phase="event_identity_lookup"} 1.120072043
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.001"} 0
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.001048576"} 0
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.001398101"} 0
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.001747626"} 0
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.002097151"} 0
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.002446676"} 0
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.002796201"} 0
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.003145726"} 0
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.003495251"} 0
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.003844776"} 0
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.004194304"} 0
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.005592405"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.006990506"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.008388607"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.009786708"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.011184809"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.01258291"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.013981011"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.015379112"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.016777216"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.022369621"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.027962026"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.033554431"} 1
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.039146836"} 2
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.044739241"} 21
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.050331646"} 35
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.055924051"} 40
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.061516456"} 44
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.067108864"} 48
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.089478485"} 56
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.111848106"} 59
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.134217727"} 59
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.156587348"} 59
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.178956969"} 60
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.20132659"} 60
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.223696211"} 60
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.246065832"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.268435456"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.357913941"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.447392426"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.536870911"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.626349396"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.715827881"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.805306366"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.894784851"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="0.984263336"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="1.073741824"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="1.431655765"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="1.789569706"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="2.147483647"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="2.505397588"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="2.863311529"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="3.22122547"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="3.579139411"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="3.937053352"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="4.294967296"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="5.726623061"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="7.158278826"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="8.589934591"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="10.021590356"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="11.453246121"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="12.884901886"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="14.316557651"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="15.748213416"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="17.179869184"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="22.906492245"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="28.633115306"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="30.0"} 61
+metertrail_ingest_phase_seconds_bucket{phase="event_insert",le="+Inf"} 61
+metertrail_ingest_phase_seconds_count{phase="event_insert"} 61
+metertrail_ingest_phase_seconds_sum{phase="event_insert"} 3.524769165
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.001"} 0
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.001048576"} 0
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.001398101"} 0
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.001747626"} 0
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.002097151"} 0
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.002446676"} 0
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.002796201"} 0
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.003145726"} 0
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.003495251"} 0
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.003844776"} 0
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.004194304"} 0
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.005592405"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.006990506"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.008388607"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.009786708"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.011184809"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.01258291"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.013981011"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.015379112"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.016777216"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.022369621"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.027962026"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.033554431"} 1
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.039146836"} 22
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.044739241"} 34
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.050331646"} 39
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.055924051"} 41
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.061516456"} 44
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.067108864"} 44
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.089478485"} 54
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.111848106"} 59
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.134217727"} 60
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.156587348"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.178956969"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.20132659"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.223696211"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.246065832"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.268435456"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.357913941"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.447392426"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.536870911"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.626349396"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.715827881"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.805306366"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.894784851"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="0.984263336"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="1.073741824"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="1.431655765"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="1.789569706"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="2.147483647"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="2.505397588"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="2.863311529"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="3.22122547"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="3.579139411"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="3.937053352"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="4.294967296"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="5.726623061"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="7.158278826"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="8.589934591"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="10.021590356"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="11.453246121"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="12.884901886"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="14.316557651"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="15.748213416"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="17.179869184"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="22.906492245"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="28.633115306"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="30.0"} 61
+metertrail_ingest_phase_seconds_bucket{phase="identity_insert",le="+Inf"} 61
+metertrail_ingest_phase_seconds_count{phase="identity_insert"} 61
+metertrail_ingest_phase_seconds_sum{phase="identity_insert"} 3.382610011
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.001"} 0
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.001048576"} 0
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.001398101"} 0
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.001747626"} 0
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.002097151"} 0
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.002446676"} 0
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.002796201"} 0
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.003145726"} 0
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.003495251"} 0
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.003844776"} 0
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.004194304"} 0
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.005592405"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.006990506"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.008388607"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.009786708"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.011184809"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.01258291"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.013981011"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.015379112"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.016777216"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.022369621"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.027962026"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.033554431"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.039146836"} 1
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.044739241"} 14
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.050331646"} 34
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.055924051"} 40
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.061516456"} 42
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.067108864"} 42
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.089478485"} 45
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.111848106"} 54
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.134217727"} 59
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.156587348"} 60
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.178956969"} 60
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.20132659"} 60
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.223696211"} 60
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.246065832"} 60
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.268435456"} 60
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.357913941"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.447392426"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.536870911"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.626349396"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.715827881"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.805306366"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.894784851"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="0.984263336"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="1.073741824"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="1.431655765"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="1.789569706"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="2.147483647"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="2.505397588"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="2.863311529"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="3.22122547"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="3.579139411"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="3.937053352"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="4.294967296"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="5.726623061"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="7.158278826"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="8.589934591"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="10.021590356"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="11.453246121"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="12.884901886"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="14.316557651"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="15.748213416"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="17.179869184"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="22.906492245"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="28.633115306"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="30.0"} 61
+metertrail_ingest_phase_seconds_bucket{phase="ledger_insert",le="+Inf"} 61
+metertrail_ingest_phase_seconds_count{phase="ledger_insert"} 61
+metertrail_ingest_phase_seconds_sum{phase="ledger_insert"} 4.099183709
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.001"} 0
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.001048576"} 0
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.001398101"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.001747626"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.002097151"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.002446676"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.002796201"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.003145726"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.003495251"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.003844776"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.004194304"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.005592405"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.006990506"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.008388607"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.009786708"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.011184809"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.01258291"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.013981011"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.015379112"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.016777216"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.022369621"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.027962026"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.033554431"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.039146836"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.044739241"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.050331646"} 1
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.055924051"} 3
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.061516456"} 33
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.067108864"} 53
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.089478485"} 60
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.111848106"} 60
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.134217727"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.156587348"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.178956969"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.20132659"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.223696211"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.246065832"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.268435456"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.357913941"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.447392426"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.536870911"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.626349396"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.715827881"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.805306366"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.894784851"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="0.984263336"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="1.073741824"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="1.431655765"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="1.789569706"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="2.147483647"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="2.505397588"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="2.863311529"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="3.22122547"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="3.579139411"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="3.937053352"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="4.294967296"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="5.726623061"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="7.158278826"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="8.589934591"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="10.021590356"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="11.453246121"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="12.884901886"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="14.316557651"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="15.748213416"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="17.179869184"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="22.906492245"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="28.633115306"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="30.0"} 61
+metertrail_ingest_phase_seconds_bucket{phase="object_identity_lookup",le="+Inf"} 61
+metertrail_ingest_phase_seconds_count{phase="object_identity_lookup"} 61
+metertrail_ingest_phase_seconds_sum{phase="object_identity_lookup"} 3.795590618
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.001"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.001048576"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.001398101"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.001747626"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.002097151"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.002446676"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.002796201"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.003145726"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.003495251"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.003844776"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.004194304"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.005592405"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.006990506"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.008388607"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.009786708"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.011184809"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.01258291"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.013981011"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.015379112"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.016777216"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.022369621"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.027962026"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.033554431"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.039146836"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.044739241"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.050331646"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.055924051"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.061516456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.067108864"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.089478485"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.111848106"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.134217727"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.156587348"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.178956969"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.20132659"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.223696211"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.246065832"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.268435456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.357913941"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.447392426"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.536870911"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.626349396"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.715827881"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.805306366"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.894784851"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="0.984263336"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="1.073741824"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="1.431655765"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="1.789569706"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="2.147483647"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="2.505397588"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="2.863311529"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="3.22122547"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="3.579139411"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="3.937053352"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="4.294967296"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="5.726623061"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="7.158278826"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="8.589934591"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="10.021590356"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="11.453246121"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="12.884901886"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="14.316557651"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="15.748213416"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="17.179869184"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="22.906492245"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="28.633115306"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="30.0"} 0
+metertrail_ingest_phase_seconds_bucket{phase="overage_lookup",le="+Inf"} 0
+metertrail_ingest_phase_seconds_count{phase="overage_lookup"} 0
+metertrail_ingest_phase_seconds_sum{phase="overage_lookup"} 0.0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.001"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.001048576"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.001398101"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.001747626"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.002097151"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.002446676"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.002796201"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.003145726"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.003495251"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.003844776"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.004194304"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.005592405"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.006990506"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.008388607"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.009786708"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.011184809"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.01258291"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.013981011"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.015379112"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.016777216"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.022369621"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.027962026"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.033554431"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.039146836"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.044739241"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.050331646"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.055924051"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.061516456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.067108864"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.089478485"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.111848106"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.134217727"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.156587348"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.178956969"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.20132659"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.223696211"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.246065832"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.268435456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.357913941"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.447392426"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.536870911"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.626349396"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.715827881"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.805306366"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.894784851"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="0.984263336"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="1.073741824"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="1.431655765"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="1.789569706"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="2.147483647"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="2.505397588"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="2.863311529"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="3.22122547"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="3.579139411"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="3.937053352"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="4.294967296"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="5.726623061"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="7.158278826"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="8.589934591"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="10.021590356"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="11.453246121"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="12.884901886"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="14.316557651"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="15.748213416"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="17.179869184"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="22.906492245"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="28.633115306"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="30.0"} 0
+metertrail_ingest_phase_seconds_bucket{phase="prepare",le="+Inf"} 0
+metertrail_ingest_phase_seconds_count{phase="prepare"} 0
+metertrail_ingest_phase_seconds_sum{phase="prepare"} 0.0
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.001"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.001048576"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.001398101"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.001747626"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.002097151"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.002446676"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.002796201"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.003145726"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.003495251"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.003844776"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.004194304"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.005592405"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.006990506"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.008388607"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.009786708"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.011184809"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.01258291"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.013981011"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.015379112"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.016777216"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.022369621"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.027962026"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.033554431"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.039146836"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.044739241"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.050331646"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.055924051"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.061516456"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.067108864"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.089478485"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.111848106"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.134217727"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.156587348"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.178956969"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.20132659"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.223696211"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.246065832"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.268435456"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.357913941"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.447392426"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.536870911"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.626349396"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.715827881"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.805306366"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.894784851"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="0.984263336"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="1.073741824"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="1.431655765"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="1.789569706"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="2.147483647"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="2.505397588"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="2.863311529"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="3.22122547"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="3.579139411"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="3.937053352"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="4.294967296"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="5.726623061"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="7.158278826"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="8.589934591"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="10.021590356"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="11.453246121"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="12.884901886"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="14.316557651"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="15.748213416"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="17.179869184"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="22.906492245"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="28.633115306"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="30.0"} 61
+metertrail_ingest_phase_seconds_bucket{phase="quota_lookup",le="+Inf"} 61
+metertrail_ingest_phase_seconds_count{phase="quota_lookup"} 61
+metertrail_ingest_phase_seconds_sum{phase="quota_lookup"} 2.62717E-4
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.001"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.001048576"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.001398101"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.001747626"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.002097151"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.002446676"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.002796201"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.003145726"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.003495251"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.003844776"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.004194304"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.005592405"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.006990506"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.008388607"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.009786708"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.011184809"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.01258291"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.013981011"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.015379112"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.016777216"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.022369621"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.027962026"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.033554431"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.039146836"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.044739241"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.050331646"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.055924051"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.061516456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.067108864"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.089478485"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.111848106"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.134217727"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.156587348"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.178956969"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.20132659"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.223696211"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.246065832"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.268435456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.357913941"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.447392426"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.536870911"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.626349396"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.715827881"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.805306366"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.894784851"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="0.984263336"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="1.073741824"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="1.431655765"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="1.789569706"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="2.147483647"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="2.505397588"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="2.863311529"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="3.22122547"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="3.579139411"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="3.937053352"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="4.294967296"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="5.726623061"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="7.158278826"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="8.589934591"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="10.021590356"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="11.453246121"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="12.884901886"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="14.316557651"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="15.748213416"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="17.179869184"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="22.906492245"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="28.633115306"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="30.0"} 0
+metertrail_ingest_phase_seconds_bucket{phase="total",le="+Inf"} 0
+metertrail_ingest_phase_seconds_count{phase="total"} 0
+metertrail_ingest_phase_seconds_sum{phase="total"} 0.0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.001"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.001048576"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.001398101"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.001747626"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.002097151"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.002446676"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.002796201"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.003145726"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.003495251"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.003844776"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.004194304"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.005592405"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.006990506"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.008388607"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.009786708"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.011184809"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.01258291"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.013981011"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.015379112"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.016777216"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.022369621"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.027962026"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.033554431"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.039146836"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.044739241"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.050331646"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.055924051"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.061516456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.067108864"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.089478485"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.111848106"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.134217727"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.156587348"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.178956969"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.20132659"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.223696211"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.246065832"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.268435456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.357913941"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.447392426"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.536870911"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.626349396"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.715827881"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.805306366"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.894784851"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="0.984263336"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="1.073741824"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="1.431655765"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="1.789569706"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="2.147483647"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="2.505397588"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="2.863311529"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="3.22122547"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="3.579139411"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="3.937053352"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="4.294967296"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="5.726623061"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="7.158278826"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="8.589934591"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="10.021590356"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="11.453246121"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="12.884901886"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="14.316557651"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="15.748213416"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="17.179869184"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="22.906492245"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="28.633115306"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="30.0"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_acquire",le="+Inf"} 0
+metertrail_ingest_phase_seconds_count{phase="transaction_acquire"} 0
+metertrail_ingest_phase_seconds_sum{phase="transaction_acquire"} 0.0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.001"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.001048576"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.001398101"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.001747626"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.002097151"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.002446676"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.002796201"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.003145726"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.003495251"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.003844776"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.004194304"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.005592405"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.006990506"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.008388607"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.009786708"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.011184809"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.01258291"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.013981011"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.015379112"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.016777216"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.022369621"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.027962026"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.033554431"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.039146836"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.044739241"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.050331646"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.055924051"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.061516456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.067108864"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.089478485"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.111848106"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.134217727"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.156587348"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.178956969"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.20132659"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.223696211"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.246065832"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.268435456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.357913941"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.447392426"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.536870911"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.626349396"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.715827881"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.805306366"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.894784851"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="0.984263336"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="1.073741824"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="1.431655765"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="1.789569706"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="2.147483647"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="2.505397588"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="2.863311529"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="3.22122547"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="3.579139411"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="3.937053352"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="4.294967296"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="5.726623061"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="7.158278826"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="8.589934591"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="10.021590356"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="11.453246121"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="12.884901886"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="14.316557651"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="15.748213416"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="17.179869184"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="22.906492245"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="28.633115306"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="30.0"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_body",le="+Inf"} 0
+metertrail_ingest_phase_seconds_count{phase="transaction_body"} 0
+metertrail_ingest_phase_seconds_sum{phase="transaction_body"} 0.0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.001"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.001048576"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.001398101"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.001747626"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.002097151"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.002446676"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.002796201"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.003145726"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.003495251"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.003844776"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.004194304"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.005592405"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.006990506"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.008388607"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.009786708"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.011184809"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.01258291"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.013981011"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.015379112"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.016777216"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.022369621"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.027962026"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.033554431"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.039146836"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.044739241"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.050331646"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.055924051"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.061516456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.067108864"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.089478485"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.111848106"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.134217727"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.156587348"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.178956969"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.20132659"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.223696211"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.246065832"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.268435456"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.357913941"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.447392426"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.536870911"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.626349396"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.715827881"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.805306366"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.894784851"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="0.984263336"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="1.073741824"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="1.431655765"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="1.789569706"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="2.147483647"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="2.505397588"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="2.863311529"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="3.22122547"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="3.579139411"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="3.937053352"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="4.294967296"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="5.726623061"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="7.158278826"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="8.589934591"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="10.021590356"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="11.453246121"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="12.884901886"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="14.316557651"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="15.748213416"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="17.179869184"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="22.906492245"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="28.633115306"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="30.0"} 0
+metertrail_ingest_phase_seconds_bucket{phase="transaction_completion",le="+Inf"} 0
+metertrail_ingest_phase_seconds_count{phase="transaction_completion"} 0
+metertrail_ingest_phase_seconds_sum{phase="transaction_completion"} 0.0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.001"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.001048576"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.001398101"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.001747626"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.002097151"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.002446676"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.002796201"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.003145726"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.003495251"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.003844776"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.004194304"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.005592405"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.006990506"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.008388607"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.009786708"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.011184809"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.01258291"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.013981011"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.015379112"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.016777216"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.022369621"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.027962026"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.033554431"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.039146836"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.044739241"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.050331646"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.055924051"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.061516456"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.067108864"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.089478485"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.111848106"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.134217727"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.156587348"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.178956969"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.20132659"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.223696211"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.246065832"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.268435456"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.357913941"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.447392426"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.536870911"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.626349396"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.715827881"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.805306366"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.894784851"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="0.984263336"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="1.073741824"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="1.431655765"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="1.789569706"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="2.147483647"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="2.505397588"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="2.863311529"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="3.22122547"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="3.579139411"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="3.937053352"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="4.294967296"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="5.726623061"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="7.158278826"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="8.589934591"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="10.021590356"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="11.453246121"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="12.884901886"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="14.316557651"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="15.748213416"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="17.179869184"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="22.906492245"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="28.633115306"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="30.0"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_acquire",le="+Inf"} 61
+metertrail_ingest_phase_seconds_count{phase="workspace_lock_acquire"} 61
+metertrail_ingest_phase_seconds_sum{phase="workspace_lock_acquire"} 0.020933634
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.001"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.001048576"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.001398101"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.001747626"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.002097151"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.002446676"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.002796201"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.003145726"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.003495251"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.003844776"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.004194304"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.005592405"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.006990506"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.008388607"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.009786708"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.011184809"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.01258291"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.013981011"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.015379112"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.016777216"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.022369621"} 0
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.027962026"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.033554431"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.039146836"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.044739241"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.050331646"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.055924051"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.061516456"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.067108864"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.089478485"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.111848106"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.134217727"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.156587348"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.178956969"} 1
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.20132659"} 4
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.223696211"} 23
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.246065832"} 33
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.268435456"} 36
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.357913941"} 45
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.447392426"} 58
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.536870911"} 60
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.626349396"} 60
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.715827881"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.805306366"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.894784851"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="0.984263336"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="1.073741824"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="1.431655765"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="1.789569706"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="2.147483647"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="2.505397588"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="2.863311529"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="3.22122547"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="3.579139411"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="3.937053352"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="4.294967296"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="5.726623061"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="7.158278826"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="8.589934591"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="10.021590356"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="11.453246121"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="12.884901886"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="14.316557651"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="15.748213416"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="17.179869184"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="22.906492245"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="28.633115306"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="30.0"} 61
+metertrail_ingest_phase_seconds_bucket{phase="workspace_lock_held",le="+Inf"} 61
+metertrail_ingest_phase_seconds_count{phase="workspace_lock_held"} 61
+metertrail_ingest_phase_seconds_sum{phase="workspace_lock_held"} 17.214919145
+# HELP metertrail_ingest_phase_seconds_max  
+# TYPE metertrail_ingest_phase_seconds_max gauge
+metertrail_ingest_phase_seconds_max{phase="event_identity_lookup"} 0.159286746
+metertrail_ingest_phase_seconds_max{phase="event_insert"} 0.239129646
+metertrail_ingest_phase_seconds_max{phase="identity_insert"} 0.149469164
+metertrail_ingest_phase_seconds_max{phase="ledger_insert"} 0.288657317
+metertrail_ingest_phase_seconds_max{phase="object_identity_lookup"} 0.125690313
+metertrail_ingest_phase_seconds_max{phase="overage_lookup"} 0.0
+metertrail_ingest_phase_seconds_max{phase="prepare"} 0.0
+metertrail_ingest_phase_seconds_max{phase="quota_lookup"} 8.3E-6
+metertrail_ingest_phase_seconds_max{phase="total"} 0.0
+metertrail_ingest_phase_seconds_max{phase="transaction_acquire"} 0.0
+metertrail_ingest_phase_seconds_max{phase="transaction_body"} 0.0
+metertrail_ingest_phase_seconds_max{phase="transaction_completion"} 0.0
+metertrail_ingest_phase_seconds_max{phase="workspace_lock_acquire"} 8.13747E-4
+metertrail_ingest_phase_seconds_max{phase="workspace_lock_held"} 0.668655852
+# HELP metertrail_ingest_queue_bytes  
+# TYPE metertrail_ingest_queue_bytes gauge
+metertrail_ingest_queue_bytes 0.0
+# HELP metertrail_ingest_queue_events  
+# TYPE metertrail_ingest_queue_events gauge
+metertrail_ingest_queue_events 0.0
+# HELP metertrail_ingest_queue_requests  
+# TYPE metertrail_ingest_queue_requests gauge
+metertrail_ingest_queue_requests 0.0
+# HELP metertrail_ingest_waiting_requests  
+# TYPE metertrail_ingest_waiting_requests gauge
+metertrail_ingest_waiting_requests 0.0
+# HELP metertrail_ledger_difference  
+# TYPE metertrail_ledger_difference gauge
+metertrail_ledger_difference 0.0
+# HELP metertrail_oldest_pending_seconds  
+# TYPE metertrail_oldest_pending_seconds gauge
+metertrail_oldest_pending_seconds 0.0
+# HELP metertrail_pending_batches  
+# TYPE metertrail_pending_batches gauge
+metertrail_pending_batches 0.0
+# HELP metertrail_pending_notifications  
+# TYPE metertrail_pending_notifications gauge
+metertrail_pending_notifications 0.0
+# HELP metertrail_quarantined_batches  
+# TYPE metertrail_quarantined_batches gauge
+metertrail_quarantined_batches 0.0
+# HELP metertrail_redis_ingest_group_requests  
+# TYPE metertrail_redis_ingest_group_requests summary
+metertrail_redis_ingest_group_requests_count 61
+metertrail_redis_ingest_group_requests_sum 601.0
+# HELP metertrail_redis_ingest_group_requests_max  
+# TYPE metertrail_redis_ingest_group_requests_max gauge
+metertrail_redis_ingest_group_requests_max 10.0
+# HELP metertrail_redis_ingest_queue_bytes  
+# TYPE metertrail_redis_ingest_queue_bytes gauge
+metertrail_redis_ingest_queue_bytes 0.0
+# HELP metertrail_redis_ingest_queue_events  
+# TYPE metertrail_redis_ingest_queue_events gauge
+metertrail_redis_ingest_queue_events 0.0
+# HELP metertrail_redis_ingest_queue_requests  
+# TYPE metertrail_redis_ingest_queue_requests gauge
+metertrail_redis_ingest_queue_requests 0.0
+# HELP metertrail_worker_slices_total  
+# TYPE metertrail_worker_slices_total counter
+metertrail_worker_slices_total{outcome="busy"} 33.0
+metertrail_worker_slices_total{outcome="idle"} 513.0
+# HELP process_cpu_time_ns_total The "cpu time" used by the Java Virtual Machine process
+# TYPE process_cpu_time_ns_total counter
+process_cpu_time_ns_total 3.23E10
+# HELP process_cpu_usage The "recent cpu usage" for the Java Virtual Machine process
+# TYPE process_cpu_usage gauge
+process_cpu_usage 0.12029795158286778
+# HELP process_files_max_files The maximum file descriptor count
+# TYPE process_files_max_files gauge
+process_files_max_files 1048576.0
+# HELP process_files_open_files The open file descriptor count
+# TYPE process_files_open_files gauge
+process_files_open_files 32.0
+# HELP process_start_time_seconds Start time of the process since unix epoch.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.793194828343E9
+# HELP process_uptime_seconds The uptime of the Java virtual machine
+# TYPE process_uptime_seconds gauge
+process_uptime_seconds 179.322
+# HELP spring_security_authorizations_active_seconds  
+# TYPE spring_security_authorizations_active_seconds summary
+spring_security_authorizations_active_seconds_count{spring_security_authentication_type="n/a",spring_security_authorization_decision="unknown",spring_security_object="request"} 0
+spring_security_authorizations_active_seconds_sum{spring_security_authentication_type="n/a",spring_security_authorization_decision="unknown",spring_security_object="request"} 0.0
+# HELP spring_security_authorizations_active_seconds_max  
+# TYPE spring_security_authorizations_active_seconds_max gauge
+spring_security_authorizations_active_seconds_max{spring_security_authentication_type="n/a",spring_security_authorization_decision="unknown",spring_security_object="request"} 0.0
+# HELP spring_security_authorizations_seconds  
+# TYPE spring_security_authorizations_seconds summary
+spring_security_authorizations_seconds_count{error="none",spring_security_authentication_type="n/a",spring_security_authorization_decision="true",spring_security_object="request"} 1
+spring_security_authorizations_seconds_sum{error="none",spring_security_authentication_type="n/a",spring_security_authorization_decision="true",spring_security_object="request"} 5.70033E-4
+# HELP spring_security_authorizations_seconds_max  
+# TYPE spring_security_authorizations_seconds_max gauge
+spring_security_authorizations_seconds_max{error="none",spring_security_authentication_type="n/a",spring_security_authorization_decision="true",spring_security_object="request"} 5.70033E-4
+# HELP spring_security_filterchains_access_exceptions_before_total  
+# TYPE spring_security_filterchains_access_exceptions_before_total counter
+spring_security_filterchains_access_exceptions_before_total{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 1.0
+# HELP spring_security_filterchains_active_seconds  
+# TYPE spring_security_filterchains_active_seconds summary
+spring_security_filterchains_active_seconds_count{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 0
+spring_security_filterchains_active_seconds_sum{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 0.0
+# HELP spring_security_filterchains_active_seconds_max  
+# TYPE spring_security_filterchains_active_seconds_max gauge
+spring_security_filterchains_active_seconds_max{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 0.0
+# HELP spring_security_filterchains_authentication_anonymous_before_total  
+# TYPE spring_security_filterchains_authentication_anonymous_before_total counter
+spring_security_filterchains_authentication_anonymous_before_total{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 1.0
+# HELP spring_security_filterchains_authorization_before_total  
+# TYPE spring_security_filterchains_authorization_before_total counter
+spring_security_filterchains_authorization_before_total{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 1.0
+# HELP spring_security_filterchains_context_async_before_total  
+# TYPE spring_security_filterchains_context_async_before_total counter
+spring_security_filterchains_context_async_before_total{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 1.0
+# HELP spring_security_filterchains_context_holder_before_total  
+# TYPE spring_security_filterchains_context_holder_before_total counter
+spring_security_filterchains_context_holder_before_total{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 1.0
+# HELP spring_security_filterchains_context_servlet_before_total  
+# TYPE spring_security_filterchains_context_servlet_before_total counter
+spring_security_filterchains_context_servlet_before_total{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 1.0
+# HELP spring_security_filterchains_header_before_total  
+# TYPE spring_security_filterchains_header_before_total counter
+spring_security_filterchains_header_before_total{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 1.0
+# HELP spring_security_filterchains_logout_before_total  
+# TYPE spring_security_filterchains_logout_before_total counter
+spring_security_filterchains_logout_before_total{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 1.0
+# HELP spring_security_filterchains_requestcache_before_total  
+# TYPE spring_security_filterchains_requestcache_before_total counter
+spring_security_filterchains_requestcache_before_total{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 1.0
+# HELP spring_security_filterchains_seconds  
+# TYPE spring_security_filterchains_seconds summary
+spring_security_filterchains_seconds_count{error="none",spring_security_filterchain_position="11",spring_security_filterchain_size="11",spring_security_reached_filter_name="AuthorizationFilter",spring_security_reached_filter_section="before"} 1
+spring_security_filterchains_seconds_sum{error="none",spring_security_filterchain_position="11",spring_security_filterchain_size="11",spring_security_reached_filter_name="AuthorizationFilter",spring_security_reached_filter_section="before"} 0.00990587
+# HELP spring_security_filterchains_seconds_max  
+# TYPE spring_security_filterchains_seconds_max gauge
+spring_security_filterchains_seconds_max{error="none",spring_security_filterchain_position="11",spring_security_filterchain_size="11",spring_security_reached_filter_name="AuthorizationFilter",spring_security_reached_filter_section="before"} 0.00990587
+# HELP spring_security_filterchains_session_management_before_total  
+# TYPE spring_security_filterchains_session_management_before_total counter
+spring_security_filterchains_session_management_before_total{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 1.0
+# HELP spring_security_filterchains_session_urlencoding_before_total  
+# TYPE spring_security_filterchains_session_urlencoding_before_total counter
+spring_security_filterchains_session_urlencoding_before_total{spring_security_filterchain_position="0",spring_security_filterchain_size="0",spring_security_reached_filter_name="none",spring_security_reached_filter_section="before"} 1.0
+# HELP spring_security_http_secured_requests_active_seconds  
+# TYPE spring_security_http_secured_requests_active_seconds summary
+spring_security_http_secured_requests_active_seconds_count 1
+spring_security_http_secured_requests_active_seconds_sum 0.057627518
+# HELP spring_security_http_secured_requests_active_seconds_max  
+# TYPE spring_security_http_secured_requests_active_seconds_max gauge
+spring_security_http_secured_requests_active_seconds_max 0.057639119
+# HELP system_cpu_count The number of processors available to the Java virtual machine
+# TYPE system_cpu_count gauge
+system_cpu_count 2.0
+# HELP system_cpu_usage The "recent cpu usage" of the system the application is running in
+# TYPE system_cpu_usage gauge
+system_cpu_usage 0.12044697579143389
+# HELP system_load_average_1m The sum of the number of runnable entities queued to available processors and the number of runnable entities running on the available processors averaged over a period of time
+# TYPE system_load_average_1m gauge
+system_load_average_1m 0.45068359375
+# HELP tasks_scheduled_execution_active_seconds  
+# TYPE tasks_scheduled_execution_active_seconds summary
+tasks_scheduled_execution_active_seconds_count{code_function="alerts",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="alerts",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="clean",code_namespace="com.metertrail.IngestPipeline",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="clean",code_namespace="com.metertrail.IngestPipeline",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="cleanup",code_namespace="com.metertrail.BudgetAlerts",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="cleanup",code_namespace="com.metertrail.BudgetAlerts",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="cleanup",code_namespace="com.metertrail.WeeklyInsights",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="cleanup",code_namespace="com.metertrail.WeeklyInsights",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="collect",code_namespace="com.metertrail.IngestPipeline",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="collect",code_namespace="com.metertrail.IngestPipeline",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="collect",code_namespace="com.metertrail.Metrics",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="collect",code_namespace="com.metertrail.Metrics",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="collect",code_namespace="com.metertrail.RedisIngest",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="collect",code_namespace="com.metertrail.RedisIngest",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="collect",code_namespace="com.metertrail.UsageCharges",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="collect",code_namespace="com.metertrail.UsageCharges",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="consume",code_namespace="com.metertrail.RedisIngest",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="consume",code_namespace="com.metertrail.RedisIngest",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="freePeriods",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="freePeriods",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="notifications",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="notifications",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="poll",code_namespace="com.metertrail.WorkerLoop",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="poll",code_namespace="com.metertrail.WorkerLoop",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="reconcile",code_namespace="com.metertrail.PaymentReconciliation",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="reconcile",code_namespace="com.metertrail.PaymentReconciliation",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="retention",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="retention",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="schedule",code_namespace="com.metertrail.BudgetAlerts",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="schedule",code_namespace="com.metertrail.BudgetAlerts",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="schedule",code_namespace="com.metertrail.WeeklyInsights",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="schedule",code_namespace="com.metertrail.WeeklyInsights",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_count{code_function="sync",code_namespace="com.metertrail.ModelPriceSync",exception="none",outcome="UNKNOWN"} 0
+tasks_scheduled_execution_active_seconds_sum{code_function="sync",code_namespace="com.metertrail.ModelPriceSync",exception="none",outcome="UNKNOWN"} 0.0
+# HELP tasks_scheduled_execution_active_seconds_max  
+# TYPE tasks_scheduled_execution_active_seconds_max gauge
+tasks_scheduled_execution_active_seconds_max{code_function="alerts",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="clean",code_namespace="com.metertrail.IngestPipeline",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="cleanup",code_namespace="com.metertrail.BudgetAlerts",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="cleanup",code_namespace="com.metertrail.WeeklyInsights",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="collect",code_namespace="com.metertrail.IngestPipeline",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="collect",code_namespace="com.metertrail.Metrics",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="collect",code_namespace="com.metertrail.RedisIngest",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="collect",code_namespace="com.metertrail.UsageCharges",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="consume",code_namespace="com.metertrail.RedisIngest",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="freePeriods",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="notifications",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="poll",code_namespace="com.metertrail.WorkerLoop",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="reconcile",code_namespace="com.metertrail.PaymentReconciliation",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="retention",code_namespace="com.metertrail.Worker",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="schedule",code_namespace="com.metertrail.BudgetAlerts",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="schedule",code_namespace="com.metertrail.WeeklyInsights",exception="none",outcome="UNKNOWN"} 0.0
+tasks_scheduled_execution_active_seconds_max{code_function="sync",code_namespace="com.metertrail.ModelPriceSync",exception="none",outcome="UNKNOWN"} 0.0
+# HELP tasks_scheduled_execution_seconds  
+# TYPE tasks_scheduled_execution_seconds summary
+tasks_scheduled_execution_seconds_count{code_function="alerts",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 3
+tasks_scheduled_execution_seconds_sum{code_function="alerts",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 0.0121504
+tasks_scheduled_execution_seconds_count{code_function="clean",code_namespace="com.metertrail.IngestPipeline",error="none",exception="none",outcome="SUCCESS"} 112
+tasks_scheduled_execution_seconds_sum{code_function="clean",code_namespace="com.metertrail.IngestPipeline",error="none",exception="none",outcome="SUCCESS"} 0.001798906
+tasks_scheduled_execution_seconds_count{code_function="cleanup",code_namespace="com.metertrail.BudgetAlerts",error="none",exception="none",outcome="SUCCESS"} 1
+tasks_scheduled_execution_seconds_sum{code_function="cleanup",code_namespace="com.metertrail.BudgetAlerts",error="none",exception="none",outcome="SUCCESS"} 0.017569923
+tasks_scheduled_execution_seconds_count{code_function="cleanup",code_namespace="com.metertrail.WeeklyInsights",error="none",exception="none",outcome="SUCCESS"} 1
+tasks_scheduled_execution_seconds_sum{code_function="cleanup",code_namespace="com.metertrail.WeeklyInsights",error="none",exception="none",outcome="SUCCESS"} 0.017811636
+tasks_scheduled_execution_seconds_count{code_function="collect",code_namespace="com.metertrail.IngestPipeline",error="none",exception="none",outcome="SUCCESS"} 34
+tasks_scheduled_execution_seconds_sum{code_function="collect",code_namespace="com.metertrail.IngestPipeline",error="none",exception="none",outcome="SUCCESS"} 0.003445801
+tasks_scheduled_execution_seconds_count{code_function="collect",code_namespace="com.metertrail.Metrics",error="none",exception="none",outcome="SUCCESS"} 12
+tasks_scheduled_execution_seconds_sum{code_function="collect",code_namespace="com.metertrail.Metrics",error="none",exception="none",outcome="SUCCESS"} 0.762751041
+tasks_scheduled_execution_seconds_count{code_function="collect",code_namespace="com.metertrail.RedisIngest",error="none",exception="none",outcome="SUCCESS"} 34
+tasks_scheduled_execution_seconds_sum{code_function="collect",code_namespace="com.metertrail.RedisIngest",error="none",exception="none",outcome="SUCCESS"} 0.031485143
+tasks_scheduled_execution_seconds_count{code_function="collect",code_namespace="com.metertrail.UsageCharges",error="none",exception="none",outcome="SUCCESS"} 2
+tasks_scheduled_execution_seconds_sum{code_function="collect",code_namespace="com.metertrail.UsageCharges",error="none",exception="none",outcome="SUCCESS"} 3.00217E-4
+tasks_scheduled_execution_seconds_count{code_function="consume",code_namespace="com.metertrail.RedisIngest",error="none",exception="none",outcome="SUCCESS"} 2913
+tasks_scheduled_execution_seconds_sum{code_function="consume",code_namespace="com.metertrail.RedisIngest",error="none",exception="none",outcome="SUCCESS"} 23.783861131
+tasks_scheduled_execution_seconds_count{code_function="freePeriods",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 3
+tasks_scheduled_execution_seconds_sum{code_function="freePeriods",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 0.016290945
+tasks_scheduled_execution_seconds_count{code_function="notifications",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 82
+tasks_scheduled_execution_seconds_sum{code_function="notifications",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 0.123174419
+tasks_scheduled_execution_seconds_count{code_function="poll",code_namespace="com.metertrail.WorkerLoop",error="none",exception="none",outcome="SUCCESS"} 15370
+tasks_scheduled_execution_seconds_sum{code_function="poll",code_namespace="com.metertrail.WorkerLoop",error="none",exception="none",outcome="SUCCESS"} 14.240142664
+tasks_scheduled_execution_seconds_count{code_function="reconcile",code_namespace="com.metertrail.PaymentReconciliation",error="none",exception="none",outcome="SUCCESS"} 1
+tasks_scheduled_execution_seconds_sum{code_function="reconcile",code_namespace="com.metertrail.PaymentReconciliation",error="none",exception="none",outcome="SUCCESS"} 2.63715E-4
+tasks_scheduled_execution_seconds_count{code_function="retention",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 1
+tasks_scheduled_execution_seconds_sum{code_function="retention",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 0.971362517
+tasks_scheduled_execution_seconds_count{code_function="schedule",code_namespace="com.metertrail.BudgetAlerts",error="none",exception="none",outcome="SUCCESS"} 3
+tasks_scheduled_execution_seconds_sum{code_function="schedule",code_namespace="com.metertrail.BudgetAlerts",error="none",exception="none",outcome="SUCCESS"} 0.128082843
+tasks_scheduled_execution_seconds_count{code_function="schedule",code_namespace="com.metertrail.WeeklyInsights",error="none",exception="none",outcome="SUCCESS"} 3
+tasks_scheduled_execution_seconds_sum{code_function="schedule",code_namespace="com.metertrail.WeeklyInsights",error="none",exception="none",outcome="SUCCESS"} 0.161493244
+tasks_scheduled_execution_seconds_count{code_function="sync",code_namespace="com.metertrail.ModelPriceSync",error="none",exception="none",outcome="SUCCESS"} 1
+tasks_scheduled_execution_seconds_sum{code_function="sync",code_namespace="com.metertrail.ModelPriceSync",error="none",exception="none",outcome="SUCCESS"} 1.60909E-4
+# HELP tasks_scheduled_execution_seconds_max  
+# TYPE tasks_scheduled_execution_seconds_max gauge
+tasks_scheduled_execution_seconds_max{code_function="alerts",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 0.008681598
+tasks_scheduled_execution_seconds_max{code_function="clean",code_namespace="com.metertrail.IngestPipeline",error="none",exception="none",outcome="SUCCESS"} 2.62916E-4
+tasks_scheduled_execution_seconds_max{code_function="cleanup",code_namespace="com.metertrail.BudgetAlerts",error="none",exception="none",outcome="SUCCESS"} 0.017569923
+tasks_scheduled_execution_seconds_max{code_function="cleanup",code_namespace="com.metertrail.WeeklyInsights",error="none",exception="none",outcome="SUCCESS"} 0.017811636
+tasks_scheduled_execution_seconds_max{code_function="collect",code_namespace="com.metertrail.IngestPipeline",error="none",exception="none",outcome="SUCCESS"} 0.002172227
+tasks_scheduled_execution_seconds_max{code_function="collect",code_namespace="com.metertrail.Metrics",error="none",exception="none",outcome="SUCCESS"} 0.195390569
+tasks_scheduled_execution_seconds_max{code_function="collect",code_namespace="com.metertrail.RedisIngest",error="none",exception="none",outcome="SUCCESS"} 0.002599151
+tasks_scheduled_execution_seconds_max{code_function="collect",code_namespace="com.metertrail.UsageCharges",error="none",exception="none",outcome="SUCCESS"} 2.82316E-4
+tasks_scheduled_execution_seconds_max{code_function="consume",code_namespace="com.metertrail.RedisIngest",error="none",exception="none",outcome="SUCCESS"} 2.811594588
+tasks_scheduled_execution_seconds_max{code_function="freePeriods",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 0.01098524
+tasks_scheduled_execution_seconds_max{code_function="notifications",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 0.004841281
+tasks_scheduled_execution_seconds_max{code_function="poll",code_namespace="com.metertrail.WorkerLoop",error="none",exception="none",outcome="SUCCESS"} 0.835787729
+tasks_scheduled_execution_seconds_max{code_function="reconcile",code_namespace="com.metertrail.PaymentReconciliation",error="none",exception="none",outcome="SUCCESS"} 2.63715E-4
+tasks_scheduled_execution_seconds_max{code_function="retention",code_namespace="com.metertrail.Worker",error="none",exception="none",outcome="SUCCESS"} 0.971362517
+tasks_scheduled_execution_seconds_max{code_function="schedule",code_namespace="com.metertrail.BudgetAlerts",error="none",exception="none",outcome="SUCCESS"} 0.121484368
+tasks_scheduled_execution_seconds_max{code_function="schedule",code_namespace="com.metertrail.WeeklyInsights",error="none",exception="none",outcome="SUCCESS"} 0.125758417
+tasks_scheduled_execution_seconds_max{code_function="sync",code_namespace="com.metertrail.ModelPriceSync",error="none",exception="none",outcome="SUCCESS"} 1.60909E-4
+# HELP tomcat_sessions_active_current_sessions  
+# TYPE tomcat_sessions_active_current_sessions gauge
+tomcat_sessions_active_current_sessions 0.0
+# HELP tomcat_sessions_active_max_sessions  
+# TYPE tomcat_sessions_active_max_sessions gauge
+tomcat_sessions_active_max_sessions 0.0
+# HELP tomcat_sessions_alive_max_seconds  
+# TYPE tomcat_sessions_alive_max_seconds gauge
+tomcat_sessions_alive_max_seconds 0.0
+# HELP tomcat_sessions_created_sessions_total  
+# TYPE tomcat_sessions_created_sessions_total counter
+tomcat_sessions_created_sessions_total 0.0
+# HELP tomcat_sessions_expired_sessions_total  
+# TYPE tomcat_sessions_expired_sessions_total counter
+tomcat_sessions_expired_sessions_total 0.0
+# HELP tomcat_sessions_rejected_sessions_total  
+# TYPE tomcat_sessions_rejected_sessions_total counter
+tomcat_sessions_rejected_sessions_total 0.0

@@ -15,18 +15,21 @@ class IngestController {
   final RateLimits limits;
   final IngestAdmission admission;
   final IngestPipeline pipeline;
+  final org.springframework.beans.factory.ObjectProvider<RedisIngest> redis;
 
   IngestController(
       Store store,
       IngestService ingest,
       RateLimits limits,
       IngestAdmission admission,
-      IngestPipeline pipeline) {
+      IngestPipeline pipeline,
+      org.springframework.beans.factory.ObjectProvider<RedisIngest> redis) {
     this.store = store;
     this.ingest = ingest;
     this.limits = limits;
     this.admission = admission;
     this.pipeline = pipeline;
+    this.redis = redis;
   }
 
   static byte[] bounded(InputStream in) throws IOException {
@@ -42,6 +45,11 @@ class IngestController {
 
   @PostMapping(value = "/v1/events/batch", produces = "application/json")
   Object batch(HttpServletRequest req) throws IOException {
+    var transport=redis.getIfAvailable();
+    if (transport!=null) {
+      var scope=store.keyScope(req.getHeader("Authorization"));
+      return ResponseEntity.accepted().body(transport.submit(scope,readBatch(req,scope.project())));
+    }
     if (pipeline.enabled()) return queuedBatch(req);
     try (var lease = admission.enter()) {
       return acceptBatch(req);
@@ -113,7 +121,7 @@ class IngestController {
     var b = Support.parse(new String(bytes, StandardCharsets.UTF_8));
     b = Protocol.defaults(b);
     Protocol.validateEvents(b);
-    Long queued = store.queries().queryForObject(
+    Long queued = redis.getIfAvailable()!=null ? 0L : store.queries().queryForObject(
         "SELECT coalesce(sum(accepted),0) FROM ingest_batches WHERE status IN ('pending','quarantined')", Long.class);
     if (queued > 50000) throw new ApiError(503, "INGEST_BACKLOG_FULL");
     return b;
@@ -124,6 +132,11 @@ class IngestController {
       @PathVariable UUID id,
       @RequestHeader(value = "Authorization", required = false) String bearer) {
     UUID project = store.key(bearer);
+    var transport=redis.getIfAvailable();
+    if (transport!=null) {
+      var result=transport.status(id,project);
+      if (result!=null) return result;
+    }
     var rows =
         store
             .queries()

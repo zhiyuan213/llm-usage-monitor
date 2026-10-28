@@ -55,13 +55,13 @@ Status: `success`, `error`, `cancelled`. Error is a string ≤1 KiB. Business id
 {"batchId":"uuid","received":3,"status":"pending"}
 ```
 
-HTTP 202 is returned only after quota reservation, identity writes, and batch/event persistence commit. The upload receipt always has `status: "pending"`; this fixed value is not live progress. Query only when needed, using the same project key with `GET https://metertrail.com/v1/batches/{batchId}`:
+With Redis transport, HTTP 202 is returned after AOF-backed Redis reception. Quota, identity and version checks happen asynchronously in PostgreSQL; 202 does not reserve quota or guarantee business acceptance. See [Redis reception](redis-ingestion.md). The legacy PostgreSQL transport returns 202 after database acceptance commits. The upload receipt always has `status: "pending"`; this fixed value is not live progress. Query only when needed, using the same project key with `GET https://metertrail.com/v1/batches/{batchId}`:
 
 ```json
 {"status":"completed","received":3,"accepted":2,"duplicates":0,"rejected":1,"errors":[{"index":2,"code":"INVALID_USAGE"}]}
 ```
 
-Indices are zero-based. Individual field errors allow the valid siblings through. Broken envelope/JSON fails the whole request. All-new objects refused solely for quota return 429 `QUOTA_EXCEEDED`; mixed batches expose rejected indices in the final result. `STALE_REVISION` is counted under duplicates and listed in errors for visibility.
+Indices are zero-based. Individual business-state errors allow valid siblings through; field-shape validation fails before enqueueing. Broken envelope/JSON fails the whole request. With Redis transport, all-new objects refused solely for quota produce a completed status result with `accepted:0`, rejected indices and `QUOTA_EXCEEDED`; they do not retroactively change the upload HTTP 202. The legacy PostgreSQL transport returns 429 for this case. Mixed batches expose rejected indices in the final result. `STALE_REVISION` is counted under duplicates and listed in errors for visibility.
 
 | HTTP | Behavior |
 | --- | --- |
@@ -69,7 +69,7 @@ Indices are zero-based. Individual field errors allow the valid siblings through
 | 401/403 | Invalid/revoked key; pause, notify owner |
 | 413 | Split batch; reject a single oversize event |
 | 429 `RATE_LIMITED` | Honor `Retry-After`, jitter retries |
-| 429 `QUOTA_EXCEEDED` | Pause new events; review billing or call `/v1/quota` |
+| 429 `QUOTA_EXCEEDED` (legacy transport) / asynchronous result code (Redis) | Pause new events; review billing or call `/v1/quota` |
 | 503 | Temporary infrastructure problem; bounded exponential retry |
 
 Network retries must preserve original IDs, revision, timestamp, and content. JSON object key order does not affect the canonical hash. Numeric lexical differences are not normalized beyond JSON parsing; clients should replay the original event representation.

@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { useToastNotice } from "./toast";
 import {ref,watch} from 'vue';
 import {api,t,date,errorText,session} from './lib';
 import {usePageSize} from './page-size';
 import QueryControls from './QueryControls.vue';
 const props=defineProps<{refreshToken:any}>();
-const rows=ref<any[]>([]),search=ref(''),applied=ref(''),page=ref(0),size=usePageSize(),total=ref(0),busy=ref(false),error=ref(''),notice=ref('');
+const rows=ref<any[]>([]),search=ref(''),applied=ref(''),page=ref(0),size=usePageSize(),total=ref(0),busy=ref(false),error=ref(''),notice=useToastNotice();
 const selected=ref<any>(null),quote=ref<any>(null),reason=ref(''),confirmation=ref(''),submitting=ref(false),dialogError=ref('');
 let generation=0;
 function statusLabel(status:string){return ({submitting:t('Submitting','提交中'),pending:t('Processing','处理中'),requiresAction:t('Provider action required','支付平台待处理'),unknown:t('Needs reconciliation — do not resubmit','待核对，请勿重复退款'),succeeded:t('Refund confirmed','退款已确认'),failed:t('Refund failed','退款失败'),canceled:t('Refund canceled','退款已取消'),rejected:t('Provider rejected','支付平台拒绝'),completed:t('Paid','已付款')} as Record<string,string>)[status]||status;}
@@ -17,7 +18,7 @@ watch(()=>props.refreshToken,load,{immediate:true});
 <template><section class="panel admin-payments-panel" :aria-busy="busy">
   <p class="muted">{{t('Refund Creem payments within seven days. Review the provider amount before confirming; refunds and subscription cancellation are tracked separately.','处理付款后7天内的 Creem 全额退款。确认前核对支付平台金额；退款与订阅取消分别跟踪。')}}</p>
   <form class="insight-toolbar" @submit.prevent="applied=search;page=0;load()"><label>{{t('Account or transaction','账号或交易编号')}}<input v-model="search" maxlength="256" :disabled="busy" /></label><button class="btn primary" :disabled="busy">{{t('Search','查询')}}</button></form>
-  <p v-if="error" class="notice error" role="alert">{{error}}</p><p v-if="notice" class="notice" role="status">{{notice}}</p>
+  <p v-if="error" class="notice error" role="alert">{{error}}</p>
   <div class="table-wrap"><table><thead><tr><th>{{t('Account','账号')}}</th><th>{{t('Transaction','交易')}}</th><th>{{t('Provider','支付平台')}}</th><th>{{t('Amount','金额')}}</th><th>{{t('Payment / refund','付款 / 退款')}}</th><th>{{t('Recorded (UTC)','记录时间（UTC）')}}</th><th>{{t('Actions','操作')}}</th></tr></thead><tbody>
     <tr v-for="row in rows" :key="row.id"><td>{{row.email}}<br><small>{{row.workspace_name}}</small></td><td>{{row.id}}</td><td>{{row.payment_provider}}</td><td>{{row.amount??t('Unknown','未知')}} {{row.currency}}</td><td>{{statusLabel(row.refund_status||row.status)}}<small v-if="['pending','unknown'].includes(row.cancellation_status)" class="error"><br>{{t('Cancellation needs reconciliation','订阅取消待核对')}}</small><small v-if="row.cancellation_status==='completed'"><br>{{t('Subscription canceled','订阅已取消')}}</small></td><td>{{date(row.created_at)}}</td><td><button v-if="row.payment_provider==='creem'&&row.id.startsWith('tran_')&&!row.refund_status&&row.status==='completed'" type="button" class="admin-refund-action" :disabled="busy" @click="open(row)">{{t('Refund','退款')}}</button><button v-else-if="row.refund_status" type="button" class="text-action" :disabled="busy" @click="reconcile(row)">{{t('Reconcile status','核对状态')}}</button><span v-else class="muted">{{t('Use provider dashboard','在支付平台处理')}}</span></td></tr>
     <tr v-if="!rows.length"><td colspan="7" class="empty-cell">{{busy?t('Loading…','加载中…'):t('No payments.','暂无付款记录。')}}</td></tr>

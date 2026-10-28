@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useToastNotice } from "./toast";
 import {usePageSize} from "./page-size";
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -11,7 +12,7 @@ const routeBase = computed(() => props.admin ? "/app/admin-messages" : "/app/mes
 const threadId = computed(() => String(route.params.detail || ""));
 const items = ref<any[]>([]), total = ref(0), page = ref(0), size=usePageSize();
 const detail = ref<any>(null), busy = ref(false), loading = ref(false), olderBusy = ref(false);
-const error = ref(""), notice = ref(""), composing = ref(false), reply = ref("");
+const error = ref(""), notice = useToastNotice(), composing = ref(false), reply = ref("");
 const draft = reactive({title:"",body:""});
 let epoch = 0, alive = true;
 let pending = { signature: "", id: "" };
@@ -86,7 +87,7 @@ async function older() {
     <p v-if="!admin" class="muted">{{ t('You can also email us at', '遇到问题，也可以发送邮件至') }} <a href="mailto:13428961230@163.com">13428961230@163.com</a>{{ t('.', '。') }}</p>
     <p class="muted">{{ t('Do not include passwords, API keys, payment details, or sensitive event content.', '请勿发送密码、API 密钥、支付信息或敏感事件内容。') }}</p>
     <div v-if="error" class="notice error" role="alert">{{ error }}</div>
-    <div v-if="notice" class="notice success" role="status">{{ notice }}</div>
+
     <div class="support-layout">
       <section class="panel support-list">
         <div class="support-heading"><h2>{{ admin ? t('User conversations', '用户会话') : t('My messages', '我的消息') }}</h2>
