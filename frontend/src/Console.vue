@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import PublicModelPrices from "./PublicModelPrices.vue";
+import ModelPricePolicy from "./ModelPricePolicy.vue";
 import RequestExplorer from "./RequestExplorer.vue";
 import {usePageSize} from "./page-size";
 import KeyQuickstart from "./KeyQuickstart.vue";
 import IngestionNotice from "./IngestionNotice.vue";
 import {readTraceView,traceViewKey} from "./trace-view-state";
+import {inferWindowPolicy,refreshWindow,rollingWindow,type WindowPolicy} from "./date-range";
 import DateRangeFilter from "./DateRangeFilter.vue";
 import SupportMessages from "./SupportMessages.vue";
 import AdminProjects from "./AdminProjects.vue";
@@ -133,21 +136,23 @@ const projects = ref<any[]>([]),
   data = ref<any>({}),
   overview = ref<any>({}),
   recent = ref<any[]>([]);
-const reportWindow=ref({from:new Date(Date.now()-7*86400000).toISOString(),to:new Date().toISOString()});
+const reportPolicy=ref<WindowPolicy>({live:true,days:7});
+const reportWindow=ref(rollingWindow(7));
 const reportWindowQuery=computed(()=>new URLSearchParams(reportWindow.value).toString());
 const traceSort=ref('started_at'),traceDirection=ref('desc'),costFilter=ref('all'),costReasonFilter=ref('');
 let restoreTrace=true;
 function restoreTraceView(){
  const key=traceViewKey(session.value?.id||'',selected.value),saved=readTraceView(sessionStorage,key);
- if(saved&&(saved.route===route.fullPath||Object.keys(route.query).every(k=>k==='project'))){search.value=saved.search;status.value=saved.status;costFilter.value=saved.cost;costReasonFilter.value=saved.reason;traceSort.value=saved.sort;traceDirection.value=saved.direction;tracePage.value=saved.page;reportSize.value=saved.size;reportWindow.value=saved.window;}
- else {search.value='';status.value='';costFilter.value=['unknown','known'].includes(String(route.query.cost))?String(route.query.cost):'all';costReasonFilter.value=['usage_missing','model_missing','pricing_evidence_missing'].includes(String(route.query.costReason))?String(route.query.costReason):'';tracePage.value=0;if(typeof route.query.from==='string'&&typeof route.query.to==='string'&&Number.isFinite(Date.parse(route.query.from))&&Date.parse(route.query.from)<Date.parse(route.query.to))reportWindow.value={from:route.query.from,to:route.query.to};}
+ if(saved&&(saved.route===route.fullPath||Object.keys(route.query).every(k=>k==='project'))){search.value=saved.search;status.value=saved.status;costFilter.value=saved.cost;costReasonFilter.value=saved.reason;traceSort.value=saved.sort;traceDirection.value=saved.direction;tracePage.value=saved.page;reportSize.value=saved.size;reportWindow.value=saved.window;reportPolicy.value=saved.windowPolicy??inferWindowPolicy(saved.window);}
+ else {search.value='';status.value='';costFilter.value=['unknown','known'].includes(String(route.query.cost))?String(route.query.cost):'all';costReasonFilter.value=['usage_missing','model_missing','pricing_evidence_missing'].includes(String(route.query.costReason))?String(route.query.costReason):'';tracePage.value=0;if(typeof route.query.from==='string'&&typeof route.query.to==='string'&&Number.isFinite(Date.parse(route.query.from))&&Date.parse(route.query.from)<Date.parse(route.query.to)) {reportWindow.value={from:route.query.from,to:route.query.to};reportPolicy.value={live:false};}}
  if(costReasonFilter.value)costFilter.value='unknown';
  restoreTrace=false;
 }
-function saveTraceView(){try{sessionStorage.setItem(traceViewKey(session.value?.id||'',selected.value),JSON.stringify({search:search.value,status:status.value,cost:costFilter.value,reason:costReasonFilter.value,sort:traceSort.value,direction:traceDirection.value,page:tracePage.value,size:reportSize.value,window:reportWindow.value,route:route.fullPath}));}catch{}}
+function saveTraceView(){try{sessionStorage.setItem(traceViewKey(session.value?.id||'',selected.value),JSON.stringify({search:search.value,status:status.value,cost:costFilter.value,reason:costReasonFilter.value,sort:traceSort.value,direction:traceDirection.value,page:tracePage.value,size:reportSize.value,window:reportWindow.value,windowPolicy:reportPolicy.value,route:route.fullPath}));}catch{}}
 
+function refreshPage(){if(page.value==='traces'||page.value==='overview'){reportWindow.value=refreshWindow(reportWindow.value,reportPolicy.value);tracePage.value=0;}return refresh();}
 async function copyRecordId(value:string){try{await navigator.clipboard.writeText(value);notice.value=t('ID copied.','ID 已复制。');}catch{error.value=t('Could not copy. Select the full ID from its tooltip or detail page.','复制失败，请从提示或详情页获取完整 ID。');}}
-function applyDates(value:{from:string;to:string}){reportWindow.value=value;tracePage.value=0;activityPage.value=0;refresh(false);}
+function applyDates(value:{from:string;to:string},policy?:WindowPolicy){reportWindow.value=value;reportPolicy.value=policy??inferWindowPolicy(value);tracePage.value=0;activityPage.value=0;refresh(false);}
 function sortTraces(value:string){traceDirection.value=traceSort.value===value&&traceDirection.value==='desc'?'asc':'desc';traceSort.value=value;tracePage.value=0;refresh(false);}
 const pageDescription=computed(()=>({overview:t('Request performance, known model cost and usage for the selected period.','查看所选时间内的请求表现、已知模型费用和用量。'),traces:t('Find requests by name or status, then compare latency and model usage.','检索请求，比较耗时、模型用量与已知费用。'),trace:t('Inspect request steps, model usage and pricing evidence.','查看请求步骤、模型用量与计费依据。'),analytics:t('Compare usage by customer, user or feature.','按客户、用户或功能比较用量。'),'cost-insights':t('Find cost drivers and compare equal-length periods.','定位费用来源，对比等长时间段的变化。'),releases:t('Mark releases and compare before and after.','记录发布时间，对比修改前后的表现。'),weekly:t('Manage weekly email summaries and delivery history.','管理每周邮件摘要与发送记录。'),billing:t('Manage your plan, quota and payment records.','管理套餐、额度和付款记录。'),keys:t('Create and revoke project API keys.','创建与撤销项目接入密钥。'),settings:t('Manage project details and model price versions.','管理项目资料与模型价格版本。'),account:t('Manage sign-in methods and account security.','管理登录方式与账号安全。'),messages:t('Send feedback and follow replies.','提交问题与建议，查看回复。'),workspace:t('Manage projects and shared workspace usage.','管理项目与工作空间共享用量。'),budgets:t('Set model spending reminders.','设置模型费用预算提醒。'),reliability:t('Investigate failed and slow requests.','排查失败请求与慢调用。'),alerts:t('Configure notifications for project activity.','配置项目用量与异常通知。'),audit:t('Review account and workspace actions.','查看账号与工作空间操作记录。') } as Record<string,string>)[page.value]||t('Review and manage this section.','查看与管理本栏目内容。'));
 function fieldLabel(key:string){return ({name:t('Name','名称'),status:t('Status','状态'),model:t('Model','模型'),provider:t('Provider','供应商'),usage:t('Token usage','Token 用量'),durationMs:t('Duration (ms)','耗时（毫秒）'),observationType:t('Step type','步骤类型'),userId:t('User','用户'),customerId:t('Customer','客户'),feature:t('Feature','功能'),metadata:t('Metadata','附加信息'),input:t('Input','输入'),output:t('Output','输出'),tags:t('Tags','标签'),error:t('Error','错误信息'),value:t('Value','评分值'),valueType:t('Value type','评分类型'),targetId:t('Target ID','关联对象 ID'),targetType:t('Target type','关联对象类型')} as Record<string,string>)[key]||key;}
@@ -189,6 +194,9 @@ const search = ref(""),
   keyName = ref(""),
   copied = ref(false);
 const changeTargetPlan = ref("");
+const pricingStatus = ref<any>({});
+const timeBandEnabled = ref(false);
+const timeBand = reactive({timezone:'Asia/Shanghai',start:'00:00',end:'08:00',inputRate:'',outputRate:'',cachedRate:''});
 const newProject = reactive({ name: "", environment: "production" }),
   alert = reactive({ name: "", metric: "error_count", threshold: "10" }),
   price = reactive({
@@ -321,8 +329,10 @@ async function refresh(force = true) {
       else if (page.value === "keys") data.value = await request(path("/keys"));
       else if (page.value === "alerts")
         data.value = await request(path("/alerts"));
-      else if (page.value === "settings")
-        data.value = await request(path("/prices"));
+      else if (page.value === "settings") {
+        const [prices, pricing] = await Promise.all([request(path("/prices")),request(path("/pricing-status"))]);
+        data.value = prices; pricingStatus.value = pricing;
+      }
     }
   } catch (e) {
     if (id !== refreshId) return;
@@ -617,7 +627,7 @@ const usagePercent = computed(() =>
                   ? t('Loading data', '正在加载数据')
                   : t('Refresh', '刷新')
               "
-              @click="refresh()"
+              @click="refreshPage()"
             >
               <RefreshCw
                 :size="15"
@@ -1273,7 +1283,12 @@ const usagePercent = computed(() =>
         >
         <template v-if="page === 'settings' && selected"
           ><section class="panel form-panel">
-            <h2>{{ t("Versioned model pricing", "模型价格版本") }}</h2>
+            <h2>{{ t("Model pricing", "模型价格") }}</h2>
+            <ModelPricePolicy :status="pricingStatus" @change="(enabled)=>run(async()=>{await api(path('/pricing-policy'),{publicPricing:enabled});await refresh()})" />
+          </section>
+          <PublicModelPrices :project="selected" :refresh-key="data" :public-pricing="pricingStatus.public_pricing" />
+          <section class="panel form-panel">
+            <h2>{{t('Custom price override','自定义价格覆盖')}}</h2>
             <p>
               {{
                 t(
@@ -1288,6 +1303,7 @@ const usagePercent = computed(() =>
                 run(async () => {
                   await api(path('/prices'), {
                     ...price,
+                    timeBands: timeBandEnabled ? [{...timeBand,inputRate:Number(timeBand.inputRate),outputRate:Number(timeBand.outputRate),cachedRate:Number(timeBand.cachedRate)}] : [],
                     effectiveAt: new Date(
                       price.effectiveAt + 'Z',
                     ).toISOString(),
@@ -1338,7 +1354,18 @@ const usagePercent = computed(() =>
                   min="0"
                   step="any"
                   required /></label
-              ><button class="btn primary">
+              >
+              <label class="price-band-toggle"><input type="checkbox" v-model="timeBandEnabled" />{{t('Add a time-of-day rate','添加分时费率')}}</label>
+              <template v-if="timeBandEnabled">
+                <label>{{t('Time zone','时区')}}<input v-model="timeBand.timezone" required placeholder="Asia/Shanghai" /></label>
+                <label>{{t('Start (inclusive)','开始（包含）')}}<input type="time" v-model="timeBand.start" required /></label>
+                <label>{{t('End (exclusive)','结束（不含）')}}<input type="time" v-model="timeBand.end" required /></label>
+                <label>{{t('Period input / 1M','时段输入 / 百万')}}<input type="number" min="0" step="any" v-model="timeBand.inputRate" required /></label>
+                <label>{{t('Period output / 1M','时段输出 / 百万')}}<input type="number" min="0" step="any" v-model="timeBand.outputRate" required /></label>
+                <label>{{t('Period cached / 1M','时段缓存 / 百万')}}<input type="number" min="0" step="any" v-model="timeBand.cachedRate" required /></label>
+                <p class="price-band-toggle muted">{{t('This period uses its own rates; other times use the base rates above. Overnight periods are supported.','此时段使用独立费率，其他时间使用上方基础费率；支持跨午夜时段。')}}</p>
+              </template>
+              <button class="btn primary">
                 {{ t("Add price version", "添加价格版本") }}
               </button>
             </form>
@@ -1357,7 +1384,7 @@ const usagePercent = computed(() =>
                 </thead>
                 <tbody>
                   <tr v-for="p in Array.isArray(data) ? data : []">
-                    <td>{{ p.provider }} / {{ p.model }}</td>
+                    <td>{{ p.provider }} / {{ p.model }}<small v-for="band in p.time_bands" class="muted" style="display:block">{{band.timezone}} {{band.start}}–{{band.end}} · {{band.inputRate}} / {{band.outputRate}} / {{band.cachedRate}}</small></td>
                     <td>{{ money(p.input_rate) }}</td>
                     <td>{{ money(p.output_rate) }}</td>
                     <td>{{ money(p.cached_rate) }}</td>
@@ -1367,8 +1394,8 @@ const usagePercent = computed(() =>
                     <td colspan="5" class="empty-cell">
                       {{
                         t(
-                          "No price versions. Model costs will be shown as unknown.",
-                          "未配置价格版本，模型成本将显示为未知。",
+                          "No custom overrides. Recognized public models use the public catalogue.",
+                          "暂无自定义价格，已收录的公共模型自动使用公共价格目录。",
                         )
                       }}
                     </td>

@@ -659,6 +659,36 @@
 .ui-v2 .price-version-form > label:nth-child(4) {
   grid-column: auto;
 }
+.ui-v2 .price-version-form > .price-band-toggle {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+}
+.ui-v2 .price-version-form .price-band-toggle input {
+  width: auto;
+  min-height: auto;
+}
+.ui-v2 .model-price-policy > label {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.6;
+}
+.ui-v2 .model-price-policy > label input {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  margin: 3px 0 0;
+}
+.ui-v2 .public-model-prices { padding: 20px; min-width: 0; }
+.ui-v2 .public-price-search { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 16px 0; }
+.ui-v2 .public-price-search label { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1 1 200px; }
+.ui-v2 .public-price-search select, .ui-v2 .public-price-search input { width: 100%; min-width: 0; }
+.ui-v2 .public-model-prices table { min-width: 800px; }
+.ui-v2 .public-model-prices summary { cursor: pointer; overflow-wrap: anywhere; }
+.ui-v2 .public-price-details { white-space: normal; overflow-wrap: anywhere; max-width: 440px; }
 .ui-v2 .form-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;

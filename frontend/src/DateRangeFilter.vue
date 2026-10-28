@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import {ref,watch} from 'vue';
 import {t} from './lib';
-import {monthDates,rollingWindow,visibleDates,customWindow,type ReportWindow} from './date-range';
-const emit=defineEmits<{change:[value:ReportWindow]}>();
+import {monthDates,rollingWindow,visibleDates,customWindow,inferWindowPolicy,type ReportWindow,type WindowPolicy} from './date-range';
+const emit=defineEmits<{change:[value:ReportWindow,policy?:WindowPolicy]}>();
 const props=defineProps<{busy?:boolean;initial?:string;value?:ReportWindow}>();
 const period=ref(props.initial??'7');
 const initialDates=period.value&&period.value!=='custom'?visibleDates(rollingWindow(Number(period.value))):monthDates();
 const from=ref(initialDates.from),to=ref(initialDates.to),invalid=ref(false);
-watch(()=>props.value,value=>{if(value){const dates=visibleDates(value);from.value=dates.from;to.value=dates.to;const days=(Date.parse(value.to)-Date.parse(value.from))/86400000;period.value=[1,7,30].includes(days)?String(days):'custom';}},{immediate:true});
+watch(()=>props.value,value=>{if(value){const dates=visibleDates(value);from.value=dates.from;to.value=dates.to;const policy=inferWindowPolicy(value);period.value=policy.live&&policy.days?String(policy.days):'custom';}},{immediate:true});
 function choose(){
  invalid.value=false;
  if(period.value==='custom'){const dates=monthDates();from.value=dates.from;to.value=dates.to;}
@@ -17,7 +17,7 @@ function query(){
  if(!period.value)return;
  const value=period.value==='custom'?customWindow(from.value,to.value):rollingWindow(Number(period.value));
  invalid.value=!value;
- if(value){if(period.value!=='custom'){const dates=visibleDates(value);from.value=dates.from;to.value=dates.to;}emit('change',value);}
+ if(value){if(period.value!=='custom'){const dates=visibleDates(value);from.value=dates.from;to.value=dates.to;}emit('change',value,{live:period.value!=='custom'||to.value>=new Date().toISOString().slice(0,10),...(period.value!=='custom'?{days:Number(period.value)}:{})});}
 }
 function edit(){period.value='custom';invalid.value=false;}
 </script>

@@ -373,7 +373,7 @@ class ConsoleController {
             store
                 .queries()
                 .queryForList(
-                    "SELECT o.*,"+CostEvidence.reason("o")+" AS cost_reason,pv.effective_at AS price_effective_at,pv.input_rate,pv.output_rate,pv.cached_rate,CASE WHEN o.type='observation' THEN NOT EXISTS(SELECT 1 FROM"
+                    "SELECT o.*,"+CostEvidence.reason("o")+" AS cost_reason,pv.effective_at AS price_effective_at,coalesce((o.applied_rates->>'input')::numeric,pv.input_rate) AS input_rate,coalesce((o.applied_rates->>'output')::numeric,pv.output_rate) AS output_rate,coalesce((o.applied_rates->>'cached')::numeric,pv.cached_rate) AS cached_rate,pv.source AS price_source,CASE WHEN o.type='observation' THEN NOT EXISTS(SELECT 1 FROM"
                         + " objects t WHERE t.project_id=o.project_id AND t.type='trace' AND"
                         + " t.trace_id=o.trace_id) WHEN o.type='score' THEN NOT EXISTS(SELECT 1"
                         + " FROM objects t WHERE t.project_id=o.project_id AND"
@@ -523,10 +523,52 @@ class ConsoleController {
   @GetMapping("/api/projects/{project}/prices")
   List<Map<String, Object>> prices(@PathVariable UUID project, HttpServletRequest req) {
     store.project(uid(req), project);
-    return store
-        .queries()
-        .queryForList(
-            "SELECT * FROM price_versions WHERE project_id=? ORDER BY effective_at DESC", project);
+    var prices=store.queries().queryForList("SELECT * FROM price_versions WHERE project_id=? ORDER BY effective_at DESC",project);
+    prices.forEach(p->p.put("time_bands",Support.parse(p.get("time_bands").toString())));
+    return prices;
+  }
+
+  @GetMapping("/api/projects/{project}/pricing-status")
+  Map<String,Object> pricingStatus(@PathVariable UUID project,HttpServletRequest req) {
+    var p=store.project(uid(req),project);
+    var result=new HashMap<String,Object>(store.queries().queryForMap("SELECT * FROM model_price_sync WHERE id=1"));
+    result.put("public_pricing",p.get("public_pricing"));
+    return result;
+  }
+
+  @GetMapping("/api/projects/{project}/public-prices")
+  Map<String,Object> publicPrices(@PathVariable UUID project,
+      @RequestParam(defaultValue="") String q, @RequestParam(defaultValue="") String provider,
+      @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="25") int size,
+      HttpServletRequest req) {
+    store.project(uid(req),project);
+    Support.require(q.length()<=128 && provider.length()<=64 && page>=0 && page<=100000
+        && size>=1 && size<=100,"INVALID_FILTER");
+    String latest="WITH latest AS (SELECT DISTINCT ON(provider,model) * FROM price_versions"
+        + " WHERE project_id IS NULL AND effective_at<=now() ORDER BY provider,model,effective_at DESC) ";
+    String filter=" FROM latest p WHERE p.available AND (?='' OR p.provider=?)"
+        + " AND (?='' OR position(lower(?) in lower(p.provider||' '||p.model))>0)";
+    var items=store.queries().queryForList(latest+"SELECT p.id,p.provider,p.model,p.input_rate,p.output_rate,"
+        + "p.cached_rate,p.cached_known,p.currency,p.effective_at,p.fetched_at,p.source,p.time_bands,"
+        + "EXISTS(SELECT 1 FROM price_versions c WHERE c.project_id=? AND c.provider=p.provider"
+        + " AND c.model=p.model AND c.effective_at<=now()) AS custom_override"
+        + filter+" ORDER BY p.provider,p.model LIMIT ? OFFSET ?",
+        project,provider,provider,q.trim(),q.trim(),size,page*size);
+    items.forEach(p->p.put("time_bands",Support.parse(p.get("time_bands").toString())));
+    long total=store.queries().queryForObject(latest+"SELECT count(*)"+filter,Long.class,
+        provider,provider,q.trim(),q.trim());
+    var providers=store.queries().queryForList(latest+"SELECT DISTINCT provider FROM latest WHERE available ORDER BY provider",String.class);
+    return Map.of("items",items,"total",total,"providers",providers);
+  }
+
+  @PostMapping("/api/projects/{project}/pricing-policy")
+  @Transactional
+  Map<String,String> pricingPolicy(@PathVariable UUID project,@RequestBody JsonNode b,HttpServletRequest req) {
+    var p=store.project(uid(req),project);
+    Support.require(b.path("publicPricing").isBoolean(),"INVALID_PRICING_POLICY");
+    store.db.update("UPDATE projects SET public_pricing=? WHERE id=?",b.path("publicPricing").asBoolean(),project);
+    store.audit(uid(req),(UUID)p.get("workspace_id"),"project.pricing-policy",project.toString(),true,req);
+    return Map.of("status","updated");
   }
 
   @PostMapping("/api/projects/{project}/prices")
@@ -544,11 +586,14 @@ class ConsoleController {
     } catch (Exception e) {
       throw new ApiError(400, "INVALID_TIMESTAMP");
     }
+    String bands;
+    try { bands=ModelPricing.bands(b.path("timeBands")).toString(); }
+    catch (Exception ex) { throw new ApiError(400,"INVALID_PRICE_TIME_BANDS"); }
     UUID id = UUID.randomUUID();
     store.db.update(
         "INSERT INTO"
-            + " price_versions(id,project_id,provider,model,effective_at,input_rate,output_rate,cached_rate)"
-            + " VALUES(?,?,?,?,?,?,?,?)",
+            + " price_versions(id,project_id,provider,model,effective_at,input_rate,output_rate,cached_rate,time_bands)"
+            + " VALUES(?,?,?,?,?,?,?,?,?::jsonb)",
         id,
         project,
         provider,
@@ -556,7 +601,7 @@ class ConsoleController {
         Timestamp.from(effective),
         input,
         output,
-        cached);
+        cached, bands);
     store.audit(uid(req), (UUID) p.get("workspace_id"), "price.create", id.toString(), true, req);
     return Map.of("id", id);
   }

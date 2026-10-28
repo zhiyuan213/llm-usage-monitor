@@ -126,39 +126,13 @@ class Worker {
                     String type = e.path("type").asText();
                     BigDecimal cost = null;
                     UUID price = null;
+                    String appliedRates = null;
                     Instant started = Instant.parse(e.path("startedAt").asText());
                     if (type.equals("observation")
                         && d.path("observationType").asText().equals("generation")) {
-                      var prices =
-                          store
-                              .queries()
-                              .queryForList(
-                                  "SELECT * FROM price_versions WHERE project_id=? AND provider=?"
-                                      + " AND model=? AND effective_at<=? ORDER BY effective_at"
-                                      + " DESC LIMIT 1",
-                                  project,
-                                  d.path("provider").asText(),
-                                  d.path("model").asText(),
-                                  Timestamp.from(started));
-                      JsonNode u = d.path("usage");
-                      if (!prices.isEmpty()
-                          && u.path("inputTokens").isNumber()
-                          && u.path("outputTokens").isNumber()
-                          && u.path("cachedInputTokens").isNumber()) {
-                        var p = prices.get(0);
-                        price = (UUID) p.get("id");
-                        cost =
-                            BigDecimal.valueOf(
-                                    u.path("inputTokens").asLong()
-                                        - u.path("cachedInputTokens").asLong())
-                                .multiply((BigDecimal) p.get("input_rate"))
-                                .add(
-                                    BigDecimal.valueOf(u.path("outputTokens").asLong())
-                                        .multiply((BigDecimal) p.get("output_rate")))
-                                .add(
-                                    BigDecimal.valueOf(u.path("cachedInputTokens").asLong())
-                                        .multiply((BigDecimal) p.get("cached_rate")))
-                                .divide(BigDecimal.valueOf(1_000_000));
+                      var quote = ModelPricing.quote(store, project, d, started);
+                      if (quote != null) {
+                        price = quote.version(); cost = quote.cost(); appliedRates = quote.rates();
                       }
                     }
                     Collections.addAll(
@@ -173,7 +147,7 @@ class Worker {
                         Timestamp.from(started),
                         d.toString(),
                         cost,
-                        price);
+                        price, appliedRates);
                     if (type.equals("observation")) {
                       Collections.addAll(
                           costArgs,
@@ -183,7 +157,7 @@ class Worker {
                           Timestamp.from(started),
                           d.has("usage") ? d.path("usage").toString() : null,
                           price,
-                          cost);
+                          cost, appliedRates);
                       costCount++;
                     }
                   }
@@ -191,8 +165,8 @@ class Worker {
                   // Multiple client batches may contain revisions of the same object. PostgreSQL
                   // ON CONFLICT DO UPDATE must see that identity only once in each INSERT.
                   var latest = new LinkedHashMap<List<Object>, List<Object>>();
-                  for (int offset = 0; offset < objectArgs.size(); offset += 11) {
-                    var values = new ArrayList<>(objectArgs.subList(offset, offset + 11));
+                  for (int offset = 0; offset < objectArgs.size(); offset += 12) {
+                    var values = new ArrayList<>(objectArgs.subList(offset, offset + 12));
                     var key = List.of(values.get(1), values.get(2));
                     var old = latest.get(key);
                     if (old == null
@@ -204,23 +178,23 @@ class Worker {
                   if (!events.isEmpty()) {
                     store.db.update(
                         "INSERT INTO"
-                            + " objects(project_id,type,object_id,revision,trace_id,span_id,parent_span_id,started_at,data,cost,price_version)"
+                            + " objects(project_id,type,object_id,revision,trace_id,span_id,parent_span_id,started_at,data,cost,price_version,applied_rates)"
                             + " VALUES "
                             + String.join(
                                 ",",
                                 Collections.nCopies(
-                                    latest.size(), "(?,?,?,?,?,?,?,?,?::jsonb,?,?)"))
+                                    latest.size(), "(?,?,?,?,?,?,?,?,?::jsonb,?,?,?::jsonb)"))
                             + " ON CONFLICT(project_id,type,object_id) DO UPDATE SET"
-                            + " revision=excluded.revision,trace_id=excluded.trace_id,span_id=excluded.span_id,parent_span_id=excluded.parent_span_id,started_at=excluded.started_at,data=excluded.data,cost=excluded.cost,price_version=excluded.price_version"
+                            + " revision=excluded.revision,trace_id=excluded.trace_id,span_id=excluded.span_id,parent_span_id=excluded.parent_span_id,started_at=excluded.started_at,data=excluded.data,cost=excluded.cost,price_version=excluded.price_version,applied_rates=excluded.applied_rates"
                             + " WHERE objects.revision<excluded.revision",
                         objectArgs.toArray());
                     if (costCount > 0)
                       store.db.update(
                           "INSERT INTO"
-                              + " cost_entries(project_id,object_id,revision,started_at,usage,price_version,estimated_cost)"
+                              + " cost_entries(project_id,object_id,revision,started_at,usage,price_version,estimated_cost,applied_rates)"
                               + " VALUES "
                               + String.join(
-                                  ",", Collections.nCopies(costCount, "(?,?,?,?,?::jsonb,?,?)"))
+                                  ",", Collections.nCopies(costCount, "(?,?,?,?,?::jsonb,?,?,?::jsonb)"))
                               + " ON CONFLICT DO NOTHING",
                           costArgs.toArray());
                     store.db.update(

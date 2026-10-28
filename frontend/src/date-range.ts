@@ -1,4 +1,14 @@
 export type ReportWindow = {from:string;to:string};
+export type WindowPolicy = {live:boolean;days?:number};
+export function inferWindowPolicy(value:ReportWindow,now=new Date()):WindowPolicy {
+ const duration=(Date.parse(value.to)-Date.parse(value.from))/86400000;
+ const live=value.to.slice(0,10)===now.toISOString().slice(0,10)&&Date.parse(value.to)<=now.getTime();
+ return {live,...(live&&[1,7,30].includes(duration)?{days:duration}:{})};
+}
+export function refreshWindow(value:ReportWindow,policy:WindowPolicy,now=new Date()):ReportWindow {
+ if(!policy.live)return value;
+ return policy.days?rollingWindow(policy.days,now):{from:value.from,to:now.toISOString()};
+}
 const DAY=86400000;
 export function monthDates(now=new Date()) {
  return {from:new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),1)).toISOString().slice(0,10),to:new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()+1,0)).toISOString().slice(0,10)};
