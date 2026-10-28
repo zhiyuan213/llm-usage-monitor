@@ -6,7 +6,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(
     exclude =
-        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+        org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
             .class)
 @EnableScheduling
 public class Application {

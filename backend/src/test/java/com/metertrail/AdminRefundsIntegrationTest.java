@@ -12,9 +12,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.*;
+import org.springframework.test.context.bean.override.mockito.*;
 import org.springframework.test.context.*;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -25,7 +25,7 @@ import org.testcontainers.junit.jupiter.*;
 class AdminRefundsIntegrationTest {
   @Container static PostgreSQLContainer<?> pg=new PostgreSQLContainer<>("postgres:16-alpine");
   @DynamicPropertySource static void properties(DynamicPropertyRegistry r){r.add("spring.datasource.url",pg::getJdbcUrl);r.add("spring.datasource.username",pg::getUsername);r.add("spring.datasource.password",pg::getPassword);}
-  @Autowired MockMvc mvc; @Autowired Store store; @SpyBean CreemPayments creem; @MockBean RateLimits limits;
+  @Autowired MockMvc mvc; @Autowired Store store; @MockitoSpyBean CreemPayments creem; @MockitoBean RateLimits limits;
   ObjectMapper json=new ObjectMapper();Cookie admin,user;UUID workspace;String id,sub,csrf="refund-test-csrf";ObjectNode payment,subscription;
   Cookie account(boolean role){UUID uid=UUID.randomUUID(),wid=UUID.randomUUID();String token=Support.token();store.db.update("INSERT INTO users(id,email,verified,is_admin) VALUES(?,?,true,?)",uid,uid+"@test.local",role);store.db.update("INSERT INTO workspaces(id,owner_id,name) VALUES(?,?,'refund test')",wid,uid);store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(token),uid,csrf);if(!role)workspace=wid;return new Cookie("mt_session",token);}
   @BeforeEach void setup(){admin=account(true);user=account(false);id="tran_"+UUID.randomUUID().toString().replace("-","");sub="sub_"+UUID.randomUUID().toString().replace("-","");store.db.update("UPDATE workspaces SET payment_provider='creem',plan='Core',customer_id='cust_Test',subscription_id=?,subscription_status='active',used_units=17 WHERE id=?",sub,workspace);store.db.update("INSERT INTO payments(id,workspace_id,status,amount,currency) VALUES(?,?,'completed',29,'USD')",id,workspace);

@@ -45,7 +45,7 @@ class PaymentsController {
     var requestFactory = new org.springframework.http.client.JdkClientHttpRequestFactory(
         java.net.http.HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build());
     requestFactory.setReadTimeout(Duration.ofSeconds(15));
-    this.paddleClient = RestClient.builder().requestFactory(requestFactory).build();
+    this.paddleClient = Support.restClient().requestFactory(requestFactory).build();
     this.store = store;
     this.checkoutConfiguration = checkoutConfiguration;
     this.publicUrl = publicUrl.replaceAll("/+$", "");

@@ -11,9 +11,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -848,7 +848,7 @@ class IngestIntegrationTest {
   @Autowired Challenges challenges;
   @Autowired org.springframework.transaction.support.TransactionTemplate tx;
   @Autowired MailDelivery mail;
-  @MockBean RateLimits rates;
+  @MockitoBean RateLimits rates;
   UUID user, workspace, project;
   String key;
 
@@ -1764,7 +1764,7 @@ class IngestIntegrationTest {
       var response=new org.springframework.mock.web.MockHttpServletResponse();
       int before=store.db.queryForObject("SELECT count(*) FROM users",Integer.class);
       try(var factory=org.mockito.Mockito.mockStatic(org.springframework.web.client.RestClient.class)) {
-        factory.when(org.springframework.web.client.RestClient::create).thenReturn(client);
+        factory.when(org.springframework.web.client.RestClient::builder).thenReturn(builder);
         if(mode.equals("new-account")) {
           controller.callback("synthetic-code","synthetic-state","",request,response);
           assertEquals(before+1,store.db.queryForObject("SELECT count(*) FROM users",Integer.class));

@@ -9,9 +9,9 @@ import java.time.Instant;
 import java.util.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -39,7 +39,7 @@ class RedisIngestIntegrationTest {
   @Autowired Store store;
   @Autowired RedisIngest queue;
   @Autowired MockMvc mvc;
-  @MockBean RateLimits limits;
+  @MockitoBean RateLimits limits;
   UUID user,workspace,project;
   String key;
   @BeforeEach void fixture() {

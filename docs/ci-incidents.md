@@ -1,5 +1,15 @@
 # CI failure records
 
+## 2026-10-28 new dependency advisories block email/price-page release
+
+- Commit `c6c6e98`, run `40707348467`: Trivy failed with 10 HIGH/CRITICAL findings in the existing Spring Boot 3.5.16 dependency tree (Jackson databind, Netty handler, Tomcat core and Spring MVC). Gitleaks passed. This is a genuine dependency gate, not a transient scan outage; deployment remained blocked.
+- Spring's primary advisories for CVE-2026-47884 and CVE-2026-47890 list public fixes in Spring Framework 7.0.9 and enterprise-only fixes for 6.2.20. Maven Central has no newer public 6.2 patch, so the fix moves to Boot 4.0.9's managed Spring 7.0.10 / Tomcat 11.0.27 / Netty 4.2.19 / Jackson 2.21.7 combination rather than ignoring findings.
+- Preserve the JSON protocol using Boot's documented `spring-boot-jackson2` compatibility module, `spring.http.converters.preferred-json-mapper=jackson2`, and `spring.jackson2.deserialization.fail-on-trailing-tokens=true`. Adapt Boot's moved JDBC/security/MockMvc packages and replace removed MockBean/SpyBean with MockitoBean/MockitoSpyBean. Testcontainers stays on 1.21.4 to retain its existing API.
+- Local verification: full backend verify passed 220 tests with zero failures/errors/skips; Trivy 0.70.0 backend dependency scan found zero HIGH/CRITICAL findings.
+- Prevention: rerun full backend contract tests and inspect the exact follow-up commit's dependency scan, SDK and image checks before release. No CVE suppressions or severity reductions were added.
+- References: https://spring.io/security/cve-2026-47884/ ; https://spring.io/security/cve-2026-47890/ ; https://docs.spring.io/spring-boot/4.0/reference/features/json.html#features.json.jackson2
+
+
 ## 2026-10-28 policy date duplicated in web-image acceptance
 
 - Commit `810f52f`, run `40622969112`: backend, frontend-sdk and security passed; images failed at `/terms` in `check-web-image.py`.

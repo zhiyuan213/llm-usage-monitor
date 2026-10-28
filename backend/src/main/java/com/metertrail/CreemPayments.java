@@ -34,7 +34,7 @@ class CreemPayments {
     var factory=new org.springframework.http.client.JdkClientHttpRequestFactory(
         java.net.http.HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build());
     factory.setReadTimeout(Duration.ofSeconds(15));
-    client=RestClient.builder().requestFactory(factory).defaultHeader("User-Agent","MeterTrail-billing/1.0").build();
+    client=Support.restClient().requestFactory(factory).defaultHeader("User-Agent","MeterTrail-billing/1.0").build();
   }
 
   boolean enabled() { return checkoutEnabled; }

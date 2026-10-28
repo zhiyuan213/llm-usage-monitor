@@ -13,9 +13,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.*;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -31,7 +31,7 @@ class InsightsIntegrationTest {
   }
   @Autowired Store store;@Autowired Insights insights;@Autowired WeeklyInsights weekly;@Autowired MockMvc mvc;
   @Autowired ReliabilityInsights reliability;@Autowired BudgetAlerts budgets;
-  @MockBean RateLimits limits;
+  @MockitoBean RateLimits limits;
   final ObjectMapper json=new ObjectMapper();
   UUID user,workspace,project,other;Cookie cookie,otherCookie;String csrf="insights-test-csrf";
   Instant end,middle,start;

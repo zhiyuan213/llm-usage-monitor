@@ -124,7 +124,7 @@ class GithubController {
       return;
     }
     if (code == null || code.isBlank()) throw new ApiError(400, "OAUTH_FAILED");
-    var http = RestClient.create();
+    var http = Support.restClient().build();
     JsonNode token =
         http.post()
             .uri("https://github.com/login/oauth/access_token")

@@ -11,6 +11,11 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 final class Support {
+  static org.springframework.web.client.RestClient.Builder restClient() {
+    return org.springframework.web.client.RestClient.builder().messageConverters(converters ->
+        converters.add(0, new org.springframework.http.converter.json.MappingJackson2HttpMessageConverter(JSON)));
+  }
+
   static final SecureRandom RANDOM = new SecureRandom();
   private static final ObjectMapper JSON = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 

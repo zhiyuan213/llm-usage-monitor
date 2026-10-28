@@ -1,4 +1,7 @@
 spring:
+  http:
+    converters:
+      preferred-json-mapper: jackson2
   application:
     name: metertrail
   datasource:
@@ -25,7 +28,7 @@ spring:
       mail.smtp.connectiontimeout: 5000
       mail.smtp.timeout: 5000
       mail.smtp.writetimeout: 5000
-  jackson:
+  jackson2:
     deserialization:
       fail-on-trailing-tokens: true
 server:
