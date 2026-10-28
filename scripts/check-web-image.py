@@ -67,6 +67,10 @@ def main():
                     raise
                 time.sleep(0.5)
         import re
+        policy_source = (ROOT / 'frontend/src/policy-content.ts').read_text(encoding='utf-8')
+        policy_date = re.search(r"export const policyDate\s*=\s*['\"](\d{4}-\d{2}-\d{2})['\"]", policy_source)
+        assert policy_date, 'Missing published policy date'
+        expected_policy_date = policy_date.group(1).encode()
         assets = re.findall(r'(?:src|href)="(/(?:assets|fonts)/[^"<>]+)"', html)
         paths = ["/", "/terms", "/privacy", "/refunds", "/security", "/demo", "/tutorials", "/tutorials/nodejs", "/tutorials/python", "/tutorials/java", "/tutorials/rest", "/sitemap.xml", "/robots.txt", "/googlecc6b6e16e288c986.html", "/fonts/NotoSansSC-ui.woff2", *assets]
         for path in paths:
@@ -75,7 +79,7 @@ def main():
                 if response.status != 200 or not content:
                     raise AssertionError("Unreadable public file: " + path)
                 if path in {'/terms','/privacy','/refunds'}:
-                    assert b'2026-10-27' in content and b'13428961230@163.com' in content, path
+                    assert expected_policy_date in content and b'13428961230@163.com' in content, path
                     assert b'Deployment policy template' not in content, path
                 if path == "/googlecc6b6e16e288c986.html" and content != (ROOT / "frontend/public" / path[1:]).read_bytes():
                     raise AssertionError("Google verification file changed")

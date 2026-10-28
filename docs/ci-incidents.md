@@ -1,5 +1,13 @@
 # CI failure records
 
+## 2026-10-28 policy date duplicated in web-image acceptance
+
+- Commit `810f52f`, run `40622969112`: backend, frontend-sdk and security passed; images failed at `/terms` in `check-web-image.py`.
+- Root cause: the cancellation policy updated its published date to 2026-10-28, while image acceptance independently hard-coded 2026-10-27. The frontend policy regression was updated, but the image contract was missed.
+- Fix: image acceptance reads the required ISO policy date from the canonical `policy-content.ts` source, rejects a missing date and verifies that all three built policy pages actually contain that date. Operator identity and template-removal checks remain blocking.
+- Prevention: run the production web-image acceptance whenever changing public policy content, dates or generated pages; preserve the date assertion rather than weakening it to permit arbitrary stale pages. Deployment of `810f52f` remained blocked after the failed image check.
+- Local fix verification: `python scripts/check-web-image.py` passed, including non-root UID 101, restrictive 0600/0700 build context, all three policy pages, retained assets, private-page headers and proxied gzip byte checks. No application source changed in this follow-up.
+
 ## 2026-10-27 retained-assets acceptance fixture permissions
 
 - Commit `fb81119`, run `40468486687`: backend, frontend-sdk and security passed; images failed in `check-web-image.py` when requesting the previous-release fixture (HTTP 404).
