@@ -569,64 +569,41 @@ finally:
 
 ```java
 import com.metertrail.sdk.MeterTrail;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public class Scenario {
+  public record Event<T>(String type, String objectId, String traceId, String spanId, String startedAt, T data) {}
+  public record TraceData(String name, String status, long durationMs, String userId, String customerId, String feature) {}
+  public record ObservationData(String observationType, String status, long durationMs, String provider, String model, Usage usage) {}
+  @JsonInclude(JsonInclude.Include.ALWAYS)
+  public record Usage(Long inputTokens, Long outputTokens, Long cachedInputTokens) {}
+  public record ScoreData(String name, String targetType, String targetId, String valueType, double value) {}
+
   public static void main(String[] args) throws Exception {
     String traceId = UUID.randomUUID().toString().replace("-", "");
     if (traceId == null || !traceId.matches("[0-9a-f]{32}"))
       throw new IllegalArgumentException("Use the earlier request traceId in METERTRAIL_TRACE_ID");
-    System.out.println("traceId: " + traceId); // Keep for a later score.
-    // Use actual request/step start times and measured durations in your app.
-    String payload = """
-[
-  [
-    {
-      "type": "trace",
-      "objectId": "trace-@trace@",
-      "traceId": "@trace@",
-      "startedAt": "@time@",
-      "data": {
-        "name": "Document analysis",
-        "status": "success",
-        "durationMs": 2100,
-        "userId": "demo-user",
-        "customerId": "demo-customer",
-        "feature": "document-analysis"
-      }
-    },
-    {
-      "type": "observation",
-      "objectId": "obs-@trace@-1",
-      "traceId": "@trace@",
-      "spanId": "0000000000000001",
-      "startedAt": "@time@",
-      "data": {
-        "observationType": "generation",
-        "status": "success",
-        "durationMs": 2000,
-        "provider": "example",
-        "model": "example-model",
-        "usage": {
-          "inputTokens": 1500,
-          "outputTokens": 400,
-          "cachedInputTokens": 0
-        }
-      }
-    }
-  ]
-]
-      """.replace("@trace@", traceId).replace("@time@", Instant.now().toString())
-        .replace("@score@", UUID.randomUUID().toString());
-    var batches = new ObjectMapper().readTree(payload);
+    System.out.println("traceId: " + traceId); // Keep this ID for later feedback.
+    String startedAt = Instant.now().toString(); // Use actual request/step start times.
+    List<List<Event<?>>> batches = List.of(
+      List.<Event<?>>of(
+        new Event<>("trace", "trace-" + traceId + "", traceId, null, startedAt,
+            new TraceData("Document analysis", "success", 2100L, "demo-user", "demo-customer", "document-analysis")),
+        new Event<>("observation", "obs-" + traceId + "-1", traceId, "0000000000000001", startedAt,
+            new ObservationData("generation", "success", 2000L, "example", "example-model", new Usage(1500L, 400L, 0L)))
+      )
+    );
+    ObjectMapper mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     try (var sdk = new MeterTrail(System.getenv("METERTRAIL_ENDPOINT"),
         System.getenv("METERTRAIL_API_KEY"), "document-api", System.out::println, System.err::println)) {
-      for (var events : batches) {
-        for (var event : events)
-          if (!sdk.record(event)) throw new IllegalStateException("SDK buffer rejected event");
+      for (List<Event<?>> events : batches) {
+        for (Event<?> event : events)
+          if (!sdk.record(mapper.valueToTree(event))) throw new IllegalStateException("SDK buffer rejected event");
         if (!sdk.flush(Duration.ofSeconds(30)))
           throw new IllegalStateException("SDK could not finish sending; retain buffered events");
       }
@@ -639,106 +616,49 @@ public class Scenario {
 
 ```java
 import com.metertrail.sdk.MeterTrail;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public class Scenario {
+  public record Event<T>(String type, String objectId, String traceId, String spanId, String startedAt, T data) {}
+  public record TraceData(String name, String status, long durationMs, String userId, String customerId, String feature) {}
+  public record ObservationData(String observationType, String status, long durationMs, String provider, String model, Usage usage) {}
+  @JsonInclude(JsonInclude.Include.ALWAYS)
+  public record Usage(Long inputTokens, Long outputTokens, Long cachedInputTokens) {}
+  public record ScoreData(String name, String targetType, String targetId, String valueType, double value) {}
+
   public static void main(String[] args) throws Exception {
     String traceId = UUID.randomUUID().toString().replace("-", "");
     if (traceId == null || !traceId.matches("[0-9a-f]{32}"))
       throw new IllegalArgumentException("Use the earlier request traceId in METERTRAIL_TRACE_ID");
-    System.out.println("traceId: " + traceId); // Keep for a later score.
-    // Use actual request/step start times and measured durations in your app.
-    String payload = """
-[
-  [
-    {
-      "type": "observation",
-      "objectId": "obs-@trace@-1",
-      "traceId": "@trace@",
-      "spanId": "0000000000000001",
-      "startedAt": "@time@",
-      "data": {
-        "observationType": "generation",
-        "status": "success",
-        "durationMs": 2000,
-        "provider": "example",
-        "model": "example-model",
-        "usage": {
-          "inputTokens": 2500,
-          "outputTokens": 500,
-          "cachedInputTokens": 0
-        }
-      }
-    }
-  ],
-  [
-    {
-      "type": "observation",
-      "objectId": "obs-@trace@-2",
-      "traceId": "@trace@",
-      "spanId": "0000000000000002",
-      "startedAt": "@time@",
-      "data": {
-        "observationType": "generation",
-        "status": "success",
-        "durationMs": 1000,
-        "provider": "example",
-        "model": "example-model",
-        "usage": {
-          "inputTokens": 1000,
-          "outputTokens": 200,
-          "cachedInputTokens": 0
-        }
-      }
-    }
-  ],
-  [
-    {
-      "type": "observation",
-      "objectId": "obs-@trace@-3",
-      "traceId": "@trace@",
-      "spanId": "0000000000000003",
-      "startedAt": "@time@",
-      "data": {
-        "observationType": "generation",
-        "status": "success",
-        "durationMs": 3000,
-        "provider": "example",
-        "model": "example-model",
-        "usage": {
-          "inputTokens": 2000,
-          "outputTokens": 500,
-          "cachedInputTokens": 0
-        }
-      }
-    },
-    {
-      "type": "trace",
-      "objectId": "trace-@trace@",
-      "traceId": "@trace@",
-      "startedAt": "@time@",
-      "data": {
-        "name": "Document analysis",
-        "status": "success",
-        "durationMs": 6200,
-        "userId": "demo-user",
-        "customerId": "demo-customer",
-        "feature": "document-analysis"
-      }
-    }
-  ]
-]
-      """.replace("@trace@", traceId).replace("@time@", Instant.now().toString())
-        .replace("@score@", UUID.randomUUID().toString());
-    var batches = new ObjectMapper().readTree(payload);
+    System.out.println("traceId: " + traceId); // Keep this ID for later feedback.
+    String startedAt = Instant.now().toString(); // Use actual request/step start times.
+    List<List<Event<?>>> batches = List.of(
+      List.<Event<?>>of(
+        new Event<>("observation", "obs-" + traceId + "-1", traceId, "0000000000000001", startedAt,
+            new ObservationData("generation", "success", 2000L, "example", "example-model", new Usage(2500L, 500L, 0L)))
+      ),
+      List.<Event<?>>of(
+        new Event<>("observation", "obs-" + traceId + "-2", traceId, "0000000000000002", startedAt,
+            new ObservationData("generation", "success", 1000L, "example", "example-model", new Usage(1000L, 200L, 0L)))
+      ),
+      List.<Event<?>>of(
+        new Event<>("observation", "obs-" + traceId + "-3", traceId, "0000000000000003", startedAt,
+            new ObservationData("generation", "success", 3000L, "example", "example-model", new Usage(2000L, 500L, 0L))),
+        new Event<>("trace", "trace-" + traceId + "", traceId, null, startedAt,
+            new TraceData("Document analysis", "success", 6200L, "demo-user", "demo-customer", "document-analysis"))
+      )
+    );
+    ObjectMapper mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     try (var sdk = new MeterTrail(System.getenv("METERTRAIL_ENDPOINT"),
         System.getenv("METERTRAIL_API_KEY"), "document-api", System.out::println, System.err::println)) {
-      for (var events : batches) {
-        for (var event : events)
-          if (!sdk.record(event)) throw new IllegalStateException("SDK buffer rejected event");
+      for (List<Event<?>> events : batches) {
+        for (Event<?> event : events)
+          if (!sdk.record(mapper.valueToTree(event))) throw new IllegalStateException("SDK buffer rejected event");
         if (!sdk.flush(Duration.ofSeconds(30)))
           throw new IllegalStateException("SDK could not finish sending; retain buffered events");
       }
@@ -751,43 +671,39 @@ public class Scenario {
 
 ```java
 import com.metertrail.sdk.MeterTrail;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public class Scenario {
+  public record Event<T>(String type, String objectId, String traceId, String spanId, String startedAt, T data) {}
+  public record TraceData(String name, String status, long durationMs, String userId, String customerId, String feature) {}
+  public record ObservationData(String observationType, String status, long durationMs, String provider, String model, Usage usage) {}
+  @JsonInclude(JsonInclude.Include.ALWAYS)
+  public record Usage(Long inputTokens, Long outputTokens, Long cachedInputTokens) {}
+  public record ScoreData(String name, String targetType, String targetId, String valueType, double value) {}
+
   public static void main(String[] args) throws Exception {
     String traceId = System.getenv("METERTRAIL_TRACE_ID");
     if (traceId == null || !traceId.matches("[0-9a-f]{32}"))
       throw new IllegalArgumentException("Use the earlier request traceId in METERTRAIL_TRACE_ID");
-    System.out.println("traceId: " + traceId); // Keep for a later score.
-    // Use actual request/step start times and measured durations in your app.
-    String payload = """
-[
-  [
-    {
-      "type": "score",
-      "objectId": "score-@score@",
-      "startedAt": "@time@",
-      "data": {
-        "name": "User satisfaction",
-        "targetType": "trace",
-        "targetId": "trace-@trace@",
-        "valueType": "numeric",
-        "value": 1
-      }
-    }
-  ]
-]
-      """.replace("@trace@", traceId).replace("@time@", Instant.now().toString())
-        .replace("@score@", UUID.randomUUID().toString());
-    var batches = new ObjectMapper().readTree(payload);
+    System.out.println("traceId: " + traceId); // Keep this ID for later feedback.
+    String startedAt = Instant.now().toString(); // Use actual request/step start times.
+    List<List<Event<?>>> batches = List.of(
+      List.<Event<?>>of(
+        new Event<>("score", "score-@score@", null, null, startedAt,
+            new ScoreData("User satisfaction", "trace", "trace-" + traceId + "", "numeric", 1))
+      )
+    );
+    ObjectMapper mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     try (var sdk = new MeterTrail(System.getenv("METERTRAIL_ENDPOINT"),
         System.getenv("METERTRAIL_API_KEY"), "document-api", System.out::println, System.err::println)) {
-      for (var events : batches) {
-        for (var event : events)
-          if (!sdk.record(event)) throw new IllegalStateException("SDK buffer rejected event");
+      for (List<Event<?>> events : batches) {
+        for (Event<?> event : events)
+          if (!sdk.record(mapper.valueToTree(event))) throw new IllegalStateException("SDK buffer rejected event");
         if (!sdk.flush(Duration.ofSeconds(30)))
           throw new IllegalStateException("SDK could not finish sending; retain buffered events");
       }
@@ -800,43 +716,39 @@ public class Scenario {
 
 ```java
 import com.metertrail.sdk.MeterTrail;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public class Scenario {
+  public record Event<T>(String type, String objectId, String traceId, String spanId, String startedAt, T data) {}
+  public record TraceData(String name, String status, long durationMs, String userId, String customerId, String feature) {}
+  public record ObservationData(String observationType, String status, long durationMs, String provider, String model, Usage usage) {}
+  @JsonInclude(JsonInclude.Include.ALWAYS)
+  public record Usage(Long inputTokens, Long outputTokens, Long cachedInputTokens) {}
+  public record ScoreData(String name, String targetType, String targetId, String valueType, double value) {}
+
   public static void main(String[] args) throws Exception {
     String traceId = System.getenv("METERTRAIL_TRACE_ID");
     if (traceId == null || !traceId.matches("[0-9a-f]{32}"))
       throw new IllegalArgumentException("Use the earlier request traceId in METERTRAIL_TRACE_ID");
-    System.out.println("traceId: " + traceId); // Keep for a later score.
-    // Use actual request/step start times and measured durations in your app.
-    String payload = """
-[
-  [
-    {
-      "type": "score",
-      "objectId": "score-@score@",
-      "startedAt": "@time@",
-      "data": {
-        "name": "User satisfaction",
-        "targetType": "observation",
-        "targetId": "obs-@trace@-1",
-        "valueType": "numeric",
-        "value": 1
-      }
-    }
-  ]
-]
-      """.replace("@trace@", traceId).replace("@time@", Instant.now().toString())
-        .replace("@score@", UUID.randomUUID().toString());
-    var batches = new ObjectMapper().readTree(payload);
+    System.out.println("traceId: " + traceId); // Keep this ID for later feedback.
+    String startedAt = Instant.now().toString(); // Use actual request/step start times.
+    List<List<Event<?>>> batches = List.of(
+      List.<Event<?>>of(
+        new Event<>("score", "score-@score@", null, null, startedAt,
+            new ScoreData("User satisfaction", "observation", "obs-" + traceId + "-1", "numeric", 1))
+      )
+    );
+    ObjectMapper mapper = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
     try (var sdk = new MeterTrail(System.getenv("METERTRAIL_ENDPOINT"),
         System.getenv("METERTRAIL_API_KEY"), "document-api", System.out::println, System.err::println)) {
-      for (var events : batches) {
-        for (var event : events)
-          if (!sdk.record(event)) throw new IllegalStateException("SDK buffer rejected event");
+      for (List<Event<?>> events : batches) {
+        for (Event<?> event : events)
+          if (!sdk.record(mapper.valueToTree(event))) throw new IllegalStateException("SDK buffer rejected event");
         if (!sdk.flush(Duration.ofSeconds(30)))
           throw new IllegalStateException("SDK could not finish sending; retain buffered events");
       }

@@ -76,7 +76,7 @@ try (var client = new com.metertrail.sdk.MeterTrail(
 
 - All SDKs retain exact identities when retrying network errors, 5xx, and temporary throttling; retries are bounded and jittered.
 - 401/403 and full-batch quota errors pause ingestion. A callback reports overflow instead of blocking application requests.
-- HTTP 200 with status pending is the upload receipt. onResult/on_result receives this receipt and sending ends without automatic polling. For rolling upgrades, SDKs also recognize legacy HTTP 202 receipts.
+- HTTP 202 with status pending is the upload receipt. onResult/on_result receives this receipt and sending ends without automatic polling. For rolling upgrades, SDKs also recognize legacy HTTP 200 receipts.
 - Query processing results only when needed: Node getBatch(batchId), Python get_batch(batch_id), Java getBatch(batchId). Each method makes an authenticated query using the current project key and returns the HTTP status and response body. It does not poll in a loop or automatically resend rejected events. Callers decide how to handle final per-event results.
 - 413 causes splitting; single-event failures are reported. No blanket retry of permanent field errors.
 - SDK queues are memory-only. Process crashes may lose unsent data. Graceful shutdown may leave events pending when the deadline expires. Use an application-owned durable spool when crash recovery is required.
@@ -99,4 +99,4 @@ var result = client.getBatch(batchId);
 // result.status(), result.data()
 ```
 
-A successful POST returns HTTP 200 and a fixed status pending receipt. For live status use GET https://metertrail.com/v1/batches/{batchId} with the same project API key, or the SDK method above. These methods return one result, without automatic repeated polling. SDK receipt callbacks no longer mean final processing completed; applications that relied on final callbacks must query explicitly.
+A successful POST returns HTTP 202 and a fixed status pending receipt. For live status use GET https://metertrail.com/v1/batches/{batchId} with the same project API key, or the SDK method above. These methods return one result, without automatic repeated polling. SDK receipt callbacks no longer mean final processing completed; applications that relied on final callbacks must query explicitly.

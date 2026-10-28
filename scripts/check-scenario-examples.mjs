@@ -24,7 +24,7 @@ const server=createServer(async(req,res)=>{
       }
     }
     received.push(body);
-    res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({batchId:'00000000-0000-4000-8000-000000000001',received:body.events.length,status:'pending'}));
+    res.writeHead(202,{'Content-Type':'application/json'});res.end(JSON.stringify({batchId:'00000000-0000-4000-8000-000000000001',received:body.events.length,status:'pending'}));
   } catch(error) { res.writeHead(400,{'Content-Type':'application/json'});res.end(JSON.stringify({code:String(error)})); }
 });
 async function run(command,args,env) {

@@ -1621,7 +1621,7 @@ class IngestIntegrationTest {
     }
     mvc.perform(post("/v1/events/batch").header("Authorization", "Bearer " + key)
             .contentType("application/json").content(batch(event("trace", "admission-recovered", 1)).toString()))
-        .andExpect(status().isOk());
+        .andExpect(status().isAccepted());
     assertEquals(1, units());
   }
 
@@ -1655,7 +1655,7 @@ class IngestIntegrationTest {
     e.put("eventId", "a".repeat(36)); e.remove("revision");
     var b = batch(e); b.remove("schemaVersion"); b.remove("agent");
     mvc.perform(post("/v1/events/batch").header("Authorization", "Bearer " + key)
-        .contentType("application/json").content(b.toString())).andExpect(status().isOk());
+        .contentType("application/json").content(b.toString())).andExpect(status().isAccepted());
     assertEquals(1, units());
     assertEquals(1L, store.db.queryForObject("SELECT revision FROM billable_objects WHERE project_id=? AND object_id='optional-identity'", Long.class, project));
     e.put("revision", 1);
@@ -2057,12 +2057,12 @@ class IngestIntegrationTest {
   }
 
   @Test
-  void receiptIsHttp200WithPendingAndQueryRemainsExplicit() throws Exception {
+  void receiptIsHttp202WithPendingAndQueryRemainsExplicit() throws Exception {
     var response = mvc.perform(post("/v1/events/batch")
         .header("Authorization", "Bearer " + key)
         .contentType("application/json")
         .content(batch(event("trace", "http-receipt", 1)).toString()))
-        .andExpect(status().isOk())
+        .andExpect(status().isAccepted())
         .andExpect(jsonPath("$.status").value("pending"))
         .andExpect(jsonPath("$.received").value(1))
         .andExpect(jsonPath("$.batchId").isNotEmpty())

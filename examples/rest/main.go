@@ -35,7 +35,7 @@ func main() {
 
 	b, _ := io.ReadAll(r.Body)
 	fmt.Println(r.Status, string(b))
-	if r.StatusCode != 200 {
+	if r.StatusCode != http.StatusAccepted {
 		os.Exit(1)
 	}
 }

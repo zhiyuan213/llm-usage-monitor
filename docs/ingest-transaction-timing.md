@@ -5,7 +5,7 @@ quota-block and pool architecture, see [durable ingestion](durable-ingestion.md)
 The new path records workspace-lock timings once per aggregate; the legacy
 per-request `total`/transaction-entry timers do not measure the whole new queue.
 
-The ingestion endpoint still returns HTTP 200 with `status: pending` after the
+The ingestion endpoint still returns HTTP 202 with `status: pending` after the
 PostgreSQL acceptance transaction commits. This change does not enable a Redis
 acceptance queue or relax quota checks.
 

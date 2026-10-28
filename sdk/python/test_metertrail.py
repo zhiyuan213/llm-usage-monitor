@@ -21,14 +21,14 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(errors[-1]['code'],'BUFFER_OVERFLOW')
         c.close()
 
-    def test_http_200_receipt_ends_without_polling_and_query_is_explicit(self):
+    def test_http_202_receipt_ends_without_polling_and_query_is_explicit(self):
         results=[]
         c=self.client(on_result=results.append)
         c.record({'type':'trace','objectId':'one','data':{}})
         seen=[]
         def request(path,body=None,deadline=None):
             seen.append(path)
-            return (200,{'batchId':'one','status':'pending'}) if body else (200,{'status':'completed','accepted':1,'errors':[]})
+            return (202,{'batchId':'one','status':'pending'}) if body else (200,{'status':'completed','accepted':1,'errors':[]})
         c._request=request
         c.paused=None
         self.assertTrue(c.flush())
@@ -40,7 +40,7 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(seen,['/v1/events/batch','/v1/batches/one'])
         c.close()
 
-    def test_split_receipts_do_not_query_and_accept_legacy_202(self):
+    def test_split_receipts_do_not_query_and_accept_legacy_200(self):
         results=[]
         c=self.client(on_result=results.append)
         c.record({'type':'trace','objectId':'one','data':{}})
@@ -49,7 +49,7 @@ class ClientTests(unittest.TestCase):
         def request(path,body=None,deadline=None):
             seen.append(path)
             self.assertIsNotNone(body)
-            return (413,{'code':'PAYLOAD_TOO_LARGE'}) if len(body['events'])>1 else (202,{'batchId':'one','status':'pending'})
+            return (413,{'code':'PAYLOAD_TOO_LARGE'}) if len(body['events'])>1 else (200,{'batchId':'one','status':'pending'})
         c._request=request
         c.paused=None
         self.assertTrue(c.flush())
@@ -74,14 +74,14 @@ class ClientTests(unittest.TestCase):
         for initial in (503, 401):
             with self.subTest(initial=initial):
                 bodies, auth, results, errors = [], [], [], []
-                statuses = [initial, 200]
+                statuses = [initial, 202]
                 class Handler(BaseHTTPRequestHandler):
                     def log_message(self, *_): pass
                     def do_POST(self):
                         bodies.append(json.loads(self.rfile.read(int(self.headers['Content-Length']))))
                         auth.append(self.headers['Authorization'])
                         status = statuses.pop(0)
-                        data = {'batchId':'receipt','status':'pending'} if status == 200 else {'code':'INVALID_API_KEY' if status == 401 else 'TEMPORARY_FAILURE'}
+                        data = {'batchId':'receipt','status':'pending'} if status == 202 else {'code':'INVALID_API_KEY' if status == 401 else 'TEMPORARY_FAILURE'}
                         raw = json.dumps(data).encode()
                         self.send_response(status)
                         self.send_header('Content-Length', str(len(raw)))

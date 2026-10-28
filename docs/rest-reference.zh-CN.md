@@ -81,7 +81,7 @@ POST https://metertrail.com/v1/events/batch；请求体 JSON。长度默认 UTF-
 | data.valueType | 评分值类型 | string | 必填 | numeric / boolean / categorical | "numeric" |
 | data.value | 评分值 | number \| boolean \| string | 必填 | numeric：有限数字；boolean：布尔值；categorical：非空字符串，≤128 UTF-16 单元；整体仍受8KiB限制 | 0.95 / true / "good" |
 
-## 响应：POST 200 OK
+## 响应：POST 202 Accepted
 
 | 字段名称 | 接入字段 | 字段类型 | 必填条件 | 长度 / 取值范围 | 示例 |
 | --- | --- | --- | --- | --- | --- |
@@ -171,6 +171,6 @@ Content-Type: application/json
 {"batchId":"550e8400-e29b-41d4-a716-446655440099","received":3,"status":"pending"}
 ```
 
-HTTP 200 表示批次已接收；上报响应 status 固定 pending，非实时处理状态。需要实时状态时，使用同一项目密钥请求 GET https://metertrail.com/v1/batches/{batchId}。
+HTTP 202 表示批次已接收；上报响应 status 固定 pending，非实时处理状态。需要实时状态时，使用同一项目密钥请求 GET https://metertrail.com/v1/batches/{batchId}。
 
 错误与逐条拒绝码参见 [错误编码表](error-codes.zh-CN.md)。

@@ -302,13 +302,13 @@ const eventErrors = [
     <h3>{{ t("Immediate parameter validation", "参数错误直接返回") }}</h3>
     <p>{{ t('Before enqueueing, every event is checked for required fields, types, lengths, UUIDs, timestamps and allowed values. Any invalid event returns HTTP 400; the entire batch is rejected, including otherwise valid events. No batchId is issued and no units are charged. errors[].index is zero-based; each invalid event reports its first error. Fix all reported errors and resubmit the entire batch. Do not repeatedly retry an unchanged 400 response.', '入队前逐条校验必填字段、类型、长度、UUID、时间格式与取值范围。任何一条不合法，直接返回 HTTP 400，整批均不接收（包括格式正确的其他事件），不生成 batchId、不扣 units。errors[].index 从 0 开始，每条不合法事件返回首个错误。修正后重新提交整批，不要原样循环重试 400。') }}</p>
     <div class="code-box"><div>HTTP 400 · JSON</div><pre>{"code":"EVENT_ID_LENGTH_MUST_BE_36","errors":[{"index":0,"field":"events[0].eventId","code":"EVENT_ID_LENGTH_MUST_BE_36"}]}</pre></div>
-    <p>{{ t('This preflight does not query object history. Duplicate events, revision conflicts, current quota and retained-data rules are checked later; query batch status after a successful HTTP 200 receipt.', '预校验不查询对象历史。事件去重、对象版本冲突、当前额度与数据保留规则仍在后续检查；HTTP 200 接收后可查询批次处理结果。') }}</p>
+    <p>{{ t('This preflight does not query object history. Duplicate events, revision conflicts, current quota and retained-data rules are checked later; query batch status after a successful HTTP 202 receipt.', '预校验不查询对象历史。事件去重、对象版本冲突、当前额度与数据保留规则仍在后续检查；HTTP 202 接收后可查询批次处理结果。') }}</p>
     <h3>{{ t("Event error codes", "逐条事件错误编码") }}</h3>
     <p>
       {{
         t(
-          "The following codes include immediate HTTP 400 validation errors and later processing results. HTTP 200 means received, not every event succeeded. Inspect accepted, duplicates, rejected and errors using the batch query API or Recent batches.",
-          "下表同时包含直接返回 HTTP 400 的格式错误码和后续处理结果码。200 只表示接收，不表示每条事件成功。通过批次查询接口或“最近上报批次”查看 accepted、duplicates、rejected 和 errors。",
+          "The following codes include immediate HTTP 400 validation errors and later processing results. HTTP 202 means received, not every event succeeded. Inspect accepted, duplicates, rejected and errors using the batch query API or Recent batches.",
+          "下表同时包含直接返回 HTTP 400 的格式错误码和后续处理结果码。202 只表示接收，不表示每条事件成功。通过批次查询接口或“最近上报批次”查看 accepted、duplicates、rejected 和 errors。",
         )
       }}
     </p>

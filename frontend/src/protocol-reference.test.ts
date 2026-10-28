@@ -61,7 +61,7 @@ it("documents every field in both minimal and full request examples", () => {
 it("documents response examples and keeps counts consistent with their request", () => {
   const receiptFields = new Set(
     sections
-      .find((section) => section.en === "Response: POST 200 OK")!
+      .find((section) => section.en === "Response: POST 202 Accepted")!
       .rows.map((row) => row[0]),
   );
   expect(JSON.parse(minimalReceiptExample).received).toBe(

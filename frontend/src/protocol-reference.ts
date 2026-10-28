@@ -482,8 +482,8 @@ export const sections = [
     ],
   },
   {
-    en: "Response: POST 200 OK",
-    zh: "响应：POST 200 OK",
+    en: "Response: POST 202 Accepted",
+    zh: "响应：POST 202 Accepted",
     rows: [
       [
         "batchId",

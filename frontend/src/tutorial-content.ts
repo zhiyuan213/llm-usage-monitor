@@ -1,4 +1,4 @@
-import { examples } from './examples';
+import { examples, javaTutorialPom } from './examples';
 export const tutorials = [
   {
     slug: 'nodejs', en: 'Track your first AI request with Node.js', zh: '用 Node.js 记录第一条 AI 请求',
@@ -17,8 +17,9 @@ export const tutorials = [
   {
     slug: 'java', en: 'Track your first AI request with Java', zh: '用 Java 记录第一条 AI 请求',
     summary: ['Use the Java HTTP client to send a request and model usage, check the receipt and find it in the console.', '使用 Java HTTP 客户端上报请求和模型用量，检查接收结果，并在控制台查看。'],
-    requirement: ['JDK 17 or later, a MeterTrail account and a project API key. No Maven dependencies required.', '需要 JDK 17 或更新版本、MeterTrail 账号和项目 API 密钥。无需额外 Maven 依赖。'],
-    filename: 'Send.java', command: 'java Send.java', code: examples.Java,
+    requirement: ['JDK 17 or later, Maven 3.9 or later, a MeterTrail account and a project API key. The provided pom.xml includes Jackson.', '需要 JDK 17 或更新版本、Maven 3.9 或更新版本、MeterTrail 账号和项目 API 密钥。下方 pom.xml 已包含 Jackson 依赖。'],
+    filename: 'src/main/java/com/metertrail/example/Send.java', command: 'mvn -q compile exec:java', code: examples.Java,
+    additionalFiles: [{filename:'pom.xml',code:javaTutorialPom}],
     usage: ['Run on your backend after the AI request finishes. Each run creates a trace and a model-call observation (2 units). Reuse the unchanged payload and IDs for retries. This example does not call a model or send prompt content.', '在 AI 请求结束后由服务端上报。每次运行创建一条请求和一条模型调用，共 2 units。重试时保留原始数据和 ID。示例不调用模型，不发送提示词正文。'],
   },
   {

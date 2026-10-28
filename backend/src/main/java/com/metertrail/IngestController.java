@@ -51,7 +51,7 @@ class IngestController {
   private ResponseEntity<?> acceptBatch(HttpServletRequest req) throws IOException {
     try {
       UUID project = store.key(req.getHeader("Authorization"));
-      return ResponseEntity.ok(ingest.accept(project, readBatch(req, project)));
+      return ResponseEntity.accepted().body(ingest.accept(project, readBatch(req, project)));
     } catch (ApiError failure) {
       if (failure.status == 503) admission.unavailable(failure.code);
       throw failure;
@@ -69,7 +69,8 @@ class IngestController {
           (result, failure) -> {
             if (failure != null)
               response.setErrorResult(new ApiError(503, "INGEST_QUEUE_UNAVAILABLE"));
-            else if (result.status() == 200) response.setResult(ResponseEntity.ok(result.body()));
+            else if (result.status() == 200)
+              response.setResult(ResponseEntity.accepted().body(result.body()));
             else {
               String code = (String) result.body().get("code");
               if (result.status() == 503) admission.unavailable(code);

@@ -744,7 +744,7 @@ import LegalPolicy from './LegalPolicy.vue';
               )
             }}
           </p>
-          <p>{{ t("SDK 0.2.0 ends sending after the HTTP 200 receipt (status is always pending). Query live results only when needed: Node getBatch(batchId), Python get_batch(batch_id), Java getBatch(batchId). All use the same project key.", "SDK 0.2.0 收到 HTTP 200 回执即结束上报，status 固定 pending。按需查询实时结果：Node getBatch(batchId)、Python get_batch(batch_id)、Java getBatch(batchId)，均使用同一项目密钥。") }}</p>
+          <p>{{ t("SDK 0.2.0 ends sending after the HTTP 202 receipt (status is always pending). Query live results only when needed: Node getBatch(batchId), Python get_batch(batch_id), Java getBatch(batchId). All use the same project key.", "SDK 0.2.0 收到 HTTP 202 回执即结束上报，status 固定 pending。按需查询实时结果：Node getBatch(batchId)、Python get_batch(batch_id)、Java getBatch(batchId)，均使用同一项目密钥。") }}</p>
           <div
             class="hero-buttons"
             style="flex-wrap: wrap; margin-bottom: 24px"
@@ -800,8 +800,8 @@ import LegalPolicy from './LegalPolicy.vue';
           <p>
             {{
               t(
-                "Keep eventId, objectId, revision, and content unchanged. Back off with jitter on network errors and 5xx. Respect Retry-After on RATE_LIMITED. Pause on QUOTA_EXCEEDED or invalid keys. Split on 413. Inspect per-event errors after 200.",
-                "重试保留 eventId、objectId、revision 和内容。网络错误或 5xx 指数退避并加抖动；RATE_LIMITED 遵循 Retry-After；额度不足或密钥无效暂停；413 拆批；200 后检查逐条结果。",
+                "Keep eventId, objectId, revision, and content unchanged. Back off with jitter on network errors and 5xx. Respect Retry-After on RATE_LIMITED. Pause on QUOTA_EXCEEDED or invalid keys. Split on 413. Inspect per-event errors after 202.",
+                "重试保留 eventId、objectId、revision 和内容。网络错误或 5xx 指数退避并加抖动；RATE_LIMITED 遵循 Retry-After；额度不足或密钥无效暂停；413 拆批；202 后检查逐条结果。",
               )
             }}
           </p>

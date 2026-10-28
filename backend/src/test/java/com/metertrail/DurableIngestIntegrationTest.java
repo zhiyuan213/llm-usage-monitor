@@ -731,7 +731,7 @@ class DurableIngestIntegrationTest {
     pipeline.processOne();
     var response =
         mvc.perform(asyncDispatch(request))
-            .andExpect(status().isOk())
+            .andExpect(status().isAccepted())
             .andExpect(jsonPath("$.status").value("pending"))
             .andReturn();
     String id = Support.parse(response.getResponse().getContentAsString()).path("batchId").asText();

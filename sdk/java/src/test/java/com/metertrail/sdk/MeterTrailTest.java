@@ -28,7 +28,7 @@ class MeterTrailTest {
                       ? "{\"batchId\":\"550e8400-e29b-41d4-a716-446655440099\",\"status\":\"pending\"}"
                       : "{\"status\":\"completed\",\"accepted\":1,\"errors\":[]}")
                   .getBytes();
-          exchange.sendResponseHeaders(200, result.length);
+          exchange.sendResponseHeaders(write ? 202 : 200, result.length);
           exchange.getResponseBody().write(result);
           exchange.close();
         });
@@ -81,8 +81,8 @@ class MeterTrailTest {
       server.createContext("/v1/events/batch", exchange -> {
         assertEquals("Bearer synthetic", exchange.getRequestHeaders().getFirst("Authorization"));
         bodies.add(new String(exchange.getRequestBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
-        int status = phase.getAndSet(200);
-        byte[] response = (status == 200 ? "{\"batchId\":\"receipt\",\"status\":\"pending\"}" : "{\"code\":\"" + (status == 401 ? "INVALID_API_KEY" : "TEMPORARY_FAILURE") + "\"}").getBytes();
+        int status = phase.getAndSet(202);
+        byte[] response = (status == 202 ? "{\"batchId\":\"receipt\",\"status\":\"pending\"}" : "{\"code\":\"" + (status == 401 ? "INVALID_API_KEY" : "TEMPORARY_FAILURE") + "\"}").getBytes();
         exchange.sendResponseHeaders(status, response.length);
         exchange.getResponseBody().write(response); exchange.close();
       });
@@ -114,7 +114,7 @@ class MeterTrailTest {
     server.createContext("/v1/events/batch",exchange->{
       bodies.add(new String(exchange.getRequestBody().readAllBytes(),java.nio.charset.StandardCharsets.UTF_8));
       boolean ok=healthy.get();byte[] body=(ok?"{\"batchId\":\"recovered\",\"status\":\"pending\"}":"{\"code\":\"SERVICE_UNAVAILABLE\"}").getBytes();
-      exchange.sendResponseHeaders(ok?200:503,body.length);exchange.getResponseBody().write(body);exchange.close();
+      exchange.sendResponseHeaders(ok?202:503,body.length);exchange.getResponseBody().write(body);exchange.close();
     });server.start();
     var sdk=new MeterTrail("http://127.0.0.1:"+server.getAddress().getPort(),"synthetic","deadline",r->results.add(r.toString()),errors::add);
     try {
