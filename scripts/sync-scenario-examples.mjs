@@ -1,8 +1,8 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 export function batches(kind, id, time, scoreId = id) {
   const trace = {type:'trace',objectId:`trace-${id}`,traceId:id,startedAt:time,data:{name:'Document analysis',status:'success',durationMs:6200,userId:'demo-user',customerId:'demo-customer',feature:'document-analysis'}};
-  const observation = (n, duration, input, output) => ({type:'observation',objectId:`obs-${id}-${n}`,traceId:id,spanId:String(n).padStart(16,'0'),startedAt:time,data:{observationType:'generation',status:'success',durationMs:duration,provider:'example',model:'example-model',usage:{inputTokens:input,outputTokens:output}}});
+  const observation = (n, duration, input, output) => ({type:'observation',objectId:`obs-${id}-${n}`,traceId:id,spanId:String(n).padStart(16,'0'),startedAt:time,data:{observationType:'generation',status:'success',durationMs:duration,provider:'example',model:'example-model',usage:{inputTokens:input,outputTokens:output,cachedInputTokens:0}}});
   if (kind === 'single') { trace.data.durationMs=2100; return [[trace, observation(1,2000,1500,400)]]; }
   if (kind === 'multiple') return [[observation(1,2000,2500,500)],[observation(2,1000,1000,200)],[observation(3,3000,2000,500),trace]];
   return [[{type:'score',objectId:`score-${scoreId}`,startedAt:time,data:{name:'User satisfaction',targetType:kind==='score-trace'?'trace':'observation',targetId:kind==='score-trace'?`trace-${id}`:`obs-${id}-1`,valueType:'numeric',value:1}}]];
@@ -94,5 +94,10 @@ if(process.argv[1]?.endsWith('sync-scenario-examples.mjs')) {
   const path='frontend/src/scenario-examples.ts';
   if(process.argv.includes('--check')) { if(readFileSync(path,'utf8').replace(/\r\n/g,'\n')!==output) throw Error('Scenario examples out of sync'); }
   else writeFileSync(path,output);
+  const fixturePath='backend/src/test/resources/published-scenarios.json';
+  const fixture=JSON.stringify(Object.fromEntries(kinds.map(kind=>[kind,batches(kind,'@trace@','@time@','@score@')])),null,2)+'\n';
+  if(process.argv.includes('--check')) {
+    if(readFileSync(fixturePath,'utf8').replace(/\r\n/g,'\n')!==fixture)throw Error('Published protocol fixture out of sync');
+  } else {mkdirSync('backend/src/test/resources',{recursive:true});writeFileSync(fixturePath,fixture);}
 }
 

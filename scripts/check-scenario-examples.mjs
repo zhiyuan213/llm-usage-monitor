@@ -18,6 +18,10 @@ const server=createServer(async(req,res)=>{
       assert.equal(event.eventId.length,36); assert.equal(event.revision,1);
       assert.ok(Math.abs(Date.now()-Date.parse(event.startedAt))<60000);
       if(event.type!=='score')assert.match(event.traceId,/^[a-f0-9]{32}$/);
+      if(event.data.usage) {
+        for(const key of ['inputTokens','outputTokens','cachedInputTokens'])assert.ok(Object.hasOwn(event.data.usage,key),'Missing usage field: '+key);
+        assert.equal(event.data.usage.cachedInputTokens,0);
+      }
     }
     received.push(body);
     res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({batchId:'00000000-0000-4000-8000-000000000001',received:body.events.length,status:'pending'}));

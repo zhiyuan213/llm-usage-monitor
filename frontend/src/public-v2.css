@@ -914,6 +914,9 @@ html[lang="zh-CN"] .public-v2 { --public-font: "MeterTrail Noto Sans SC", system
 .public-v2 .scenario-type { color:#3156e8; font-weight:600; }
 .public-v2 .scenario-flow-children { border-left:2px solid #b9c8ee; margin-left:12px; padding-left:20px; }
 .public-v2 .scenario-flow p { margin-bottom:0; }
+.public-v2 .scenario-upload-steps { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 12px; }
+.public-v2 .scenario-upload-steps li { border-left: 3px solid #b9c8ee; padding: 8px 16px; }
+.public-v2 .scenario-upload-steps li > div { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
 .public-v2 .scenario-language { display:flex; align-items:center; gap:12px; margin:20px 0; }
 .public-v2 .integration-scenarios .code-box { min-width:0; margin-top:20px; }
 .public-v2 .integration-scenarios .code-box > div { display:flex; justify-content:space-between; gap:12px; align-items:center; }

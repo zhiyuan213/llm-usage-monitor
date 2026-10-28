@@ -17,7 +17,7 @@ class Send {
           {"eventId":"%s","objectId":"%s","type":"observation","traceId":"%s","spanId":"%s","startedAt":"%s",
            "data":{"name":"Model response","observationType":"generation","status":"success",
                    "durationMs":2000,"provider":"example","model":"example-model",
-                   "usage":{"inputTokens":1500,"outputTokens":400}}}
+                   "usage":{"inputTokens":1500,"outputTokens":400,"cachedInputTokens":0}}}
         ]}
         """.formatted(UUID.randomUUID(), UUID.randomUUID(), traceId, startedAt,
             UUID.randomUUID(), UUID.randomUUID(), traceId,

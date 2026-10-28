@@ -26,7 +26,7 @@ const server=createServer(async (req,res)=>{
     assert.notEqual(model.eventId,event.eventId); assert.equal(model.revision,undefined);
     assert.equal(model.data.observationType,'generation'); assert.equal(model.data.durationMs,2000);
     assert.equal(model.data.provider,'example'); assert.equal(model.data.model,'example-model');
-    assert.deepEqual(model.data.usage,{inputTokens:1500,outputTokens:400});
+    assert.deepEqual(model.data.usage,{inputTokens:1500,outputTokens:400,cachedInputTokens:0});
     received.push(body); res.writeHead(200,{'Content-Type':'application/json'}); res.end(JSON.stringify({batchId:'example',received:2,status:'pending'}));
   } catch(e) {res.writeHead(400); res.end(String(e));}
 });

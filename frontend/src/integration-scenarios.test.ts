@@ -1,5 +1,9 @@
 import { expect, it } from 'vitest';
 import { restScenarios, scenarioSources } from './scenario-examples';
+it('includes all required usage fields in every published model-call scenario',()=>{
+ for(const batches of Object.values(restScenarios))for(const batch of batches)for(const event of batch as any[])
+  if(event.data?.usage)expect(event.data.usage).toEqual({inputTokens:expect.any(Number),outputTokens:expect.any(Number),cachedInputTokens:0});
+});
 it('shows one request with one or three model steps, and sends optional scores separately',()=>{
   expect(restScenarios.single.map(b=>b.length)).toEqual([2]);
   expect(restScenarios.multiple.map(b=>b.length)).toEqual([1,1,2]);

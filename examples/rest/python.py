@@ -31,7 +31,7 @@ batch = {
                 'name': 'Model response', 'observationType': 'generation',
                 'status': 'success', 'durationMs': 2000,
                 'provider': 'example', 'model': 'example-model',
-                'usage': {'inputTokens': 1500, 'outputTokens': 400},
+                'usage': {'inputTokens': 1500, 'outputTokens': 400, 'cachedInputTokens': 0},
             },
         },
     ],

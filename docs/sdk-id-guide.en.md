@@ -98,7 +98,8 @@ const batches = [
         "model": "example-model",
         "usage": {
           "inputTokens": 1500,
-          "outputTokens": 400
+          "outputTokens": 400,
+          "cachedInputTokens": 0
         }
       }
     }
@@ -143,7 +144,8 @@ const batches = [
         "model": "example-model",
         "usage": {
           "inputTokens": 2500,
-          "outputTokens": 500
+          "outputTokens": 500,
+          "cachedInputTokens": 0
         }
       }
     }
@@ -163,7 +165,8 @@ const batches = [
         "model": "example-model",
         "usage": {
           "inputTokens": 1000,
-          "outputTokens": 200
+          "outputTokens": 200,
+          "cachedInputTokens": 0
         }
       }
     }
@@ -183,7 +186,8 @@ const batches = [
         "model": "example-model",
         "usage": {
           "inputTokens": 2000,
-          "outputTokens": 500
+          "outputTokens": 500,
+          "cachedInputTokens": 0
         }
       }
     },
@@ -341,7 +345,8 @@ batches = json.loads(r'''[
         "model": "example-model",
         "usage": {
           "inputTokens": 1500,
-          "outputTokens": 400
+          "outputTokens": 400,
+          "cachedInputTokens": 0
         }
       }
     }
@@ -392,7 +397,8 @@ batches = json.loads(r'''[
         "model": "example-model",
         "usage": {
           "inputTokens": 2500,
-          "outputTokens": 500
+          "outputTokens": 500,
+          "cachedInputTokens": 0
         }
       }
     }
@@ -412,7 +418,8 @@ batches = json.loads(r'''[
         "model": "example-model",
         "usage": {
           "inputTokens": 1000,
-          "outputTokens": 200
+          "outputTokens": 200,
+          "cachedInputTokens": 0
         }
       }
     }
@@ -432,7 +439,8 @@ batches = json.loads(r'''[
         "model": "example-model",
         "usage": {
           "inputTokens": 2000,
-          "outputTokens": 500
+          "outputTokens": 500,
+          "cachedInputTokens": 0
         }
       }
     },
@@ -604,7 +612,8 @@ public class Scenario {
         "model": "example-model",
         "usage": {
           "inputTokens": 1500,
-          "outputTokens": 400
+          "outputTokens": 400,
+          "cachedInputTokens": 0
         }
       }
     }
@@ -659,7 +668,8 @@ public class Scenario {
         "model": "example-model",
         "usage": {
           "inputTokens": 2500,
-          "outputTokens": 500
+          "outputTokens": 500,
+          "cachedInputTokens": 0
         }
       }
     }
@@ -679,7 +689,8 @@ public class Scenario {
         "model": "example-model",
         "usage": {
           "inputTokens": 1000,
-          "outputTokens": 200
+          "outputTokens": 200,
+          "cachedInputTokens": 0
         }
       }
     }
@@ -699,7 +710,8 @@ public class Scenario {
         "model": "example-model",
         "usage": {
           "inputTokens": 2000,
-          "outputTokens": 500
+          "outputTokens": 500,
+          "cachedInputTokens": 0
         }
       }
     },

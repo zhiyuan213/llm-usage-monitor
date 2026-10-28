@@ -1,0 +1,150 @@
+{
+  "single": [
+    [
+      {
+        "type": "trace",
+        "objectId": "trace-@trace@",
+        "traceId": "@trace@",
+        "startedAt": "@time@",
+        "data": {
+          "name": "Document analysis",
+          "status": "success",
+          "durationMs": 2100,
+          "userId": "demo-user",
+          "customerId": "demo-customer",
+          "feature": "document-analysis"
+        }
+      },
+      {
+        "type": "observation",
+        "objectId": "obs-@trace@-1",
+        "traceId": "@trace@",
+        "spanId": "0000000000000001",
+        "startedAt": "@time@",
+        "data": {
+          "observationType": "generation",
+          "status": "success",
+          "durationMs": 2000,
+          "provider": "example",
+          "model": "example-model",
+          "usage": {
+            "inputTokens": 1500,
+            "outputTokens": 400,
+            "cachedInputTokens": 0
+          }
+        }
+      }
+    ]
+  ],
+  "multiple": [
+    [
+      {
+        "type": "observation",
+        "objectId": "obs-@trace@-1",
+        "traceId": "@trace@",
+        "spanId": "0000000000000001",
+        "startedAt": "@time@",
+        "data": {
+          "observationType": "generation",
+          "status": "success",
+          "durationMs": 2000,
+          "provider": "example",
+          "model": "example-model",
+          "usage": {
+            "inputTokens": 2500,
+            "outputTokens": 500,
+            "cachedInputTokens": 0
+          }
+        }
+      }
+    ],
+    [
+      {
+        "type": "observation",
+        "objectId": "obs-@trace@-2",
+        "traceId": "@trace@",
+        "spanId": "0000000000000002",
+        "startedAt": "@time@",
+        "data": {
+          "observationType": "generation",
+          "status": "success",
+          "durationMs": 1000,
+          "provider": "example",
+          "model": "example-model",
+          "usage": {
+            "inputTokens": 1000,
+            "outputTokens": 200,
+            "cachedInputTokens": 0
+          }
+        }
+      }
+    ],
+    [
+      {
+        "type": "observation",
+        "objectId": "obs-@trace@-3",
+        "traceId": "@trace@",
+        "spanId": "0000000000000003",
+        "startedAt": "@time@",
+        "data": {
+          "observationType": "generation",
+          "status": "success",
+          "durationMs": 3000,
+          "provider": "example",
+          "model": "example-model",
+          "usage": {
+            "inputTokens": 2000,
+            "outputTokens": 500,
+            "cachedInputTokens": 0
+          }
+        }
+      },
+      {
+        "type": "trace",
+        "objectId": "trace-@trace@",
+        "traceId": "@trace@",
+        "startedAt": "@time@",
+        "data": {
+          "name": "Document analysis",
+          "status": "success",
+          "durationMs": 6200,
+          "userId": "demo-user",
+          "customerId": "demo-customer",
+          "feature": "document-analysis"
+        }
+      }
+    ]
+  ],
+  "score": [
+    [
+      {
+        "type": "score",
+        "objectId": "score-@score@",
+        "startedAt": "@time@",
+        "data": {
+          "name": "User satisfaction",
+          "targetType": "observation",
+          "targetId": "obs-@trace@-1",
+          "valueType": "numeric",
+          "value": 1
+        }
+      }
+    ]
+  ],
+  "score-trace": [
+    [
+      {
+        "type": "score",
+        "objectId": "score-@score@",
+        "startedAt": "@time@",
+        "data": {
+          "name": "User satisfaction",
+          "targetType": "trace",
+          "targetId": "trace-@trace@",
+          "valueType": "numeric",
+          "value": 1
+        }
+      }
+    ]
+  ]
+}
