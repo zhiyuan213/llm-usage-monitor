@@ -28,7 +28,7 @@ async function save() {
 </script>
 <template>
   <section class="panel form-panel">
-    <h2>{{ t("Project details", "项目资料") }}</h2>
+    <h2>{{ t("Project configuration", "项目配置") }}</h2>
     <div v-if="error" class="notice error">{{ error }}</div>
     <form class="form-grid" @submit.prevent="save">
       <label

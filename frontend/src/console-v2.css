@@ -1399,7 +1399,7 @@
 
 /* Operation feedback is teleported outside the console layout, without shifting page content. */
 .console-toast {
-  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  position: fixed; top: max(88px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
   z-index: 10000; display: flex; align-items: center; gap: 10px;
   width: max-content; max-width: calc(100vw - 32px); box-sizing: border-box;
   padding: 16px 22px; border: 1px solid #dce4ee; border-radius: 8px;
@@ -1408,3 +1408,10 @@
 }
 .console-toast svg { flex-shrink: 0; color: #279c78; }
 .console-toast-error svg { color: #dc4c64; }
+
+.ui-v2 .custom-pricing-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
+.ui-v2[data-page="settings"] .custom-pricing-grid > .panel { min-width: 0; margin-bottom: 0; }
+.ui-v2 .custom-pricing-grid .price-version-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ui-v2 .custom-price-list table { min-width: 600px; }
+@media (max-width: 1100px) { .ui-v2 .custom-pricing-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 700px) { .ui-v2 .custom-pricing-grid .price-version-form { grid-template-columns: minmax(0, 1fr); } }

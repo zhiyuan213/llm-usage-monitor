@@ -24,7 +24,6 @@ import PlanFeatures from "./PlanFeatures.vue";
 import QueryControls from "./QueryControls.vue";
 import WorkspaceOverview from "./WorkspaceOverview.vue";
 import ProjectInfoEditor from "./ProjectInfoEditor.vue";
-import BatchHistory from "./BatchHistory.vue";
 import AccountSecurity from "./AccountSecurity.vue";
 import {
   computed,
@@ -1297,15 +1296,17 @@ const usagePercent = computed(() =>
           <RouterLink class="back-link" :to="modelPricesBack"><ArrowLeft :size="16" />{{t('Back','返回')}}</RouterLink>
           <PublicModelPrices :project="selected" :refresh-key="data" :public-pricing="pricingStatus.public_pricing" />
         </template>
-        <template v-if="page === 'settings' && selected"
-          ><section class="panel form-panel">
-            <h2>{{ t("Model pricing", "模型价格") }}</h2>
-            <RouterLink class="btn" :to="modelPricesLink">{{t("View model prices", "查看模型价格")}}</RouterLink>
+        <template v-if="page === 'settings' && selected">
+          <ProjectInfoEditor v-if="project" :project="project" @saved="refresh()" />
+          <section class="panel form-panel">
+            <h2>{{ t("Public model pricing", "公共模型价格") }}</h2>
+            <RouterLink :to="modelPricesLink">{{t("View model prices", "查看模型价格")}}</RouterLink>
             <ModelPricePolicy :status="pricingStatus" @change="(enabled)=>run(async()=>{await api(path('/pricing-policy'),{publicPricing:enabled});await refresh()})" />
           </section>
 
+          <div class="custom-pricing-grid">
           <section class="panel form-panel">
-            <h2>{{t('Custom price override','自定义价格覆盖')}}</h2>
+            <h2>{{t('Custom model price configuration','自定义模型价格配置')}}</h2>
             <p>
               {{
                 t(
@@ -1387,7 +1388,8 @@ const usagePercent = computed(() =>
               </button>
             </form>
           </section>
-          <section class="panel table-wrap">
+          <section class="panel form-panel custom-price-list">
+            <h2>{{t('Custom model price list','自定义模型价格列表')}}</h2>
             <div class="table-wrap">
               <table>
                 <thead>
@@ -1421,11 +1423,7 @@ const usagePercent = computed(() =>
               </table>
             </div>
           </section>
-          <ProjectInfoEditor
-            v-if="page === 'settings' && project"
-            :project="project"
-            @saved="refresh()"
-          />
+          </div>
           </template
         >
         <template v-if="page === 'account'"
@@ -1512,7 +1510,6 @@ const usagePercent = computed(() =>
           @delete="deleteProject"
         />
 
-        <BatchHistory v-if="page === 'keys' && selected" :project="selected" />
         <BusinessInsights v-if="accountReady && selected && ['cost-insights','releases','weekly'].includes(page)" :key="page+selected" :project="selected" :mode="page" :refresh-token="loading" />
         <BudgetReminders v-if="accountReady && selected && page==='budgets'" :key="page+selected" :project="selected" :refresh-token="loading" />
         <ReliabilityInsights v-if="accountReady && selected && page==='reliability'" :key="page+selected" :project="selected" :refresh-token="loading" />
