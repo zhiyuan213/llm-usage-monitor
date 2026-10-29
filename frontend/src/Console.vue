@@ -762,10 +762,10 @@ const usagePercent = computed(() =>
               <table class="traces-table">
                 <thead>
                   <tr>
-                    <th>{{ t("Name", "名称") }}</th>
                     <th>{{ t("Object ID", "对象 ID") }}</th>
+                    <th>{{ t("Name", "名称") }}</th>
                     <th><button type="button" class="sort-heading" @click="sortTraces('duration')">{{t("Duration", "耗时")}} {{traceSort==='duration'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th>
-                    <th>{{t("Models","模型")}}</th><th><button type="button" class="sort-heading" @click="sortTraces('tokens')">Token {{traceSort==='tokens'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th><th><button type="button" class="sort-heading" @click="sortTraces('estimated_cost')">{{t("Known estimated cost","已知估算费用")}} {{traceSort==='estimated_cost'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th>
+                    <th><button type="button" class="sort-heading" @click="sortTraces('tokens')">Token {{traceSort==='tokens'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th><th><button type="button" class="sort-heading" @click="sortTraces('estimated_cost')">{{t("Known estimated cost","已知估算费用")}} {{traceSort==='estimated_cost'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th>
                     <th>{{ t("User / Customer", "用户 / 客户") }}</th>
                     <th>{{ t("Status", "状态") }}</th>
                     <th>{{ t("Started at (UTC)", "开始时间 (UTC)") }}</th>
@@ -774,11 +774,11 @@ const usagePercent = computed(() =>
                 </thead>
                 <tbody>
                   <tr v-for="o in data.items || []" :key="o.object_id">
+                    <td :data-label="t('Object ID','对象 ID')"><span class="record-id"><code :title="o.object_id">{{o.object_id.length>16?o.object_id.slice(0,8)+'…'+o.object_id.slice(-4):o.object_id}}</code><button type="button" class="copy-id" :aria-label="t('Copy full ID','复制完整 ID')" @click="copyRecordId(o.object_id)"><Copy :size="14" /></button></span></td>
                     <td :data-label="t('Name','名称')">
                       <strong>{{ o.data.name || "—" }}</strong>
                     </td>
-                    <td :data-label="t('Object ID','对象 ID')"><span class="record-id"><code :title="o.object_id">{{o.object_id.length>16?o.object_id.slice(0,8)+'…'+o.object_id.slice(-4):o.object_id}}</code><button type="button" class="copy-id" :aria-label="t('Copy full ID','复制完整 ID')" @click="copyRecordId(o.object_id)"><Copy :size="14" /></button></span></td>
-                    <td :data-label="t('Duration','耗时')">{{ n(o.data.durationMs) }} ms</td><td :data-label="t('Models','模型')">{{o.models||"—"}}</td><td data-label="Token" :title="o.tokens==null?t('Token usage not reported','未上报 Token 用量'):''">{{o.tokens==null?'—':n(o.tokens)}}</td><td :data-label="t('Known cost','已知费用')"><span :title="o.estimated_cost==null?t('No priced model calls; check usage and model rates.','无已定价模型调用，请检查用量和模型价格。'):''">{{o.estimated_cost==null?'—':money(o.estimated_cost)}}</span><small class="muted">{{n(o.priced_calls)}}/{{n(o.generations)}} {{t("priced","条已定价")}}</small></td>
+                    <td :data-label="t('Duration','耗时')">{{ n(o.data.durationMs) }} ms</td><td data-label="Token" :title="o.tokens==null?t('Token usage not reported','未上报 Token 用量'):''">{{o.tokens==null?'—':n(o.tokens)}}</td><td :data-label="t('Known cost','已知费用')"><span :title="o.estimated_cost==null?t('No priced model calls; check usage and model rates.','无已定价模型调用，请检查用量和模型价格。'):''">{{o.estimated_cost==null?'—':money(o.estimated_cost)}}</span><small class="muted">{{n(o.priced_calls)}}/{{n(o.generations)}} {{t("priced","条已定价")}}</small></td>
                     <td :data-label="t('User / Customer','用户 / 客户')">
                       {{ o.data.userId || "—" }} /
                       {{ o.data.customerId || "—" }}
@@ -802,7 +802,7 @@ const usagePercent = computed(() =>
                     </td>
                   </tr>
                   <tr v-if="!data.items?.length">
-                    <td colspan="10" class="empty-cell">
+                    <td colspan="9" class="empty-cell">
                       {{
                         t(
                           "No traces match these filters.",
@@ -859,21 +859,19 @@ const usagePercent = computed(() =>
             </div>
             <div
               class="waterfall"
-              v-for="(o, i) in traceObjects.filter(
-                (o: any) => o.type !== 'score',
-              )"
+              v-for="(o, i) in traceObjects"
               :key="o.object_id"
             >
               <span class="step-number">{{ Number(i) + 1 }}</span>
               <div>
                 <b>{{ traceObjectLabel(o) }}</b
                 ><small
-                  >{{ objectLabel(o.type) }} ·
+                  >{{ o.type==='trace'?t('Trace (request)','Trace（请求）'):o.type==='observation'?t('Observation (step)','Observation（调用步骤）'):t('Score (rating)','Score（评分）') }} ·
                   {{ o.data.observationType ? objectLabel(o.data.observationType) : o.data.status }}</small
                 >
                 <code class="waterfall-object-id">{{ o.object_id }}</code>
               </div>
-              <div class="waterfall-track">
+              <div v-if="o.type!=='score'" class="waterfall-track">
                 <i
                   :style="{
                     marginLeft:
@@ -894,26 +892,9 @@ const usagePercent = computed(() =>
                   }"
                 ></i>
               </div>
-              <span>{{ n(o.data.durationMs) }} ms</span>
-            </div>
-            <p v-if="!traceObjects.length" class="empty-cell">
-              {{
-                t(
-                  "This trace is not available.",
-                  "该调用不存在或已超过保留期。",
-                )
-              }}
-            </p>
-          </section>
-          <section
-            v-for="o in traceObjects"
-            :key="o.object_id"
-            class="panel detail-card"
-          >
-            <div class="panel-heading">
-              <h2>{{ traceObjectLabel(o) }}</h2>
-              <span class="badge">{{t('Revision','修订版本')}} {{ o.revision }}</span>
-            </div>
+              <span v-if="o.type!=='score'">{{ n(o.data.durationMs) }} ms</span>
+              <div class="waterfall-details">
+                <div class="waterfall-event-meta"><span>{{t('Event time','事件时间')}}: {{date(o.started_at)}}</span><span>{{t('Status','状态')}}: {{o.data.status||'—'}}</span><span>{{t('Revision','修订版本')}}: {{o.revision}}</span></div>
             <p v-if="o.data.observationType==='generation'">{{t('Model','模型')}}: {{o.data.model||'—'}} · {{t('Known estimated cost','已知估算费用')}}: {{money(o.cost)}}</p>
             <p v-if="o.data.observationType==='generation'" class="muted">{{t('Input / output / cached tokens','输入 / 输出 / 缓存 Token')}}: {{n(o.data.usage?.inputTokens)}} / {{n(o.data.usage?.outputTokens)}} / {{n(o.data.usage?.cachedInputTokens)}}</p>
             <p v-if="o.data.observationType==='generation' && o.cost==null" class="notice">{{costReason(o)}}</p>
@@ -931,7 +912,18 @@ const usagePercent = computed(() =>
               <dt>{{ t("Estimated cost", "估算成本") }}</dt>
               <dd>{{ o.type === "observation" ? money(o.cost) : "—" }}</dd>
             </dl></details>
-          </section></template
+              </div>
+            </div>
+            <p v-if="!traceObjects.length" class="empty-cell">
+              {{
+                t(
+                  "This trace is not available.",
+                  "该调用不存在或已超过保留期。",
+                )
+              }}
+            </p>
+          </section>
+</template
         >
         <AdminProjects v-if="page === 'admin-projects' && accountReady" :refresh-token="loading" />
         <AdminPayments v-if="page === 'admin-payments' && accountReady" :refresh-token="loading" />
