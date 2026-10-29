@@ -62,3 +62,7 @@ Observation filter/event IDs follow-up: full mvn -B -f backend/pom.xml verify pa
 - 五项指标卡、瀑布图分区及状态标签；只展示目标为当前Trace的Score，默认0不保存，多项按事件时间最新优先。
 - frontend test：24 files / 69 tests passed；build passed；三项示例同步检查 passed；依赖审计114 packages / 0 advisories；diff check passed。
 - 新增默认0、错误目标排除、最新真实0评分回归；未声称浏览器视觉验收通过。
+
+## 数据统计三块布局
+- 左侧分组列表，右侧Token及费用两张独立柱状图；当前维度明确显示字段，说明分组而非请求逐条列表。后端与导出契约未改变。
+- frontend test：24 files / 69 tests passed；build passed；三项示例同步检查 passed；依赖审计114 packages / 0 advisories；diff check passed。未声称浏览器视觉验收通过。

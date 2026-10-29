@@ -1524,3 +1524,12 @@
 @media(max-width:1200px) { .ui-v2 .trace-detail-metrics { grid-template-columns: repeat(3,minmax(0,1fr)); } }
 @media(max-width:700px) { .ui-v2 .trace-detail-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media(max-width:440px) { .ui-v2 .trace-detail-metrics { grid-template-columns: 1fr; } }
+
+.ui-v2 .analytics-chart-stack { display: grid; gap: 16px; min-width: 0; }
+.ui-v2 .analytics-chart-stack .analytics-chart-panel { margin-bottom: 0; }
+.ui-v2 .analytics-grouping-note { color: #6b7a94; font-size: 12px; line-height: 1.8; margin: 0 0 14px; }
+.ui-v2 .analytics-grouping-note code { color: #4b61a7; }
+.ui-v2 .analytics-chart-stack .analytics-token-chart { height: 260px; }
+.ui-v2 .analytics-chart-stack .analytics-chart-panel { padding: 18px; }
+.ui-v2 .analytics-chart-stack .analytics-chart-panel p { font-size: 12px; margin: 8px 0; }
+.ui-v2 .analytics-list-panel .panel-heading { padding: 16px; }

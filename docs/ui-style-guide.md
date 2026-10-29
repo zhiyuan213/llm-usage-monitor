@@ -211,3 +211,5 @@ REST 与 SDK 使用相同的三种场景：单模型调用（Trace + Observation
 - 费用公式浮层桌面最多820px宽、560px高，同时受视口约束；Observation ID 紧随模型名，同排不足时换行。
 
 - 调用详情顶部使用五张淡色指标卡（耗时、模型调用、Token、费用、Trace评分），图标置右。Trace评分只读上报Score，targetType=trace且targetId匹配当前Trace对象；未评分显示0并标注未评分，多项按时间展示最新值并列出各评分，不自动平均。瀑布图使用分区背景、状态标签及细分隔线。
+
+- 数据统计使用左列表、右上Token柱状图、右下费用柱状图三块布局，取消图表指标切换。标识表头按当前维度显示客户ID/用户ID/功能，并说明data.customerId/data.userId/data.feature分组及未提供规则；分组数不代表请求数，图表仍取完整范围前20组，不随分页。
