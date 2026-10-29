@@ -13,7 +13,7 @@ const appliedWindow=ref(makeWindow(dates.from,dates.to)!);
 const appliedDimension=ref('customerId');
 const page=ref(0), size=usePageSize(), total=ref(0), rows=ref<any[]>([]), tokenChart=ref<any[]>([]), costChart=ref<any[]>([]), busy=ref(false), error=ref('');
 const dimensionName=computed(()=>appliedDimension.value==='customerId'?t('Customer ID','客户 ID'):appliedDimension.value==='userId'?t('User ID','用户 ID'):t('Feature','功能'));
-function label(row:any){return row.dimension||t('Not provided','未提供');}
+function label(row:any){return row.dimension||t('Not set: '+dimensionName.value,'未设置'+dimensionName.value);}
 let version=0;
 const params=computed(()=>new URLSearchParams({project:props.project,dimension:appliedDimension.value,...appliedWindow.value}).toString());
 const exportUrl=computed(()=>'/api/reports/analytics/export?'+params.value+'&lang='+language.value);
@@ -40,7 +40,8 @@ watch(()=>props.refreshToken,()=>load());
       <label>{{t('Dimension','统计维度')}}<select v-model="draftDimension" :disabled="busy"><option value="customerId">{{t('Customers','客户')}}</option><option value="userId">{{t('Users','用户')}}</option><option value="feature">{{t('Features','功能')}}</option></select></label>
       <template #actions><div class="query-export"><a class="btn" :aria-disabled="busy||!!error" :href="busy||error?undefined:exportUrl+'&format=xlsx'">{{t('Export Excel','导出 Excel')}}</a><a class="btn" :aria-disabled="busy||!!error" :href="busy||error?undefined:exportUrl+'&format=pdf'">{{t('Export PDF','导出 PDF')}}</a></div></template>
     </DateRangeFilter>
-    <p class="analytics-grouping-note">{{t('Grouped by','当前按')}} <strong>{{dimensionName}}</strong>（<code>data.{{appliedDimension}}</code>）{{t('; repeated values are combined. Missing IDs appear under Not provided. Row count is the number of groups, not requests.','汇总；同一标识合并为一行，未上报归入“未提供”。列表条数是分组数，不是请求数。')}}</p>
+    <p class="analytics-grouping-note">{{t('Grouped by','当前按')}} <strong>{{dimensionName}}</strong>（<code>data.{{appliedDimension}}</code>）{{t('; repeated values are combined. Missing labels are grouped as Not set. Row count is the number of groups, not requests.','汇总；同一标识合并为一行，未上报归入“未设置”分组。列表条数是分组数，不是请求数。')}}</p>
+    <details class="panel notification-rules"><summary>{{t('How to report customer, user and feature labels','如何填写客户、用户与功能标识')}}</summary><p>{{t('Set these fields inside events[n].data. customerId identifies a customer organization; userId identifies an end user; feature identifies a business feature. Use stable internal IDs rather than emails or names.','在 events[n].data 中填写：customerId 标识客户组织，userId 标识终端用户，feature 标识业务功能。使用稳定的内部 ID，避免邮箱或真实姓名。')}}</p><pre><code>{"customerId":"customer-001","userId":"user-001","feature":"document-analysis"}</code></pre><p>{{t('Include the same labels on the Trace and every related Observation: grouping reads each object’s own fields and does not inherit labels from its Trace. Existing unlabeled records are not automatically relabeled.','Trace 与每条关联 Observation 都应填写相同标签：统计读取每个对象自身字段，不会从 Trace 自动继承；既有未标记记录不会自动补齐。')}}</p></details>
     <div class="analytics-report-grid">
       <section class="panel analytics-list-panel" :aria-busy="busy">
         <div class="panel-heading"><h2>{{dimensionName}} {{t('statistics','统计')}}</h2><span class="badge">{{total}} {{t('groups','组')}}</span></div>

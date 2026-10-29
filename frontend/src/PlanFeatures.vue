@@ -21,6 +21,8 @@ defineProps<{ index: number; compactRetention?: boolean }>();
       {{ t("of rolling data retention", "滚动数据保留") }}
     </li>
     <li><Check :size="16" />Trace · Observation · Score</li>
+    <li><Check :size="16" />{{ t("Audit Excel/PDF export and customer attribution", "审计 Excel/PDF 导出与客户归因") }}</li>
+    <li><Check :size="16" />{{ t("Project-specific model price versions", "项目自定义模型价格版本") }}</li>
     <li v-if="index > 0"><Check :size="16" />{{ t('Cost diagnosis, release comparison and weekly reports', '费用诊断、发布对比与自动周报') }}</li>
     <li v-if="index > 0"><Check :size="16" />{{ t('Budget reminders and failure / slow-call analysis', '预算提醒与失败、慢调用分析') }}</li>
     <li v-if="index === 2"><Check :size="16" />{{ t('Custom budget warning and slow-call thresholds', '自定义预算提醒线与慢调用阈值') }}</li>

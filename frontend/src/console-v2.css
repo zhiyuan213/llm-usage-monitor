@@ -1581,3 +1581,5 @@
 
 /* Trace scores belong to the parent; observations keep this slot empty. */
 .ui-v2 .traces-table > thead > tr > th:nth-child(10), .ui-v2 .traces-table > tbody > tr > td:nth-child(10):not([colspan]) { text-align: center; font-variant-numeric: tabular-nums; }
+.ui-v2 .analytics-report .notification-rules { margin-bottom:16px; }
+.ui-v2 .analytics-report .notification-rules pre { max-width:100%; overflow-x:auto; padding:12px; background:#f5f7fb; border-radius:6px; }

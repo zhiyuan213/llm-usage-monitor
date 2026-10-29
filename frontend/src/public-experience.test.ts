@@ -45,3 +45,9 @@ it('publishes final distinct policies with the confirmed operator and seven-day 
  const {setLanguage}=await import('./lib');setLanguage('zh-CN');
  const chinese=await render('/refunds');expect(chinese).toContain('7天退款');expect(chinese).toContain('申请全额退款');
 });
+
+it('states actual common plan capabilities and separates audit retention from analytics',async()=>{
+ const pricing=await render('/pricing');for(const text of ['Included across all plans','Audit Excel/PDF export and customer attribution','Project-specific model price versions','not provider invoice reconciliation'])expect(pricing).toContain(text);
+ const security=await render('/security');expect(security).toContain('no fixed automatic expiry');expect(security).toContain('not a promise of permanent storage');expect(security).toContain('legacy Paddle');expect(security).toContain('not a signed DPA');
+ const {setLanguage}=await import('./lib');setLanguage('zh-CN');const chinese=await render('/security');expect(chinese).toContain('没有固定自动到期清理期限');expect(chinese).toContain('不代表永久保存');
+});

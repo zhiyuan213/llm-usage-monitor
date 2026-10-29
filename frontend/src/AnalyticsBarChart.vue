@@ -15,7 +15,7 @@ const maximum=computed(()=>{
 const ticks=computed(()=>Array.from({length:5},(_,i)=>maximum.value*i/4));
 const barWidth=computed(()=>(chartWidth.value-80)/Math.max(1,chart.value.length));
 const columnWidth=computed(()=>Math.min(28,Math.max(4,barWidth.value-24)));
-function label(row:any){return row.dimension||t('Not provided','未提供');}
+function label(row:any){return row.dimension||t('Not set: '+props.dimensionLabel,'未设置'+props.dimensionLabel);}
 function value(row:any){return row[metric.value];}
 function costNumber(value:number){return value!==0 && Math.abs(value)<0.0001?value.toExponential(1):new Intl.NumberFormat(language.value,{maximumFractionDigits:8}).format(value);}
 function valueLabel(row:any){return value(row)==null?t('Unknown','未知'):metric.value==='tokens'?n(value(row)):costNumber(Number(value(row)));}

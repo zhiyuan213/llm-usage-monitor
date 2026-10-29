@@ -1028,6 +1028,8 @@ const usagePercent = computed(() =>
         <template v-if="page === 'alerts' && selected"
           ><section class="panel form-panel">
             <h2>{{ t("Create alert rule", "创建告警规则") }}</h2>
+            <p>{{t('Notifications are emailed to the workspace owner’s account email. Recipients and Webhook/Slack channels cannot currently be customized.','通知发送到工作空间所有者的账号邮箱，当前不支持自定义收件人或 Webhook/Slack 渠道。')}}</p>
+            <details class="notification-rules"><summary>{{t('Metrics and notification scope','指标口径与通知范围')}}</summary><p>{{t('Error count counts error objects in the last hour; latency compares the maximum matching object duration in milliseconds; cost sums positive known object costs in USD. Rules examine both Trace and Observation records, so request and step records may both match. This differs from Overview’s slow/failure counts, which count individual Observations only.','错误数量统计最近一小时状态为 error 的对象数；耗时按匹配对象的最大毫秒数比较；费用累加对象的已知正费用（USD）。规则同时检查 Trace 和 Observation，请求与步骤可能分别匹配；这与概览只统计单次 Observation 的慢调用、失败调用口径不同。')}}</p><p>{{t('For calendar-month model spending and forecast warnings, use Budget reminders. Neither feature charges your payment method or stops ingestion.','按自然月的模型费用与预测提醒请使用“预算提醒”。两种提醒都不会扣款或停止接入。')}} <RouterLink to="/app/budgets">{{t('Budget reminders','预算提醒')}}</RouterLink></p></details>
             <p>
               {{
                 t(
@@ -1500,7 +1502,7 @@ const usagePercent = computed(() =>
         <SupportMessages v-if="accountReady && ['messages', 'admin-messages'].includes(page)" :key="page" :admin="page === 'admin-messages'" :refresh-token="loading" />
         <AccountSecurity v-if="page === 'account'" :disabled="!accountReady || signingOut" />
         <template v-if="page === 'audit'"
-          ><div class="audit-toolbar query-export trace-export">
+          ><p class="muted">{{t('Audit records cover recorded account and workspace operations, not every model event. They are separate from plan analytical retention and currently have no fixed automatic expiry. Deleting a project/account retains audit records; this is not a permanent-storage guarantee. Export records you need.','审计记录覆盖已记录的账号与工作空间操作，不是每条模型事件；独立于套餐分析明细保留窗口，目前无固定自动到期清理期限。删除项目或账号仍保留审计记录，但不保证永久保存，请导出所需记录。')}} <RouterLink to="/security#data-handling">{{t('Data processing and retention','数据处理与保留说明')}}</RouterLink></p><div class="audit-toolbar query-export trace-export">
             <h2>{{ t("Activity log", "操作记录") }}</h2>
             <a
               class="btn"
