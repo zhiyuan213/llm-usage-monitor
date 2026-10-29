@@ -1436,3 +1436,4 @@
 
 .ui-v2 .waterfall-object-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 5px; }
 .ui-v2 .traces-table .record-id code { white-space: normal; overflow-wrap: anywhere; }
+.ui-v2 .waterfall-event-meta { flex-direction: column; align-items: flex-start; gap: 4px; }

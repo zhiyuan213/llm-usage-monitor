@@ -17,3 +17,11 @@ ID/cache follow-up: 64 frontend tests passed, production build passed, audit zer
 Observation metrics follow-up: full mvn -B -f backend/pom.xml verify passed using JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=D:/code/llm-usage-monitor/.local/java-tmp -Duser.timezone=UTC; original local attempts failed due Windows short TEMP Unix socket path and local timezone in billing tests. Frontend 64 tests, build, 114-package audit (zero advisories), all three generated-example synchronization checks passed. Slow/failed counters now exclude Trace and Score and include Observation; 4999/5000ms boundary covered.
 
 Observation filter/event IDs follow-up: full mvn -B -f backend/pom.xml verify passed with UTC and explicit local Unix socket temp directory. Observation filter regression proves 30s root with five sub-5s children excluded; 5000ms child included; failed child included regardless root status; invalid filter/ownership checked. IngestIntegrationTest verifies current revision event ID persists after worker materialization. Frontend 64 tests, production build, dependency audit (0 findings), three generated sync checks and diff check passed. V26 adds persistent object event ID and backfills retained matching revisions; unavailable history stays null.
+
+## 状态换行及模型去重
+- frontend test：22 files / 64 tests passed。
+- frontend production build：passed。
+- audit-locked-dependencies.py：114 packages，0 advisories。
+- sync-doc-examples、sync-scenario-examples、write-sdk-id-guides --check：passed。
+- git diff --check：passed。
+- 本次为前端展示调整；浏览器本地预览连接失败，未将其记录为视觉验证通过。

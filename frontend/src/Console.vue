@@ -892,7 +892,7 @@ const usagePercent = computed(() =>
               <span v-if="o.type!=='score'">{{ n(o.data.durationMs) }} ms</span>
               <div class="waterfall-details">
                 <div class="waterfall-event-meta"><span>{{t('Event time','事件时间')}}: {{date(o.started_at)}}</span><span>{{t('Status','状态')}}: {{o.data.status||'—'}}</span></div>
-            <p v-if="o.data.observationType==='generation'">{{t('Model','模型')}}: {{o.data.model||'—'}} · {{t('Known estimated cost','已知估算费用')}}: {{money(o.cost)}}</p>
+            <p v-if="o.data.observationType==='generation'">{{t('Known estimated cost','已知估算费用')}}: {{money(o.cost)}}</p>
             <p v-if="o.data.observationType==='generation'" class="muted">{{t('Input / output / cached tokens','输入 / 输出 / 缓存 Token')}}: {{n(o.data.usage?.inputTokens)}} / {{n(o.data.usage?.outputTokens)}} / {{n(o.data.usage?.cachedInputTokens)}}</p>
             <p v-if="o.data.observationType==='generation' && o.cost==null" class="notice">{{costReason(o)}}</p>
 
