@@ -34,3 +34,9 @@ Observation filter/event IDs follow-up: full mvn -B -f backend/pom.xml verify pa
 - audit-locked-dependencies.py：114 packages，0 advisories。
 - git diff --check：passed。
 - 窄屏保持容器横向滚动，未声称完成浏览器视觉验收。
+
+## Observation 展开区域层级优化
+- Trace 展开底色、Observation 分组标题及数量、状态标签、数字右对齐、窄屏内滚动。
+- frontend test：22 files / 65 tests passed；production build：passed。
+- 三项 generated examples --check：passed；依赖审计114 packages / 0 advisories；git diff --check：passed。
+- 未修改接口或导出契约；未声明浏览器视觉验收通过。

@@ -1446,3 +1446,28 @@
 .ui-v2 .trace-observations > td { padding: 16px 24px; background: #f5f7fb; }
 .ui-v2 .trace-observations code { white-space: normal; overflow-wrap: anywhere; }
 .ui-v2 .trace-observations table { min-width: 1000px; background: white; }
+
+/* Expanded trace children keep a distinct, quiet hierarchy. */
+.ui-v2 .traces-table > tbody > .trace-row-expanded > td { background: #f5f7ff; border-bottom-color: #e2e7fb; }
+.ui-v2 .trace-expand { width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; }
+.ui-v2 .trace-expand:hover, .ui-v2 .trace-expand[aria-expanded="true"] { background: #e8edff; }
+.ui-v2 .trace-expand:focus-visible { outline: 2px solid #3156e8; outline-offset: 2px; }
+.ui-v2 .trace-observations > td { padding: 0 16px 16px 44px; background: #f5f7ff; }
+.ui-v2 .observation-group { border: 1px solid #dfe5f3; border-left: 3px solid #9baaf4; border-radius: 8px; overflow: hidden; background: white; }
+.ui-v2 .observation-group-heading { display: flex; align-items: center; gap: 8px; padding: 12px 14px; color: #65738d; font-size: 12px; border-bottom: 1px solid #e8edf5; }
+.ui-v2 .observation-group-heading strong { color: #344465; font-size: 13px; }
+.ui-v2 .observation-group-mark { color: #7083d7; font-size: 18px; }
+.ui-v2 .observation-count { padding: 1px 7px; background: #eef1fd; border-radius: 10px; color: #5266bd; font-variant-numeric: tabular-nums; }
+.ui-v2 .observation-feedback { padding: 16px; margin: 0; }
+.ui-v2 .observation-table { width: 100%; min-width: 1080px; }
+.ui-v2 .observation-table th { background: #fafbfe; font-size: 12px; font-weight: 500; color: #687893; }
+.ui-v2 .observation-table th, .ui-v2 .observation-table td { padding: 12px 14px; vertical-align: middle; }
+.ui-v2 .observation-table td { color: #4c5d78; border-bottom: 1px solid #edf0f6; font-size: 12px; }
+.ui-v2 .observation-table tbody tr:last-child td { border-bottom: 0; }
+.ui-v2 .observation-table tbody tr:hover td { background: #f8faff; }
+.ui-v2 .observation-table code { font-size: 11px; color: #65738d; line-height: 1.6; }
+.ui-v2 .observation-table .numeric { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ui-v2 .observation-model { color: #263953; font-weight: 600; }
+.ui-v2 .observation-unit { color: #8290a5; }
+.ui-v2 .observation-time { white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 680px) { .ui-v2 .trace-observations > td { padding: 0 8px 12px; } }

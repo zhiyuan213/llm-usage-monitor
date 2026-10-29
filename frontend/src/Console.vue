@@ -776,7 +776,7 @@ const usagePercent = computed(() =>
                   </tr>
                 </thead>
                 <tbody>
-                  <template v-for="o in data.items || []" :key="selected+o.object_id"><tr>
+                  <template v-for="o in data.items || []" :key="selected+o.object_id"><tr :class="{'trace-row-expanded':expandedTraces[selected+o.object_id]}">
                     <td><button type="button" class="trace-expand" :aria-expanded="!!expandedTraces[selected+o.object_id]" :aria-label="t('Toggle observations','展开或收起 Observation')" @click="expandedTraces[selected+o.object_id]=!expandedTraces[selected+o.object_id]">{{expandedTraces[selected+o.object_id]?'▾':'▸'}}</button></td>
                     <td data-label="eventId"><span class="record-id"><code>{{o.event_id||'—'}}</code><button v-if="o.event_id" type="button" class="copy-id" :aria-label="t('Copy event ID','复制事件 ID')" @click="copyRecordId(o.event_id)"><Copy :size="14" /></button></span></td>
                     <td :data-label="t('Object ID','对象 ID')"><span class="record-id"><code :title="o.object_id">{{o.object_id}}</code><button type="button" class="copy-id" :aria-label="t('Copy full ID','复制完整 ID')" @click="copyRecordId(o.object_id)"><Copy :size="14" /></button></span></td>
