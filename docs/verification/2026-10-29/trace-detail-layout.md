@@ -11,3 +11,5 @@
 These are frontend checks; no backend or export contract changes. Exact commit CI remains a deployment gate.
 
 Follow-up: removed the overview Trace-level model row and duplicate reported-fields expander. Frontend: 63 tests and production build passed; locked dependency audit reported zero advisories; all three generated-example checks and git diff --check passed.
+
+ID/cache follow-up: 64 frontend tests passed, production build passed, audit zero advisories, generated examples synchronized, diff check passed. Fixture browser verified ID precedes name/type, no duplicate type/status subtitle, no overflow at desktop or 390px. Cached usage aggregation tested for multiple calls, unknown values and measured zero. Trace table now displays the full object ID with copy retained.

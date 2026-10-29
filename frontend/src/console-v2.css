@@ -1433,3 +1433,6 @@
 .ui-v2 .request-card { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 9px 12px; }
 .ui-v2 .request-card small { margin-top: 2px; }
 @media (max-width: 680px) { .ui-v2 .request-card > span:last-child { grid-column: auto; text-align: right; } }
+
+.ui-v2 .waterfall-object-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 5px; }
+.ui-v2 .traces-table .record-id code { white-space: normal; overflow-wrap: anywhere; }

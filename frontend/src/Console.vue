@@ -774,7 +774,7 @@ const usagePercent = computed(() =>
                 </thead>
                 <tbody>
                   <tr v-for="o in data.items || []" :key="o.object_id">
-                    <td :data-label="t('Object ID','对象 ID')"><span class="record-id"><code :title="o.object_id">{{o.object_id.length>16?o.object_id.slice(0,8)+'…'+o.object_id.slice(-4):o.object_id}}</code><button type="button" class="copy-id" :aria-label="t('Copy full ID','复制完整 ID')" @click="copyRecordId(o.object_id)"><Copy :size="14" /></button></span></td>
+                    <td :data-label="t('Object ID','对象 ID')"><span class="record-id"><code :title="o.object_id">{{o.object_id}}</code><button type="button" class="copy-id" :aria-label="t('Copy full ID','复制完整 ID')" @click="copyRecordId(o.object_id)"><Copy :size="14" /></button></span></td>
                     <td :data-label="t('Name','名称')">
                       <strong>{{ o.data.name || "—" }}</strong>
                     </td>
@@ -864,12 +864,8 @@ const usagePercent = computed(() =>
             >
               <span class="step-number">{{ Number(i) + 1 }}</span>
               <div>
-                <b>{{ traceObjectLabel(o) }}</b
-                ><small
-                  >{{ o.type==='trace'?t('Trace (request)','Trace（请求）'):o.type==='observation'?t('Observation (step)','Observation（调用步骤）'):t('Score (rating)','Score（评分）') }} ·
-                  {{ o.data.observationType ? objectLabel(o.data.observationType) : o.data.status }}</small
-                >
                 <code class="waterfall-object-id">{{ o.object_id }}</code>
+                <div class="waterfall-object-title"><b>{{ traceObjectLabel(o) }}</b><span class="badge">{{o.type==='trace'?'Trace':o.type==='observation'?'Observation':'Score'}}</span></div>
               </div>
               <div v-if="o.type!=='score'" class="waterfall-track">
                 <i

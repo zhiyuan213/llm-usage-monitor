@@ -3,9 +3,10 @@ import {requestSummary,stepWidth,pageItems} from './request-explorer';
 describe('request explorer',()=>{
  it('groups model calls without counting trace or score twice',()=>{
  const result=requestSummary([{type:'trace',data:{}},{type:'score',data:{value:5}},{type:'observation',cost:0.2,data:{observationType:'generation',model:'a',usage:{inputTokens:10,outputTokens:4}}},{type:'observation',cost:null,data:{observationType:'generation',model:'b'}},{type:'observation',data:{observationType:'tool'}}]);
- expect(result).toEqual({calls:2,priced:1,models:'a, b',input:10,output:4,cost:0.2});
+ expect(result).toEqual({calls:2,priced:1,models:'a, b',input:10,output:4,cached:null,cost:0.2});
  });
- it('keeps missing usage and cost unknown',()=>expect(requestSummary([{type:'observation',cost:null,data:{observationType:'generation'}}])).toMatchObject({input:null,output:null,cost:null}));
+ it('keeps missing usage and cost unknown',()=>expect(requestSummary([{type:'observation',cost:null,data:{observationType:'generation'}}])).toMatchObject({input:null,output:null,cached:null,cost:null}));
+ it('sums cached input separately without counting trace usage',()=>{const result=requestSummary([{type:'trace',data:{usage:{cachedInputTokens:999}}},...[0,5,7].map(cached=>({type:'observation',data:{observationType:'generation',usage:{cachedInputTokens:cached}}}))]);expect(result.cached).toBe(12);expect(requestSummary([{type:'observation',data:{observationType:'generation',usage:{cachedInputTokens:0}}}]).cached).toBe(0);});
  it('caps overlapping steps and preserves zero durations',()=>{expect(stepWidth(200,100)).toBe(100);expect(stepWidth(0,100)).toBe(0);expect(stepWidth(undefined,100)).toBe(0);});
  it('paginates the filtered collection without omissions',()=>{const rows=[1,2,3,4,5,6];expect(pageItems(rows,0,5)).toEqual([1,2,3,4,5]);expect(pageItems(rows,1,5)).toEqual([6]);expect(pageItems(rows.filter(n=>n%2===0),0,5)).toEqual([2,4,6]);});
 });
