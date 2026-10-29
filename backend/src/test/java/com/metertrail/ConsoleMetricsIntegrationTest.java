@@ -135,9 +135,9 @@ class ConsoleMetricsIntegrationTest {
     UUID workspace=store.db.queryForObject("SELECT id FROM workspaces WHERE owner_id=?",UUID.class,owner);
     store.db.update("INSERT INTO projects(id,workspace_id,name) VALUES(?,?,'report')",project,workspace);
     var start=java.time.Instant.now().minusSeconds(3600);
-    String[] types={"trace","trace","trace","observation","score"};
-    String[] statuses={"success","error","cancelled","error","error"};
-    int[] durations={4999,5000,6000,9000,9000};
+    String[] types={"trace","trace","trace","observation","score","observation","observation"};
+    String[] statuses={"success","error","cancelled","error","error","success","success"};
+    int[] durations={4999,5000,6000,9000,9000,5000,4999};
     for(int i=0;i<types.length;i++)store.db.update("INSERT INTO objects(project_id,type,object_id,revision,started_at,data) VALUES(?,?,?,1,?::timestamptz,?::jsonb)",project,types[i],"object-"+i,start.toString(),json.writeValueAsString(Map.of("status",statuses[i],"durationMs",durations[i])));
     String endpoint="/api/projects/"+project;
     mvc.perform(get(endpoint+"/overview").cookie(userCookie)).andExpect(status().isOk()).andExpect(jsonPath("$.summary.traces").value(3)).andExpect(jsonPath("$.summary.slow_requests").value(2)).andExpect(jsonPath("$.summary.failed_requests").value(1));

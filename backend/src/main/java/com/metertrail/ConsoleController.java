@@ -263,8 +263,8 @@ class ConsoleController {
             .queries()
             .queryForMap(
                 "SELECT count(*) AS objects,count(*) FILTER(WHERE o.type='trace') AS"
-                    + " traces,count(*) FILTER(WHERE o.type='trace' AND (o.data->>'durationMs')::numeric>=5000) AS slow_requests,"
-                    + "count(*) FILTER(WHERE o.type='trace' AND o.data->>'status'='error') AS failed_requests,count(*) FILTER(WHERE o.type='observation' AND o.data->>'observationType'='generation') AS"
+                    + " traces,count(*) FILTER(WHERE o.type='observation' AND (o.data->>'durationMs')::numeric>=5000) AS slow_requests,"
+                    + "count(*) FILTER(WHERE o.type='observation' AND o.data->>'status'='error') AS failed_requests,count(*) FILTER(WHERE o.type='observation' AND o.data->>'observationType'='generation') AS"
                     + " calls,count(*) FILTER(WHERE o.data->>'status'='error') AS"
                     + " errors,sum(o.cost) FILTER(WHERE o.type='observation' AND o.data->>'observationType'='generation') AS cost,count(*) FILTER(WHERE"
                     + " o.type='observation' AND o.data->>'observationType'='generation' AND o.cost IS NULL) AS"

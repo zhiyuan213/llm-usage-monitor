@@ -693,14 +693,14 @@ const usagePercent = computed(() =>
                   t('Application requests (Trace)', '应用请求（Trace）'),
                 ],
                 [
-                  t('Slow requests', '慢请求数'),
+                  t('Slow calls', '慢调用数'),
                   n(overview.summary?.slow_requests),
-                  t('Duration ≥ 5 seconds', '耗时 ≥ 5 秒'),
+                  t('Observation · single call ≥ 5 seconds', 'Observation · 单次调用耗时 ≥5 秒'),
                 ],
                 [
-                  t('Failed requests', '失败请求数'),
+                  t('Failed calls', '失败调用数'),
                   n(overview.summary?.failed_requests),
-                  t('Requests with error status', '状态为 error 的请求'),
+                  t('Observation · single call status is error', 'Observation · 单次调用状态为 error'),
                 ],
                 [
                   t('Total tokens', '总 Token'),
@@ -710,7 +710,7 @@ const usagePercent = computed(() =>
                 [
                   t('Known estimated model cost', '已知模型估算费用'),
                   overview.summary?.cost==null?'—':money(overview.summary?.cost),
-                  overview.summary?.cost==null?t('No priced model calls yet','暂无已定价模型调用'):`${n(Number(overview.summary?.calls||0)-Number(overview.summary?.unknown_costs||0))}/${n(overview.summary?.calls)} ` + t('model calls priced', '条模型调用已定价'),
+                  '',
                 ],
               ]"
               :key="i"
@@ -721,7 +721,7 @@ const usagePercent = computed(() =>
                 /></span>
               <div class="overview-stat-copy"><span>{{ v[0] }}</span>
               <strong>{{ v[1] }}</strong
-              ><small>{{ v[2] }}</small><RouterLink v-if="i===4" :to="modelPricesLink">{{t('Review model rates →','查看模型价格 →')}}</RouterLink></div>
+              ><small>{{ v[2] }}</small><RouterLink v-if="i===4" :to="modelPricesLink">{{t('Review model rates','查看模型价格')}}</RouterLink></div>
             </article>
           </div>
           <RequestExplorer :project="selected" :window="reportWindow" :refresh-token="loading" /></template>

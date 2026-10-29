@@ -37,7 +37,7 @@ watch(()=>props.refreshToken,(value,old)=>{if(old&&!value)void load();});
 </script>
 <template>
 <div class="request-explorer">
- <section class="panel request-list"><div class="panel-heading"><h2>{{t('Explore requests','查看请求')}}</h2></div>
+ <section class="panel request-list">
  <div class="request-filters"><button v-for="f in [{id:'all',en:'All',zh:'全部'},{id:'slow',en:'Slow requests (≥ 5 s)',zh:'慢请求（≥ 5 秒）'},{id:'error',en:'Failed requests',zh:'失败请求'}]" :key="f.id" class="btn" :class="{primary:filter===f.id}" :aria-pressed="filter===f.id" @click="setFilter(f.id)">{{t(f.en,f.zh)}}</button></div>
  <p v-if="busy" role="status">{{t('Loading requests…','正在加载请求…')}}</p><div v-else-if="error" role="alert">{{error}} <button class="btn" @click="load()">{{t('Retry','重试')}}</button></div>
  <div v-else class="request-cards"><button v-for="row in items" :key="row.object_id" class="request-card" :class="{selected:selected?.object_id===row.object_id}" :aria-pressed="selected?.object_id===row.object_id" @click="choose(row)"><span><strong>{{row.data.name||row.object_id}}</strong><small>{{date(row.started_at)}}</small></span><span>{{row.data.status==='success'?t('Success','成功'):row.data.status==='error'?t('Failed','失败'):row.data.status||'—'}}</span></button><p v-if="!items.length" class="empty-cell">{{t('No requests in this range.','该时间范围内暂无请求。')}}</p></div>
@@ -47,6 +47,6 @@ watch(()=>props.refreshToken,(value,old)=>{if(old&&!value)void load();});
  <dl><div><dt>{{t('Request duration','请求总耗时')}}</dt><dd>{{n(selected.data.durationMs)}} ms</dd></div><div><dt>{{t('Input / output / cached tokens','输入 / 输出 / 缓存 Token')}}</dt><dd>{{n(summary.input)}} / {{n(summary.output)}} / {{n(summary.cached)}}</dd></div><div><dt>{{t('Known estimated cost','已知估算费用')}}</dt><dd>{{money(summary.cost)}}<small>{{summary.priced}}/{{summary.calls}} {{t('model calls priced','条模型调用已定价')}}</small></dd></div></dl>
  <h3>{{t('Where the time went','耗时分布')}}</h3><ol class="request-steps"><li v-for="step in steps" :key="step.object_id"><div><strong>{{traceObjectLabel(step)}}</strong><span>{{n(step.data.durationMs)}} ms</span></div><code class="waterfall-object-id">{{step.object_id}}</code><div class="request-step-track"><span :style="{width:stepWidth(step.data.durationMs,selected.data.durationMs)+'%'}"></span></div></li></ol><p v-if="!steps.length">{{t('No retained steps were reported for this request.','该请求暂无保留的调用步骤。')}}</p>
  <div v-if="scores.length" class="request-scores"><h3>{{t('Scores','评分')}}</h3><p v-for="score in scores" :key="score.object_id">{{score.data.name}}: {{score.data.value}} <small>{{objects.find(o=>o.type===score.data.targetType&&o.object_id===score.data.targetId)?.data.name||score.data.targetId}}</small></p></div>
- <RouterLink class="request-full" :to="'/app/trace/'+selected.trace_id+'?project='+project">{{t('View full request →','查看完整请求 →')}}</RouterLink></template></template><p v-else>{{t('Select a request to see its steps.','选择一条请求查看调用步骤。')}}</p></section>
+ <RouterLink class="request-full" :to="'/app/trace/'+selected.trace_id+'?project='+project">{{t('View full request','查看完整请求')}}</RouterLink></template></template><p v-else>{{t('Select a request to see its steps.','选择一条请求查看调用步骤。')}}</p></section>
 </div>
 </template>
