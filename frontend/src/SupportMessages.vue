@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {MessageSquare, Mail, ShieldCheck, Plus, Send} from "lucide-vue-next";
 import { useToastNotice } from "./toast";
 import {usePageSize} from "./page-size";
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
@@ -83,18 +84,16 @@ async function older() {
 
 <template>
   <section class="support-messages" :aria-busy="loading">
-    <p>{{ admin ? t('Read and reply to user feedback. Replies stay in the original conversation.', '查看并回复用户反馈，所有回复保留在原消息会话中。') : t('Tell us what is not working or share a suggestion. Replies appear under your original message.', '遇到问题或有建议，可以在这里反馈。管理员的回复会显示在原消息下面。') }}</p>
-    <p v-if="!admin" class="muted">{{ t('You can also email us at', '遇到问题，也可以发送邮件至') }} <a href="mailto:13428961230@163.com">13428961230@163.com</a>{{ t('.', '。') }}</p>
-    <p class="muted">{{ t('Do not include passwords, API keys, payment details, or sensitive event content.', '请勿发送密码、API 密钥、支付信息或敏感事件内容。') }}</p>
+    <header class="support-intro panel"><div class="support-intro-icon"><MessageSquare :size="24" /></div><div class="support-intro-copy"><h2>{{admin?t('Feedback inbox','反馈收件箱'):t('We are here to help','问题与建议，随时反馈')}}</h2><p>{{ admin ? t('Read and reply to user feedback. Replies stay in the original conversation.', '查看并回复用户反馈，所有回复保留在原消息会话中。') : t('Tell us what is not working or share a suggestion. Replies appear under your original message.', '遇到问题或有建议，可以在这里反馈。管理员的回复会显示在原消息下面。') }}</p><small><ShieldCheck :size="14" />{{t('Do not include passwords, API keys, payment details, or sensitive event content.','请勿发送密码、API 密钥、支付信息或敏感事件内容。')}}</small></div><a v-if="!admin" class="support-email" href="mailto:13428961230@163.com"><Mail :size="17" /><span>{{t('Email support','邮件联系')}}<strong>13428961230@163.com</strong></span></a></header>
     <div v-if="error" class="notice error" role="alert">{{ error }}</div>
 
     <div class="support-layout">
       <section class="panel support-list">
         <div class="support-heading"><h2>{{ admin ? t('User conversations', '用户会话') : t('My messages', '我的消息') }}</h2>
-          <button v-if="!admin" class="btn primary" :disabled="busy" @click="composing=true;notice=''">{{ t('New message', '新建消息') }}</button>
+          <button v-if="!admin" class="btn primary" :disabled="busy" @click="composing=true;notice=''"><Plus :size="15" />{{ t('New message', '新建消息') }}</button>
         </div>
         <p v-if="loading && !items.length" role="status">{{ t('Loading…', '正在加载…') }}</p>
-        <p v-else-if="!items.length" class="empty-cell">{{ t('No messages yet.', '暂无消息。') }}</p>
+        <div v-else-if="!items.length" class="support-empty-list"><MessageSquare :size="28" /><strong>{{t('No messages yet','还没有反馈消息')}}</strong><p>{{t('Your conversations and replies will appear here.','新建消息后，可在这里查看反馈和回复。')}}</p></div>
         <RouterLink v-for="item in items" :key="item.id" :to="`${routeBase}/${item.id}`" :class="['support-thread', {selected: threadId === item.id}]" :aria-current="threadId === item.id ? 'page' : undefined">
           <strong>{{ item.title }}</strong>
           <span v-if="admin">{{ item.user_email }}</span>
@@ -106,9 +105,9 @@ async function older() {
       <section v-if="composing && !admin" class="panel support-conversation">
         <div class="support-heading"><h2>{{ t('New message', '新建消息') }}</h2><button class="text-button" :disabled="busy" @click="composing=false">{{ t('Cancel', '取消') }}</button></div>
         <form @submit.prevent="create">
-          <label>{{ t('Subject', '标题') }}<input v-model="draft.title" required maxlength="240" :disabled="busy" /></label>
+          <label>{{ t('Subject', '标题') }}<input v-model="draft.title" required maxlength="240" :placeholder="t('Briefly describe your question or suggestion','简要描述你的问题或建议')" :disabled="busy" /></label>
           <small v-if="bytes(draft.title) > 240" class="muted" role="status">{{ t('The subject is too long. Please shorten it.', '标题太长，请精简后再发送。') }}</small>
-          <label>{{ t('Message', '消息内容') }}<textarea v-model="draft.body" required maxlength="8000" rows="8" :disabled="busy"></textarea></label>
+          <label>{{ t('Message', '消息内容') }}<textarea v-model="draft.body" required maxlength="8000" rows="8" :placeholder="t('Describe what happened and what you expected.','描述遇到的问题、操作步骤和期望的结果。')" :disabled="busy"></textarea></label>
           <small v-if="bytes(draft.body) > 8000" class="muted" role="status">{{ t('The message is too long. Please shorten it or send it in parts.', '消息太长，请精简或分条发送。') }}</small>
           <button class="btn primary" :disabled="busy || !draftValid">{{ busy ? t('Sending…', '正在发送…') : t('Send message', '发送消息') }}</button>
         </form>
@@ -135,7 +134,7 @@ async function older() {
         </form>
         <p v-else class="muted">{{ t('Reply limit reached. Start a new conversation.', '已达到回复上限，请新建会话。') }}</p>
       </section>
-      <section v-else class="panel support-conversation empty"><p>{{ loading ? t('Loading…', '正在加载…') : t('Select a conversation to see its messages.', '选择一条消息查看会话。') }}</p></section>
+      <section v-else class="panel support-conversation support-empty-conversation"><div class="support-empty-art"><MessageSquare :size="34" /></div><h2>{{loading?t('Loading…','正在加载…'):t('Keep every conversation in one place','在这里查看完整会话')}}</h2><p>{{t('Select a message on the left to view its details and replies.','选择左侧消息，即可查看内容、跟进回复。')}}</p><button v-if="!admin&&!loading" class="btn primary" @click="composing=true;notice=''" :disabled="busy"><Send :size="15" />{{t('Write your first message','发起反馈')}}</button></section>
     </div>
   </section>
 </template>

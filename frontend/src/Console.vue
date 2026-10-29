@@ -859,7 +859,7 @@ const usagePercent = computed(() =>
               >{{ traceObjects.length }} {{ traceObjects.length===1?t("object", "个对象"):t("objects", "个对象") }}</span
             >
           </div>
-          <div class="insight-metrics trace-detail-metrics"><article class="panel trace-metric-duration"><Clock :size="20"/><span>{{t('Request duration','请求总耗时')}}</span><strong>{{n(traceSummary.duration)}} ms</strong></article><article class="panel trace-metric-calls"><GitBranch :size="20"/><span>{{t('Model calls','模型调用数')}}</span><strong>{{n(traceSummary.calls)}}</strong></article><article class="panel trace-metric-tokens"><Activity :size="20"/><span>{{t('Known tokens','已知 Token')}}</span><strong>{{n(traceSummary.tokens)}}</strong></article><article class="panel trace-metric-cost"><Coins :size="20"/><span>{{t('Known estimated cost','已知估算费用')}}</span><strong>{{money(traceSummary.cost)}}</strong><small>{{traceSummary.priced}}/{{traceSummary.calls}} {{t('model calls priced','条模型调用已定价')}}</small></article><article class="panel trace-metric-score"><MessageSquare :size="20"/><span>{{t('Trace score','Trace 评分')}}</span><strong>{{latestTraceScore(traceObjects)}}</strong><small>{{traceScores(traceObjects)[0]?.data.name||t('Not scored','未评分')}}</small></article></div><div v-if="traceScores(traceObjects).length>1" class="trace-score-list"><span v-for="score in traceScores(traceObjects)" :key="score.object_id" class="badge">{{score.data.name}}：{{score.data.value}}</span></div>
+          <div class="insight-metrics trace-detail-metrics"><article class="panel trace-metric-duration"><Clock :size="20"/><span>{{t('Request duration','请求总耗时')}}</span><strong>{{n(traceSummary.duration)}} ms</strong></article><article class="panel trace-metric-calls"><GitBranch :size="20"/><span>{{t('Model calls','模型调用数')}}</span><strong>{{n(traceSummary.calls)}}</strong></article><article class="panel trace-metric-tokens"><Activity :size="20"/><span>{{t('Known tokens','已知 Token')}}</span><strong>{{n(traceSummary.tokens)}}</strong></article><article class="panel trace-metric-cost"><Coins :size="20"/><span>{{t('Known estimated cost','已知估算费用')}}</span><strong>{{money(traceSummary.cost)}}</strong><small>{{traceSummary.priced}}/{{traceSummary.calls}} {{t('model calls priced','条模型调用已定价')}}</small></article><article class="panel trace-metric-score"><MessageSquare :size="20"/><span>{{t('Trace score','Trace 评分')}}</span><div class="trace-score-number"><strong>{{latestTraceScore(traceObjects)}}</strong><button type="button" class="score-help-button" :title="t('Based on reported Score events targeting this Trace. The latest score is shown; defaults to 0 when not scored.','根据关联当前 Trace 的 Score 上报评分，显示最新一项；未上报评分时默认显示 0。')" :aria-label="t('Score help: based on reported Score events targeting this Trace; latest score shown, defaults to 0.','评分说明：根据关联当前 Trace 的 Score 上报评分，显示最新一项；未上报时默认显示 0。')">?</button></div><small>{{traceScores(traceObjects)[0]?.data.name||t('Not scored','未评分')}}</small></article></div><div v-if="traceScores(traceObjects).length>1" class="trace-score-list"><span v-for="score in traceScores(traceObjects)" :key="score.object_id" class="badge">{{score.data.name}}：{{score.data.value}}</span></div>
           <section class="panel trace-waterfall">
             <div class="panel-heading">
               <h2>{{ t("Execution waterfall", "执行瀑布图") }}</h2>
@@ -1170,15 +1170,7 @@ const usagePercent = computed(() =>
             </div>
           </section></template
         >
-        <template v-if="page === 'billing'"
-          ><div class="notice">
-            {{
-              t(
-                "Platform units and model provider costs are separate. Plan changes and payment amounts are confirmed by your payment provider.",
-                "平台 units 与模型供应商费用独立核算，套餐变更与付款金额以支付平台确认为准。",
-              )
-            }}
-          </div>
+        <template v-if="page === 'billing'">
           <BillingSubscription v-model:target-plan="changeTargetPlan" :data="data" :checkout-id="String(route.query.checkout || route.query.checkout_id || '')" @refresh="refresh(false)" />
           <div class="plans">
             <article

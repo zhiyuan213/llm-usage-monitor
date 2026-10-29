@@ -29,25 +29,11 @@ watch(()=>props.data, data=>{
     notice.value=t('Subscription confirmed. Your current plan is ','订阅已确认，当前套餐为 ')+w.plan;
   }
 },{deep:true});
-function status(value: string) {
-  const labels: Record<string, [string,string]> = {
-    cancel:['Cancel','取消'], pause:['Pause','暂停'], active:['Active','活跃'], past_due:['Past due','付款逾期'], canceled:['Canceled','已取消'],
-    paused:['Paused','已暂停'], trialing:['Trialing','试用中'], approved:['Approved','已批准'],
-    pending_approval:['Pending approval','待审核'], rejected:['Rejected','已拒绝'],
-    refund:['Refund','退款'], credit:['Credit','抵扣'], completed:['Completed','已完成'],
-  };
-  return labels[value] ? t(...labels[value]) : value;
-}
 function amount(totals: any, field = "total") {
   if (!totals?.currency_code || totals[field] == null) return t('None','无');
   const currency=totals.currency_code;
   const digits=new Intl.NumberFormat('en',{style:'currency',currency}).resolvedOptions().maximumFractionDigits ?? 2;
   return new Intl.NumberFormat(language.value,{style:'currency',currency}).format(Number(totals[field])/10**digits);
-}
-function scheduled() {
-  const raw=props.data.workspace?.scheduled_change;
-  if (!raw) return null;
-  try { return typeof raw === 'string' ? JSON.parse(raw) : raw; } catch { return null; }
 }
 let previewVersion=0;
 async function loadPreview(plan:string) {
@@ -73,17 +59,7 @@ async function confirm() {
 }
 </script>
 <template>
-  <section v-if="data.workspace?.subscription_id" class="panel billing-subscription">
-    <h2>{{t('Subscription status','订阅状态')}}</h2>
-    <p><strong>{{status(data.workspace.subscription_status)}}</strong> · {{data.workspace.plan}}</p>
-    <p v-if="scheduled()">{{t('Scheduled change','计划变更')}}: {{status(scheduled().action)}} · {{date(scheduled().effective_at)}}</p>
-    <p v-if="data.workspace.plan==='Free' && ['canceled','expired'].includes(data.workspace.subscription_status)" class="notice">{{t('The paid subscription has ended. Your current plan is Free. You can subscribe to Core or Pro below.','付费订阅已结束，当前套餐为 Free，可在下方重新开通 Core 或 Pro。')}}</p>
-    <p v-else-if="data.workspace.subscription_status !== 'active'" class="notice error">{{t('This subscription is not active. Review payment or cancellation details in Manage subscription.','此订阅当前未处于活跃状态，请在“管理订阅”查看付款或取消详情。')}}</p>
-    <p v-if="data.workspace.retention_plan && data.workspace.retention_grace_until" class="notice" role="status">{{t('Previous paid data retention is protected until','原付费数据保留宽限期截止')}} {{date(data.workspace.retention_grace_until)}}. {{t('Free quota applies to new ingestion. After this deadline, data follows Free retention.','新增接入按 Free 额度执行；宽限期结束后，已有数据也按 Free 保留规则处理。')}}</p>
-    <p v-if="data.workspace.plan !== 'Free' && data.workspace.retention_grace_until" class="notice" role="status">{{t('Renewal grace ends at','续费宽限期截止')}} {{date(data.workspace.retention_grace_until)}}. {{t('New ingestion is stopped. After this deadline, Free retention applies and analytics older than 30 days will be deleted.','当前停止新增接入。期满后按 Free 保留规则清理超过30天的调用数据。')}}</p>
-    <p v-if="data.workspace.payment_provider==='creem'" class="muted">{{t('Creem manages renewal and cancellation in the billing portal. Plan changes and additional usage billing are not enabled yet.','可在账单门户管理 Creem 续费与取消。套餐切换和额外用量计费暂未开放。')}}</p>
-    <p v-else class="muted">{{t('Core / Pro changes apply immediately with Paddle proration. Review the amount before confirming; failed payments prevent the change. Current-period usage is preserved.','Core / Pro 立即切换，由 Paddle 按剩余账期折算差价。确认前请核对金额；付款失败不变更套餐，当前账期已用额度不会清零。')}}</p>
-  </section>
+
 
   <section v-if="targetPlan" class="panel billing-subscription" aria-live="polite">
     <h2>{{t('Review plan change','确认套餐变更')}} → {{targetPlan}}</h2>

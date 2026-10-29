@@ -66,3 +66,8 @@ Observation filter/event IDs follow-up: full mvn -B -f backend/pom.xml verify pa
 ## 数据统计三块布局
 - 左侧分组列表，右侧Token及费用两张独立柱状图；当前维度明确显示字段，说明分组而非请求逐条列表。后端与导出契约未改变。
 - frontend test：24 files / 69 tests passed；build passed；三项示例同步检查 passed；依赖审计114 packages / 0 advisories；diff check passed。未声称浏览器视觉验收通过。
+
+## 套餐页及消息界面精简
+- 移除套餐顶部静态说明与订阅状态区域，保留支付确认交互；调整列表列宽、评分说明及消息页面样式。
+- frontend test 24 files / 69 tests passed；production build passed；三项 generated-example synchronization passed；dependency audit 114 packages / 0 advisories；git diff --check passed。
+- 本批未完成浏览器视觉验收，以上不视为视觉验收。
