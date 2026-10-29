@@ -1471,3 +1471,12 @@
 .ui-v2 .observation-unit { color: #8290a5; }
 .ui-v2 .observation-time { white-space: nowrap; font-variant-numeric: tabular-nums; }
 @media (max-width: 680px) { .ui-v2 .trace-observations > td { padding: 0 8px 12px; } }
+
+.ui-v2 .cost-help { display: inline-flex; position: relative; margin-left: 6px; vertical-align: middle; text-align: left; }
+.ui-v2 .cost-help-button { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: 1px solid #a9b6d0; border-radius: 50%; color: #63789d; background: white; font-size: 12px; cursor: pointer; }
+.ui-v2 .request-cost-tooltip { display: none; position: absolute; z-index: 30; top: 100%; right: 0; width: min(520px, calc(100vw - 56px)); max-height: 360px; overflow: auto; padding: 16px; border: 1px solid #dfe5f3; border-radius: 8px; background: #fff; box-shadow: 0 8px 30px #12213d24; color: #52617b; font-size: 12px; line-height: 1.7; white-space: normal; overflow-wrap: anywhere; }
+.ui-v2 .cost-help:hover .request-cost-tooltip, .ui-v2 .cost-help:focus-within .request-cost-tooltip, .ui-v2 .cost-help.open .request-cost-tooltip { display: block; }
+.ui-v2 .request-cost-tooltip h3 { margin: 0 0 8px; font-size: 14px; color: #263953; }
+.ui-v2 .request-cost-tooltip p { margin: 8px 0; }
+.ui-v2 .request-cost-tooltip ol { padding-left: 20px; }
+.ui-v2 .request-cost-tooltip code { display: block; font-size: 11px; }

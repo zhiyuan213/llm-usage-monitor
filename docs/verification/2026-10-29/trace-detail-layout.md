@@ -40,3 +40,8 @@ Observation filter/event IDs follow-up: full mvn -B -f backend/pom.xml verify pa
 - frontend test：22 files / 65 tests passed；production build：passed。
 - 三项 generated examples --check：passed；依赖审计114 packages / 0 advisories；git diff --check：passed。
 - 未修改接口或导出契约；未声明浏览器视觉验收通过。
+
+## 费用公式悬浮提示
+- 移除常驻公式区；金额后问号支持悬停、聚焦和点击显示，Escape 收起点击状态，切换请求重置。
+- frontend test：22 files / 65 tests passed；production build passed；三项示例同步检查 passed；依赖审计114 packages / 0 advisories；diff check passed。
+- 未修改计价及历史费用，未声称浏览器视觉验收通过。
