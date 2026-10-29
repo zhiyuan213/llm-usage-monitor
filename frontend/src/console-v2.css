@@ -1480,3 +1480,20 @@
 .ui-v2 .request-cost-tooltip p { margin: 8px 0; }
 .ui-v2 .request-cost-tooltip ol { padding-left: 20px; }
 .ui-v2 .request-cost-tooltip code { display: block; font-size: 11px; }
+
+/* Parent Trace and child Observation tables share exactly the same column grid. */
+.ui-v2 .traces-table, .ui-v2 .observation-table { table-layout: fixed; width: 100%; min-width: 1400px; }
+.ui-v2 .traces-table > thead > tr > th, .ui-v2 .traces-table > tbody > tr > td:not([colspan]), .ui-v2 .observation-table th, .ui-v2 .observation-table td { padding: 12px 10px; min-width: 0; max-width: none; overflow-wrap: anywhere; }
+.ui-v2 .traces-table > tbody > .trace-observations > td { padding: 0 0 14px; }
+.ui-v2 .observation-group { border-left: 0; border-right: 0; border-radius: 0; }
+.ui-v2 .observation-group-heading { padding-left: 3%; }
+.ui-v2 .observation-group > .table-wrap { overflow: visible; }
+.ui-v2 .traces-table > thead > tr > th:nth-child(5), .ui-v2 .traces-table > thead > tr > th:nth-child(6), .ui-v2 .traces-table > thead > tr > th:nth-child(7), .ui-v2 .traces-table > tbody > tr > td:nth-child(5), .ui-v2 .traces-table > tbody > tr > td:nth-child(6), .ui-v2 .traces-table > tbody > tr > td:nth-child(7) { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 680px) {
+ .ui-v2 .traces-table { display: table; }
+ .ui-v2 .traces-table thead { display: table-header-group; }
+ .ui-v2 .traces-table tbody { display: table-row-group; padding: 0; }
+ .ui-v2 .traces-table tr { display: table-row; padding: 0; border: 0; border-radius: 0; margin: 0; }
+ .ui-v2 .traces-table td { display: table-cell; }
+ .ui-v2 .traces-table td::before { display: none; }
+}

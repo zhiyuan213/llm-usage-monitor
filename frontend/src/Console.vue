@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useToastNotice } from "./toast";
+import {traceColumnWidths} from "./trace-column-layout";
 import TraceObservationsRow from "./TraceObservationsRow.vue";
 import PublicModelPrices from "./PublicModelPrices.vue";
 import ModelPricePolicy from "./ModelPricePolicy.vue";
@@ -761,7 +762,7 @@ const usagePercent = computed(() =>
             </template>
           </DateRangeFilter><section class="panel">
             <div class="table-wrap">
-              <table class="traces-table">
+              <table class="traces-table"><colgroup><col v-for="(width,i) in traceColumnWidths" :key="i" :style="{width:width+'%'}" /></colgroup>
                 <thead>
                   <tr>
                     <th :aria-label="t('Expand observations','展开 Observation')"></th><th>eventId</th>

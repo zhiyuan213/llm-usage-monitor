@@ -49,3 +49,8 @@ Observation filter/event IDs follow-up: full mvn -B -f backend/pom.xml verify pa
 ## 概览费用说明精简
 - 移除请求详情费用下的已定价条数说明。
 - frontend test 22 files / 65 tests passed；build passed；三项示例同步检查 passed；依赖审计114 packages / 0 advisories；diff check passed。
+
+## 父子列对齐及 Observation Token
+- 父子表共享11列宽度；子表Token为输入+输出，缓存不重复计入，缺失用量保持未知；窄屏统一容器滚动。
+- frontend test：23 files / 67 tests passed；build passed；三项示例同步检查 passed；依赖审计114 packages / 0 advisories；diff check passed。
+- 未修改后端或导出契约；未声称浏览器视觉验收通过。
