@@ -853,6 +853,8 @@ class IngestIntegrationTest {
   String key;
 
   @Test void expiredPaidRetentionHasBoundedGraceAndDowngradesOnlyOnce() {
+    store.db.update("UPDATE workspaces SET used_units=1000 WHERE id=?",workspace);
+    tx.executeWithoutResult(x->BillingUsage.save(store,store.workspace(user)));
     store.db.update("UPDATE workspaces SET plan='Pro',subscription_status='active',period_end=now()-interval '2 days' WHERE id=?",workspace);
     SubscriptionRetention.reconcile(store,tx);
     var grace=store.db.queryForObject("SELECT retention_grace_until FROM workspaces WHERE id=?",java.sql.Timestamp.class,workspace);
@@ -862,7 +864,7 @@ class IngestIntegrationTest {
     store.db.update("UPDATE workspaces SET retention_grace_until=now()-interval '1 second',used_units=123,auto_overage=true WHERE id=?",workspace);
     SubscriptionRetention.reconcile(store,tx);
     assertEquals("Free",store.workspace(user).get("plan"));
-    assertEquals(0L,((Number)store.workspace(user).get("used_units")).longValue());
+    assertEquals(1000L,((Number)store.workspace(user).get("used_units")).longValue());
     assertEquals(false,store.workspace(user).get("auto_overage"));
     store.db.update("UPDATE workspaces SET used_units=7 WHERE id=?",workspace);
     SubscriptionRetention.reconcile(store,tx);
@@ -905,6 +907,8 @@ class IngestIntegrationTest {
   }
 
   @Test void endedSubscriptionUsesFreeQuotaWithoutResettingUsageAndNewCheckoutReplacesOnlyItsBoundSubscription() {
+    store.db.update("UPDATE workspaces SET used_units=49999 WHERE id=?",workspace);
+    tx.executeWithoutResult(x->BillingUsage.save(store,store.workspace(user)));
     pack();store.db.update("UPDATE workspaces SET subscription_status='canceled',used_units=49999 WHERE id=?",workspace);
     SubscriptionRetention.reconcile(store,tx);
     var w=store.workspace(user);assertEquals("Free",w.get("plan"));assertEquals(49999L,w.get("used_units"));

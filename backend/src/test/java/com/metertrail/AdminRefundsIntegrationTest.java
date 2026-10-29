@@ -52,9 +52,11 @@ class AdminRefundsIntegrationTest {
     payment.put("amount_paid",2900);subscription.put("last_transaction_id","tran_Newer");submit().andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("REFUND_NEWER_PAYMENT_EXISTS"));verify(creem,never()).post(eq("/v1/refunds"),any());
   }
   @Test void confirmedRefundCancelsSubscriptionAndCannotBeSubmittedTwice()throws Exception{
+    store.db.update("INSERT INTO billing_usage_periods(workspace_id,plan,period_start,period_end,used_units) VALUES(?,'Free',date_trunc('month',now()),date_trunc('month',now())+interval '1 month',1000)",workspace);
     submit().andExpect(status().isOk()).andExpect(jsonPath("$.status").value("succeeded")).andExpect(jsonPath("$.cancellation_status").value("completed"));submit().andExpect(status().isOk());
     verify(creem,times(1)).post(eq("/v1/refunds"),any());verify(creem,times(1)).post(eq("/v1/subscriptions/"+sub+"/cancel"),any());
-    assertEquals("canceled",store.db.queryForObject("SELECT subscription_status FROM workspaces WHERE id=?",String.class,workspace));assertEquals(17L,store.db.queryForObject("SELECT used_units FROM workspaces WHERE id=?",Long.class,workspace));
+    assertEquals("canceled",store.db.queryForObject("SELECT subscription_status FROM workspaces WHERE id=?",String.class,workspace));assertEquals(1000L,store.db.queryForObject("SELECT used_units FROM workspaces WHERE id=?",Long.class,workspace));
+    assertEquals(17L,store.db.queryForObject("SELECT used_units FROM billing_usage_periods WHERE workspace_id=? AND plan='Core'",Long.class,workspace));
     assertEquals("Free",store.db.queryForObject("SELECT plan FROM workspaces WHERE id=?",String.class,workspace));
     assertEquals(true,IngestionStatus.describe(store.db.queryForMap("SELECT * FROM workspaces WHERE id=?",workspace),0,false,false,Instant.now()).get("can_accept_new"));
     assertEquals(1L,store.db.queryForObject("SELECT count(*) FROM audit_logs WHERE action='payment.refund.request' AND target=?",Long.class,id));

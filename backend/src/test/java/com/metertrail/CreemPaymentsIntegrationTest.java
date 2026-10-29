@@ -119,6 +119,45 @@ class CreemPaymentsIntegrationTest {
     assertEquals(0L,store.db.queryForObject("SELECT used_units FROM workspaces WHERE id=?",Long.class,workspace));
     assertEquals("creem",store.db.queryForObject("SELECT payment_provider FROM workspaces WHERE id=?",String.class,workspace));
   }
+  @Test void cancellationRestoresFreeMonthUsageAndKeepsPaidHistory() throws Exception {
+    billingFixture();
+    store.db.update("UPDATE workspaces SET used_units=1000 WHERE id=?",workspace);
+    var at=java.time.Instant.now();
+    send(event("subscription.paid",at)).andExpect(status().isOk());
+    assertEquals(0L,store.workspace(owner).get("used_units"));
+    store.db.update("UPDATE workspaces SET used_units=23 WHERE id=?",workspace);
+    var cancel=event("subscription.canceled",at.plusMillis(10));
+    cancel.with("object").put("status","canceled");
+    send(cancel).andExpect(status().isOk());
+    assertEquals(1000L,store.workspace(owner).get("used_units"));
+    assertEquals(23L,store.db.queryForObject("SELECT used_units FROM billing_usage_periods WHERE workspace_id=? AND plan='Core'",Long.class,workspace));
+    send(cancel).andExpect(status().isOk());
+    assertEquals(1000L,store.workspace(owner).get("used_units"));
+    // A second upgrade/cancellation must preserve additional Free consumption too.
+    store.db.update("UPDATE workspaces SET used_units=1007 WHERE id=?",workspace);
+    String previous=sub;
+    billingFixture();
+    store.db.update("UPDATE checkout_intents SET previous_subscription_id=? WHERE id=?",previous,intent);
+    send(event("subscription.paid",at.plusMillis(20))).andExpect(status().isOk());
+    assertEquals(0L,store.workspace(owner).get("used_units"));
+    var again=event("subscription.canceled",at.plusMillis(30));
+    again.with("object").put("status","canceled");
+    send(again).andExpect(status().isOk());
+    assertEquals(1007L,store.workspace(owner).get("used_units"));
+  }
+
+  @Test void cancellationDoesNotCarryPreviousFreeMonthIntoCurrentMonth() throws Exception {
+    billingFixture();
+    store.db.update("UPDATE workspaces SET used_units=1000,period_start=date_trunc('month',now())-interval '1 month',period_end=date_trunc('month',now()) WHERE id=?",workspace);
+    var at=java.time.Instant.now();
+    send(event("subscription.paid",at)).andExpect(status().isOk());
+    store.db.update("UPDATE workspaces SET used_units=23 WHERE id=?",workspace);
+    var cancel=event("subscription.canceled",at.plusMillis(10));
+    cancel.with("object").put("status","canceled");
+    send(cancel).andExpect(status().isOk());
+    assertEquals(0L,store.workspace(owner).get("used_units"));
+    assertEquals(1000L,store.db.queryForObject("SELECT used_units FROM billing_usage_periods WHERE workspace_id=? AND plan='Free'",Long.class,workspace));
+  }
   @Test void scheduledCancellationKeepsAccessButPastDueRequiresAnotherPaidEvent() throws Exception {
     billingFixture();var at=java.time.Instant.now();send(event("subscription.paid",at)).andExpect(status().isOk());
     var cancel=event("subscription.scheduled_cancel",at.plusMillis(10));cancel.with("object").put("status","scheduled_cancel");

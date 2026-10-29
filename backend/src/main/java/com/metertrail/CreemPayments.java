@@ -208,6 +208,7 @@ class CreemPayments {
       Instant previousStart=((Timestamp)w.get("period_start")).toInstant();
       if(start.isBefore(previousStart) && !"Free".equals(w.get("plan")))return finish(eventId,type,hash,at,"stale");
       boolean reset="Free".equals(w.get("plan"))||start.isAfter(previousStart);
+      if(reset) BillingUsage.save(store,w);
       store.db.update("UPDATE workspaces SET payment_provider='creem',plan=?,subscription_id=?,customer_id=?,subscription_status='active',period_start=?,period_end=?,retention_plan=NULL,retention_grace_until=NULL,auto_overage=false,used_units=CASE WHEN ? THEN 0 ELSE used_units END,addon_units=CASE WHEN ? THEN 0 ELSE addon_units END,overage_units=CASE WHEN ? THEN 0 ELSE overage_units END,addon_consumed=CASE WHEN ? THEN 0 ELSE addon_consumed END,payment_updated_at=? WHERE id=?",
           plan,subscriptionId,id(sub.path("customer")),Timestamp.from(start),Timestamp.from(end),reset,reset,reset,reset,Timestamp.from(at),workspace);
       JsonNode order=type.equals("checkout.completed")?object.path("order"):sub.path("last_transaction");

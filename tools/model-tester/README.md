@@ -1,6 +1,6 @@
 # MeterTrail 桌面真实数据测试工具
 
-安装 Python 3.10 或更新版本（包含 Tk），双击 `启动工具.bat`。无需安装第三方依赖，也可运行 `python app.py`。
+Windows 独立版直接双击 `MeterTrailTester.exe`，无需安装 Python。源码版需安装 Python 3.10 或更新版本（包含 Tk），双击 `启动工具.bat`，也可运行 `python app.py`。启动脚本优先使用同目录 EXE，其次尝试 `py` 和 `python`。
 
 填写兼容 OpenAI Chat Completions 的完整模型 API 地址、模型 Key、模型名称、供应商名称，以及 MeterTrail 地址和项目 Key。输入问题，点击“提问并记录”。真实模型调用会按供应商规则计费。
 

@@ -291,7 +291,10 @@ class PaymentsController {
         Instant previousStart = ((Timestamp) w.get("period_start")).toInstant();
         if (start.isBefore(previousStart) && !"Free".equals(w.get("plan"))) return Map.of("status", "stale");
         boolean newPeriod = start.isAfter(previousStart) || "Free".equals(w.get("plan"));
-        if(newPeriod) ChargeLedger.close(store,w);
+        if(newPeriod) {
+          ChargeLedger.close(store,w);
+          BillingUsage.save(store,w);
+        }
         store.db.update(
             "UPDATE workspaces SET"
                 + " payment_provider='paddle',retention_plan=NULL,retention_grace_until=NULL,plan=?,subscription_id=?,subscription_status=?,period_start=?,period_end=?,used_units=CASE"
