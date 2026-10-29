@@ -122,6 +122,14 @@ class QueryReportsController {
       traceWindow+=" AND (o.data->>'durationMs')::numeric>=?";
       traceArgs.add(Long.parseLong(minimum));
     }
+    String observation=Optional.ofNullable(req.getParameter("observation")).orElse("");
+    Support.require(Set.of("","slow","error").contains(observation),"INVALID_FILTER");
+    if(!observation.isEmpty()) {
+      var observationArgs=new ArrayList<Object>();
+      String observationWindow=ReportWindow.filter(req,observationArgs).replace("o.started_at","g.started_at");
+      traceWindow+=" AND EXISTS(SELECT 1 FROM objects g WHERE g.project_id=o.project_id AND g.trace_id=o.trace_id AND g.type='observation' AND g.started_at>workspace_retention_cutoff(w) AND "+(observation.equals("slow")?"(g.data->>'durationMs')::numeric>=5000":"g.data->>'status'='error'")+observationWindow+")";
+      traceArgs.addAll(observationArgs);
+    }
     String cost=Optional.ofNullable(req.getParameter("cost")).orElse("all"),reason=Optional.ofNullable(req.getParameter("costReason")).orElse("");
     Support.require(Set.of("all","unknown","known").contains(cost),"INVALID_FILTER");
     Support.require(Set.of("","usage_missing","model_missing","pricing_evidence_missing").contains(reason),"INVALID_FILTER");

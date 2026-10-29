@@ -147,7 +147,7 @@ class Worker {
                         Timestamp.from(started),
                         d.toString(),
                         cost,
-                        price, appliedRates);
+                        price, appliedRates, e.path("eventId").asText(null));
                     if (type.equals("observation")) {
                       Collections.addAll(
                           costArgs,
@@ -165,8 +165,8 @@ class Worker {
                   // Multiple client batches may contain revisions of the same object. PostgreSQL
                   // ON CONFLICT DO UPDATE must see that identity only once in each INSERT.
                   var latest = new LinkedHashMap<List<Object>, List<Object>>();
-                  for (int offset = 0; offset < objectArgs.size(); offset += 12) {
-                    var values = new ArrayList<>(objectArgs.subList(offset, offset + 12));
+                  for (int offset = 0; offset < objectArgs.size(); offset += 13) {
+                    var values = new ArrayList<>(objectArgs.subList(offset, offset + 13));
                     var key = List.of(values.get(1), values.get(2));
                     var old = latest.get(key);
                     if (old == null
@@ -178,14 +178,14 @@ class Worker {
                   if (!events.isEmpty()) {
                     store.db.update(
                         "INSERT INTO"
-                            + " objects(project_id,type,object_id,revision,trace_id,span_id,parent_span_id,started_at,data,cost,price_version,applied_rates)"
+                            + " objects(project_id,type,object_id,revision,trace_id,span_id,parent_span_id,started_at,data,cost,price_version,applied_rates,event_id)"
                             + " VALUES "
                             + String.join(
                                 ",",
                                 Collections.nCopies(
-                                    latest.size(), "(?,?,?,?,?,?,?,?,?::jsonb,?,?,?::jsonb)"))
+                                    latest.size(), "(?,?,?,?,?,?,?,?,?::jsonb,?,?,?::jsonb,?)"))
                             + " ON CONFLICT(project_id,type,object_id) DO UPDATE SET"
-                            + " revision=excluded.revision,trace_id=excluded.trace_id,span_id=excluded.span_id,parent_span_id=excluded.parent_span_id,started_at=excluded.started_at,data=excluded.data,cost=excluded.cost,price_version=excluded.price_version,applied_rates=excluded.applied_rates"
+                            + " revision=excluded.revision,trace_id=excluded.trace_id,span_id=excluded.span_id,parent_span_id=excluded.parent_span_id,started_at=excluded.started_at,data=excluded.data,cost=excluded.cost,price_version=excluded.price_version,applied_rates=excluded.applied_rates,event_id=excluded.event_id"
                             + " WHERE objects.revision<excluded.revision",
                         objectArgs.toArray());
                     if (costCount > 0)

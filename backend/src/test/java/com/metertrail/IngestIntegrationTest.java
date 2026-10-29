@@ -1911,6 +1911,8 @@ class IngestIntegrationTest {
     Worker worker = new Worker(store, tx, mail, true, "test@test.local");
     worker.process();
     worker.process();
+    assertEquals(o.path("eventId").asText(),store.db.queryForObject("SELECT event_id FROM objects WHERE project_id=? AND type='observation' AND object_id='obs-1'",String.class,project));
+    assertEquals(t.path("eventId").asText(),store.db.queryForObject("SELECT event_id FROM objects WHERE project_id=? AND type='trace' AND object_id='trace-1'",String.class,project));
     assertEquals(
         3,
         store.db.queryForObject(

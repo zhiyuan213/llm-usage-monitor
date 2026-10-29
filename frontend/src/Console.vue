@@ -864,7 +864,8 @@ const usagePercent = computed(() =>
             >
               <span class="step-number">{{ Number(i) + 1 }}</span>
               <div>
-                <code class="waterfall-object-id">{{ o.object_id }}</code>
+                <code class="waterfall-object-id">{{t('Event ID','事件 ID')}}：{{o.event_id||t('Not retained','未保留')}}</code>
+                <code class="waterfall-object-id">{{t('Object ID','对象 ID')}}：{{ o.object_id }}</code>
                 <div class="waterfall-object-title"><b>{{ traceObjectLabel(o) }}</b><span class="badge">{{o.type==='trace'?'Trace':o.type==='observation'?'Observation':'Score'}}</span></div>
               </div>
               <div v-if="o.type!=='score'" class="waterfall-track">
@@ -890,11 +891,11 @@ const usagePercent = computed(() =>
               </div>
               <span v-if="o.type!=='score'">{{ n(o.data.durationMs) }} ms</span>
               <div class="waterfall-details">
-                <div class="waterfall-event-meta"><span>{{t('Event time','事件时间')}}: {{date(o.started_at)}}</span><span>{{t('Status','状态')}}: {{o.data.status||'—'}}</span><span>{{t('Revision','修订版本')}}: {{o.revision}}</span></div>
+                <div class="waterfall-event-meta"><span>{{t('Event time','事件时间')}}: {{date(o.started_at)}}</span><span>{{t('Status','状态')}}: {{o.data.status||'—'}}</span></div>
             <p v-if="o.data.observationType==='generation'">{{t('Model','模型')}}: {{o.data.model||'—'}} · {{t('Known estimated cost','已知估算费用')}}: {{money(o.cost)}}</p>
             <p v-if="o.data.observationType==='generation'" class="muted">{{t('Input / output / cached tokens','输入 / 输出 / 缓存 Token')}}: {{n(o.data.usage?.inputTokens)}} / {{n(o.data.usage?.outputTokens)}} / {{n(o.data.usage?.cachedInputTokens)}}</p>
             <p v-if="o.data.observationType==='generation' && o.cost==null" class="notice">{{costReason(o)}}</p>
-            <p v-if="o.price_version" class="muted">{{t('Matched price version','命中价格版本')}}: {{o.price_version}} · {{t('Effective at','生效时间')}}: {{date(o.price_effective_at)}} · {{t('Input / output / cached USD per million tokens','输入 / 输出 / 缓存价格（美元/百万 Token）')}}: {{o.input_rate}} / {{o.output_rate}} / {{o.cached_rate}}</p>
+
 
               </div>
             </div>

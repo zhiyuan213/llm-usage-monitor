@@ -130,6 +130,22 @@ class ConsoleMetricsIntegrationTest {
         .andExpect(status().isOk()).andExpect(jsonPath("$.objects.length()").value(3));
   }
 
+  @Test void observationFiltersIgnoreTotalTraceDurationAndRootStatus() throws Exception {
+    UUID project=UUID.randomUUID();
+    UUID workspace=store.db.queryForObject("SELECT id FROM workspaces WHERE owner_id=?",UUID.class,owner);
+    store.db.update("INSERT INTO projects(id,workspace_id,name) VALUES(?,?,'observation filters')",project,workspace);
+    String[] ids={"long-root","slow-child-root","failed-child-root"};
+    for(int i=0;i<ids.length;i++) {
+      String trace=String.format("%032x",i+1);
+      store.db.update("INSERT INTO objects(project_id,type,object_id,revision,trace_id,started_at,data) VALUES(?,'trace',?,1,?,now(),?::jsonb)",project,ids[i],trace,json.writeValueAsString(Map.of("name",ids[i],"status",i==0?"error":"success","durationMs",i==0?30000:1000)));
+      for(int j=0;j<5;j++)store.db.update("INSERT INTO objects(project_id,type,object_id,revision,trace_id,started_at,data) VALUES(?,'observation',?,1,?,now(),?::jsonb)",project,ids[i]+"-step-"+j,trace,json.writeValueAsString(Map.of("status",i==2&&j==0?"error":"success","durationMs",i==1&&j==0?5000:4999)));
+    }
+    String endpoint="/api/reports/traces";
+    for(String filter:List.of("slow","error"))mvc.perform(get(endpoint).cookie(userCookie).param("project",project.toString()).param("observation",filter)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].object_id").value(filter.equals("slow")?"slow-child-root":"failed-child-root"));
+    mvc.perform(get(endpoint).cookie(userCookie).param("project",project.toString()).param("observation","invalid")).andExpect(status().isBadRequest());
+    mvc.perform(get(endpoint).cookie(otherCookie).param("project",project.toString()).param("observation","slow")).andExpect(status().isNotFound());
+  }
+
   @Test void overviewCountsTraceRequestsAndDeleteRequiresLiteralAndProof() throws Exception {
     UUID project=UUID.randomUUID();
     UUID workspace=store.db.queryForObject("SELECT id FROM workspaces WHERE owner_id=?",UUID.class,owner);
