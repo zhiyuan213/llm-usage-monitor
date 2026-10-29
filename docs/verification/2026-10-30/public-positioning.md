@@ -6,3 +6,5 @@
 - Frontend tests: 24 files, 69 passed. Production build and 11 generated public pages passed. Three generated-example synchronization checks passed. Locked dependency audit: 114 packages, zero advisories. git diff --check passed.
 - Local browser fixture: English desktop hero/pricing inspected; Chinese FAQ expanded; 390px pricing cards single column (325px), body375px; Chinese home body375px. Fixed existing overage-table overflow with a local scroll container.
 - No backend or payment contract changes. Not deployed.
+
+- Follow-up: synchronized generated static home content after post-deploy rollback detected stale copy. dist/home.html exact hero and async metadata text confirmed. Repeated frontend 69 tests, production build, generated checks and dependency audit114/0 passed; diff check passed.

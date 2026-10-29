@@ -86,3 +86,8 @@
 ## 2026-10-29 local payment fixture timestamp precision
 - Full backend verification exposed `wrongPriceDeclineAndLatePaymentNeverGrantPack`: expected refund_required, observed failed. Sequential synthetic webhook events used wall-clock nanoseconds; PostgreSQL microsecond rounding could make a later event compare as non-newer and be ignored.
 - Fix test fixtures to use monotonically increasing, one-second-separated event times. Production event ordering and payment logic stay unchanged. Keep the full late-payment/refund assertions and full verify regression.
+
+## 2026-10-30 public home static copy drift
+- Release 4401a71 passed CI but post-deploy content acceptance found the generated home.html still used the previous hero. Automatic rollback restored the previous web and worker images.
+- Root cause: Vue public copy and build-public-pages.mjs maintain separate home content. Sync the static title/body/description with the confirmed positioning. Pricing currently renders on the client, so initial HTML cannot verify its FAQ; verify its bundle plus browser-rendered content instead.
+- Prevention: inspect generated dist/home.html after every home copy change and retain exact content checks in post-deploy verification.
