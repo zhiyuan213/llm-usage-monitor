@@ -17,3 +17,8 @@ it('explains cached input using recorded per-call rates and preserves unknowns',
  expect(costFormula({...call,cost:null})).toBeNull();
  expect(costFormula({...call,input_rate:null})).toBeNull();
 });
+it('shows both cache write costs and does not add reasoning twice',()=>{
+ const call={cost:'0.0035',input_rate:3,output_rate:6,cached_rate:0.5,applied_rates:{cacheWrite5m:2.5,cacheWrite1h:4},data:{usage:{inputTokens:1000,outputTokens:200,cachedInputTokens:300,cacheWrite5mTokens:100,cacheWrite1hTokens:100,reasoningTokens:100}}};
+ expect(costFormula(call)).toBe('((1000 − 300 − 100 − 100) × 3 + 200 × 6 + 300 × 0.5 + 100 × 2.5 + 100 × 4) ÷ 1,000,000 = US$0.0035');
+ expect(costFormula({...call,applied_rates:null})).toBeNull();
+});

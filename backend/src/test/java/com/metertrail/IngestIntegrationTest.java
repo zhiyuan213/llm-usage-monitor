@@ -1251,7 +1251,7 @@ class IngestIntegrationTest {
           }
           assertEquals(126, xml.split("<row r=").length - 1);
           assertEquals(
-              kind.equals("traces") ? 11 : 6,
+              kind.equals("traces") ? 13 : 6,
               xml.substring(xml.indexOf("<row r="), xml.indexOf("</row>")).split("<c r=").length
                   - 1);
           if (kind.equals("traces")) {
@@ -1259,6 +1259,8 @@ class IngestIntegrationTest {
             assertTrue(xml.contains("已知 Token"));
             assertTrue(xml.contains("已知估算费用 USD"));
             assertTrue(xml.contains("成本未知调用"));
+            assertTrue(xml.contains("eventId"));
+            assertTrue(xml.contains("★打分"));
           }
         } else
           try (var exported = org.apache.pdfbox.Loader.loadPDF(bytes)) {
@@ -1838,6 +1840,36 @@ class IngestIntegrationTest {
     process.environment().put("DRILL_DB_USER",pg.getUsername());process.environment().put("DRILL_DB_PASSWORD",pg.getPassword());
     process.redirectErrorStream(true);process.redirectOutput(java.nio.file.Path.of("target",application+".log").toFile());
     return process.start();
+  }
+
+  @Test void traceListUsesLatestTargetedScoreWithZeroFallbackAndExportsIt() throws Exception {
+    String token=Support.token();
+    store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(token),user,"score-list");
+    var cookie=new jakarta.servlet.http.Cookie("mt_session",token);
+    var root=event("trace","rated-root",1);root.put("startedAt",Instant.now().minusSeconds(60).toString());
+    var unrated=event("trace","unrated-root",1);unrated.put("startedAt",Instant.now().minusSeconds(50).toString());
+    var old=event("score","old-score",1);old.put("startedAt",Instant.now().minusSeconds(10).toString());
+    ((ObjectNode)old.path("data")).put("targetId","rated-root").put("value",2);
+    var recent=event("score","latest-score",1);recent.put("startedAt",Instant.now().minusSeconds(5).toString());
+    ((ObjectNode)recent.path("data")).put("targetId","rated-root").put("value",4.5);
+    var observation=event("score","observation-score",1);
+    ((ObjectNode)observation.path("data")).put("targetType","observation").put("targetId","rated-root").put("value",999);
+    ingest.accept(project,batch(root,unrated,old,recent,observation));new Worker(store,tx,mail,true,"test@test.local").process();
+    String query="/api/reports/traces?project="+project+"&size=5";
+    mvc.perform(get(query).cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(2))
+        .andExpect(jsonPath("$.items[0].score").value("0")).andExpect(jsonPath("$.items[0].score_reported").value(false))
+        .andExpect(jsonPath("$.items[1].score").value("4.5")).andExpect(jsonPath("$.items[1].score_reported").value(true));
+    UUID other=UUID.randomUUID();store.db.update("INSERT INTO projects(id,workspace_id,name) VALUES(?,?,'Other')",other,workspace);
+    store.db.update("INSERT INTO objects(project_id,type,object_id,revision,started_at,data) VALUES(?,'score','foreign-score',1,now(),?::jsonb)",other,((ObjectNode)observation.path("data").deepCopy()).put("targetType","trace").put("value",1000).toString());
+    mvc.perform(get(query).cookie(cookie)).andExpect(jsonPath("$.items[1].score").value("4.5"));
+    for(String format:List.of("xlsx","pdf")) {
+      byte[] bytes=mvc.perform(get("/api/reports/traces/export?project="+project+"&format="+format).cookie(cookie))
+          .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+      String text="";
+      if(format.equals("pdf"))try(var pdf=org.apache.pdfbox.Loader.loadPDF(bytes)){text=new org.apache.pdfbox.text.PDFTextStripper().getText(pdf);}
+      else try(var zip=new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(bytes))){java.util.zip.ZipEntry e;while((e=zip.getNextEntry())!=null)if(e.getName().endsWith("sheet1.xml"))text=new String(zip.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);}
+      assertTrue(text.contains("Score"));assertTrue(text.contains("4.5"));assertFalse(text.contains("foreign-score"));
+    }
   }
 
   ObjectNode event(String type, String object, int revision) {

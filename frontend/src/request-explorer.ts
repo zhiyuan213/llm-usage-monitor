@@ -12,5 +12,11 @@ export function costFormula(o:any):string|null {
  const values=[u?.inputTokens,u?.outputTokens,u?.cachedInputTokens,o.input_rate,o.output_rate,o.cached_rate];
  if(o.cost==null||values.some(v=>v==null||!Number.isFinite(Number(v))))return null;
  const [input,output,cached,ir,orr,cr]=values.map(Number);
+ const w5=Number(u.cacheWrite5mTokens||0),w1=Number(u.cacheWrite1hTokens||0);
+ if(w5||w1) {
+   const rates=o.applied_rates;
+   if(!rates||[rates.cacheWrite5m,rates.cacheWrite1h].some(v=>v==null||!Number.isFinite(Number(v))))return null;
+   return `((${input} − ${cached} − ${w5} − ${w1}) × ${ir} + ${output} × ${orr} + ${cached} × ${cr} + ${w5} × ${rates.cacheWrite5m} + ${w1} × ${rates.cacheWrite1h}) ÷ 1,000,000 = US$${Number(o.cost).toFixed(12).replace(/0+$/,'').replace(/\.$/,'')}`;
+ }
  return `((${input} − ${cached}) × ${ir} + ${output} × ${orr} + ${cached} × ${cr}) ÷ 1,000,000 = US$${Number(o.cost).toFixed(12).replace(/0+$/,'').replace(/\.$/,'')}`;
 }

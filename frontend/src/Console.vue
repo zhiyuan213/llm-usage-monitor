@@ -4,6 +4,7 @@ import {traceScores,latestTraceScore} from "./trace-score";
 import {traceColumnWidths} from "./trace-column-layout";
 import TraceObservationsRow from "./TraceObservationsRow.vue";
 import PublicModelPrices from "./PublicModelPrices.vue";
+import BillingPriceRules from "./BillingPriceRules.vue";
 import ModelPricePolicy from "./ModelPricePolicy.vue";
 import RequestExplorer from "./RequestExplorer.vue";
 import {usePageSize} from "./page-size";
@@ -155,7 +156,7 @@ let restoreTrace=true;
 function restoreTraceView(){
  const key=traceViewKey(session.value?.id||'',selected.value),saved=readTraceView(sessionStorage,key);
  if(saved&&(saved.route===route.fullPath||Object.keys(route.query).every(k=>k==='project'))){search.value=saved.search;status.value=saved.status;costFilter.value=saved.cost;costReasonFilter.value=saved.reason;traceSort.value=saved.sort;traceDirection.value=saved.direction;tracePage.value=saved.page;reportSize.value=saved.size;reportWindow.value=saved.window;reportPolicy.value=saved.windowPolicy??inferWindowPolicy(saved.window);}
- else {search.value='';status.value='';costFilter.value=['unknown','known'].includes(String(route.query.cost))?String(route.query.cost):'all';costReasonFilter.value=['usage_missing','model_missing','pricing_evidence_missing'].includes(String(route.query.costReason))?String(route.query.costReason):'';tracePage.value=0;if(typeof route.query.from==='string'&&typeof route.query.to==='string'&&Number.isFinite(Date.parse(route.query.from))&&Date.parse(route.query.from)<Date.parse(route.query.to)) {reportWindow.value={from:route.query.from,to:route.query.to};reportPolicy.value={live:false};}}
+ else {search.value='';status.value='';costFilter.value=['unknown','known'].includes(String(route.query.cost))?String(route.query.cost):'all';costReasonFilter.value=['usage_missing','model_missing','pricing_evidence_missing','price_missing','price_unavailable','billing_rule_missing','billing_rule_ambiguous','cache_rate_missing','cache_write_rate_missing','currency_unsupported'].includes(String(route.query.costReason))?String(route.query.costReason):'';tracePage.value=0;if(typeof route.query.from==='string'&&typeof route.query.to==='string'&&Number.isFinite(Date.parse(route.query.from))&&Date.parse(route.query.from)<Date.parse(route.query.to)) {reportWindow.value={from:route.query.from,to:route.query.to};reportPolicy.value={live:false};}}
  if(costReasonFilter.value)costFilter.value='unknown';
  restoreTrace=false;
 }
@@ -168,7 +169,7 @@ function sortTraces(value:string){traceDirection.value=traceSort.value===value&&
 const pageDescription=computed(()=>({'model-prices':t('Browse current public model rates and time-of-day pricing.','查看当前公共模型价格与分时费率。'),overview:t('Request performance, known model cost and usage for the selected period.','查看所选时间内的请求表现、已知模型费用和用量。'),traces:t('Find requests by name or status, then compare latency and model usage.','检索请求，比较耗时、模型用量与已知费用。'),trace:t('Inspect request steps, model usage and pricing evidence.','查看请求步骤、模型用量与计费依据。'),analytics:t('Compare usage by customer, user or feature.','按客户、用户或功能比较用量。'),'cost-insights':t('Find cost drivers and compare equal-length periods.','定位费用来源，对比等长时间段的变化。'),releases:t('Mark releases and compare before and after.','记录发布时间，对比修改前后的表现。'),weekly:t('Manage weekly email summaries and delivery history.','管理每周邮件摘要与发送记录。'),billing:t('Manage your plan, quota and payment records.','管理套餐、额度和付款记录。'),keys:t('Create and revoke project API keys.','创建与撤销项目接入密钥。'),settings:t('Manage project details and model price versions.','管理项目资料与模型价格版本。'),account:t('Manage sign-in methods and account security.','管理登录方式与账号安全。'),messages:t('Send feedback and follow replies.','提交问题与建议，查看回复。'),workspace:t('Manage projects and shared workspace usage.','管理项目与工作空间共享用量。'),budgets:t('Set model spending reminders.','设置模型费用预算提醒。'),reliability:t('Compare failure rates and latency by model or feature.','按模型或功能分析失败率与耗时排行。'),alerts:t('Configure notifications for project activity.','配置项目用量与异常通知。'),audit:t('Review account and workspace actions.','查看账号与工作空间操作记录。') } as Record<string,string>)[page.value]||t('Review and manage this section.','查看与管理本栏目内容。'));
 function fieldLabel(key:string){return ({name:t('Name','名称'),status:t('Status','状态'),model:t('Model','模型'),provider:t('Provider','供应商'),usage:t('Token usage','Token 用量'),durationMs:t('Duration (ms)','耗时（毫秒）'),observationType:t('Step type','步骤类型'),userId:t('User','用户'),customerId:t('Customer','客户'),feature:t('Feature','功能'),metadata:t('Metadata','附加信息'),input:t('Input','输入'),output:t('Output','输出'),tags:t('Tags','标签'),error:t('Error','错误信息'),value:t('Value','评分值'),valueType:t('Value type','评分类型'),targetId:t('Target ID','关联对象 ID'),targetType:t('Target type','关联对象类型')} as Record<string,string>)[key]||key;}
 function objectLabel(value:string){return ({trace:t('Request','请求'),observation:t('Step','步骤'),score:t('Score','评分'),generation:t('Model generation','模型生成'),tool:t('Tool','工具'),retrieval:t('Retrieval','检索')} as Record<string,string>)[value]||value;}
-function costReason(o:any){return ({usage_missing:t('Missing input, output or cached token usage; report zero cached tokens when there are none.','缺少输入、输出或缓存 Token 用量；没有缓存时请上报0。'),model_missing:t('Missing model or provider','缺少模型或供应商'),pricing_evidence_missing:t('No usable pricing evidence was recorded when this revision was processed. Check the model, provider and effective price date.','处理此修订时未记录可用计价证据，请核对模型、供应商与价格生效时间。')} as Record<string,string>)[o.cost_reason]||t('Unknown cost: reason needs confirmation','费用未知：原因待确认');}
+function costReason(o:any){return ({currency_unsupported:t('Currency conversion is not configured','未配置该币种的换算规则'),price_missing:t('No matching price at call time','调用发生时没有匹配的价格'),price_unavailable:t('Price withdrawn or unsupported','价格已撤回或规则不受支持'),billing_rule_missing:t('No matching batch, tier or regional rate','没有匹配的批量、等级或区域费率'),billing_rule_ambiguous:t('Time-of-day and special billing rules conflict','分时与特殊计费规则冲突'),cache_rate_missing:t('Cache read rate missing','缺少缓存读取费率'),cache_write_rate_missing:t('Cache write rate missing','缺少缓存写入费率'),usage_missing:t('Missing input, output or cached token usage; report zero cached tokens when there are none.','缺少输入、输出或缓存 Token 用量；没有缓存时请上报0。'),model_missing:t('Missing model or provider','缺少模型或供应商'),pricing_evidence_missing:t('No usable pricing evidence was recorded when this revision was processed. Check the model, provider and effective price date.','处理此修订时未记录可用计价证据，请核对模型、供应商与价格生效时间。')} as Record<string,string>)[o.cost_reason]||t('Unknown cost: reason needs confirmation','费用未知：原因待确认');}
 const traceSummary=computed(()=>{const calls=traceObjects.value.filter((o:any)=>o.type==='observation'&&o.data.observationType==='generation');const priced=calls.filter((o:any)=>o.cost!=null);const usage=calls.filter((o:any)=>o.data.usage?.inputTokens!=null&&o.data.usage?.outputTokens!=null);return {calls:calls.length,priced:priced.length,cost:priced.length?priced.reduce((n:number,o:any)=>n+Number(o.cost),0):null,tokens:usage.length?usage.reduce((n:number,o:any)=>n+Number(o.data.usage.inputTokens)+Number(o.data.usage.outputTokens),0):null,duration:traceObjects.value.find((o:any)=>o.type==='trace')?.data.durationMs};});
 const accountReady = computed(() => contextReady.value && !loading.value && !!session.value?.csrf);
 const activityPage = ref(0),
@@ -208,6 +209,7 @@ const search = ref(""),
 const changeTargetPlan = ref("");
 const pricingStatus = ref<any>({});
 const timeBandEnabled = ref(false);
+const billingRules = ref<any[]>([]);
 const timeBand = reactive({timezone:'Asia/Shanghai',start:'00:00',end:'08:00',inputRate:'',outputRate:'',cachedRate:''});
 const newProject = reactive({ name: "", environment: "production" }),
   alert = reactive({ name: "", metric: "error_count", threshold: "10" }),
@@ -745,7 +747,7 @@ const usagePercent = computed(() =>
                 <option value="success">success</option>
                 <option value="error">error</option>
                 <option value="cancelled">cancelled</option></select
-              ><select v-model="costFilter" :aria-label="t('Cost completeness','费用完整性')" @change="costFilter!=='unknown'&&(costReasonFilter='')"><option value="all">{{t('All costs','全部费用状态')}}</option><option value="unknown">{{t('Has unknown cost','含未知费用')}}</option><option value="known">{{t('Fully priced model calls','模型调用全部已定价')}}</option></select><select v-if="costFilter==='unknown'" v-model="costReasonFilter" :aria-label="t('Unknown cost reason','未知费用原因')"><option value="">{{t('All reasons','全部原因')}}</option><option value="usage_missing">{{t('Usage missing','缺少用量')}}</option><option value="model_missing">{{t('Model or provider missing','缺少模型或供应商')}}</option><option value="pricing_evidence_missing">{{t('Pricing evidence missing','缺少计价证据')}}</option></select>
+              ><select v-model="costFilter" :aria-label="t('Cost completeness','费用完整性')" @change="costFilter!=='unknown'&&(costReasonFilter='')"><option value="all">{{t('All costs','全部费用状态')}}</option><option value="unknown">{{t('Has unknown cost','含未知费用')}}</option><option value="known">{{t('Fully priced model calls','模型调用全部已定价')}}</option></select><select v-if="costFilter==='unknown'" v-model="costReasonFilter" :aria-label="t('Unknown cost reason','未知费用原因')"><option value="">{{t('All reasons','全部原因')}}</option><option value="usage_missing">{{t('Usage missing','缺少用量')}}</option><option value="model_missing">{{t('Model or provider missing','缺少模型或供应商')}}</option><option v-for="reason in ['price_missing','price_unavailable','billing_rule_missing','billing_rule_ambiguous','cache_rate_missing','cache_write_rate_missing','currency_unsupported']" :value="reason">{{costReason({cost_reason:reason})}}</option><option value="pricing_evidence_missing">{{t('Pricing evidence missing','缺少计价证据')}}</option></select>
             </div>
             <template #actions>
               <div class="query-export trace-export">
@@ -766,25 +768,25 @@ const usagePercent = computed(() =>
               <table class="traces-table"><colgroup><col v-for="(width,i) in traceColumnWidths" :key="i" :style="{width:width+'%'}" /></colgroup>
                 <thead>
                   <tr>
-                    <th :aria-label="t('Expand observations','展开 Observation')"></th><th>eventId</th>
+                    <th :aria-label="t('Expand observations','展开 Observation')"></th><th>{{ t("Name", "名称") }}</th><th>eventId</th>
                     <th>{{ t("Object ID", "对象 ID") }}</th>
-                    <th>{{ t("Name", "名称") }}</th>
                     <th><button type="button" class="sort-heading" @click="sortTraces('duration')">{{t("Duration", "耗时")}} {{traceSort==='duration'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th>
-                    <th><button type="button" class="sort-heading" @click="sortTraces('tokens')">Token {{traceSort==='tokens'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th><th><button type="button" class="sort-heading" @click="sortTraces('estimated_cost')">{{t("Known estimated cost","已知估算费用")}} {{traceSort==='estimated_cost'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th>
+                    <th><button type="button" class="sort-heading" @click="sortTraces('tokens')">Token {{traceSort==='tokens'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th><th><button type="button" class="sort-heading" @click="sortTraces('estimated_cost')">{{t("Cost","费用")}} {{traceSort==='estimated_cost'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th>
                     <th>{{ t("User / Customer", "用户 / 客户") }}</th>
                     <th>{{ t("Status", "状态") }}</th>
+                    <th>{{t("★ Score","★打分")}}</th>
                     <th>{{ t("Started at (UTC)", "开始时间 (UTC)") }}</th>
-                    <th></th>
+                    <th>{{t("Actions","操作")}}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <template v-for="o in data.items || []" :key="selected+o.object_id"><tr :class="{'trace-row-expanded':expandedTraces[selected+o.object_id]}">
                     <td><button type="button" class="trace-expand" :aria-expanded="!!expandedTraces[selected+o.object_id]" :aria-label="t('Toggle observations','展开或收起 Observation')" @click="expandedTraces[selected+o.object_id]=!expandedTraces[selected+o.object_id]">{{expandedTraces[selected+o.object_id]?'▾':'▸'}}</button></td>
-                    <td data-label="eventId"><span class="record-id"><code>{{o.event_id||'—'}}</code><button v-if="o.event_id" type="button" class="copy-id" :aria-label="t('Copy event ID','复制事件 ID')" @click="copyRecordId(o.event_id)"><Copy :size="14" /></button></span></td>
-                    <td :data-label="t('Object ID','对象 ID')"><span class="record-id"><code :title="o.object_id">{{o.object_id}}</code><button type="button" class="copy-id" :aria-label="t('Copy full ID','复制完整 ID')" @click="copyRecordId(o.object_id)"><Copy :size="14" /></button></span></td>
                     <td :data-label="t('Name','名称')">
                       <strong>{{ o.data.name || "—" }}</strong>
                     </td>
+                    <td data-label="eventId"><span class="record-id"><code>{{o.event_id||'—'}}</code><button v-if="o.event_id" type="button" class="copy-id" :aria-label="t('Copy event ID','复制事件 ID')" @click="copyRecordId(o.event_id)"><Copy :size="14" /></button></span></td>
+                    <td :data-label="t('Object ID','对象 ID')"><span class="record-id"><code :title="o.object_id">{{o.object_id}}</code><button type="button" class="copy-id" :aria-label="t('Copy full ID','复制完整 ID')" @click="copyRecordId(o.object_id)"><Copy :size="14" /></button></span></td>
                     <td :data-label="t('Duration','耗时')">{{ n(o.data.durationMs) }} ms</td><td data-label="Token" :title="o.tokens==null?t('Token usage not reported','未上报 Token 用量'):''">{{o.tokens==null?'—':n(o.tokens)}}</td><td :data-label="t('Known cost','已知费用')"><span :title="o.estimated_cost==null?t('No priced model calls; check usage and model rates.','无已定价模型调用，请检查用量和模型价格。'):''">{{o.estimated_cost==null?'—':money(o.estimated_cost)}}</span><small class="muted">{{n(o.priced_calls)}}/{{n(o.generations)}} {{t("priced","条已定价")}}</small></td>
                     <td :data-label="t('User / Customer','用户 / 客户')">
                       {{ o.data.userId || "—" }} /
@@ -799,6 +801,7 @@ const usagePercent = computed(() =>
                         >{{ o.data.status }}</span
                       >
                     </td>
+                    <td :data-label="t('★ Score','★打分')" :title="o.score_reported?t('Latest Score reported for this Trace','关联当前 Trace 的最新 Score 评分'):t('No Score reported; displaying 0','未上报 Score，默认显示 0')">{{o.score??0}}</td>
                     <td :data-label="t('Started at (UTC)','开始时间（UTC）')">{{ date(o.started_at) }}</td>
                     <td :data-label="t('Actions','操作')">
                       <RouterLink
@@ -1300,6 +1303,7 @@ const usagePercent = computed(() =>
                 run(async () => {
                   await api(path('/prices'), {
                     ...price,
+                    billingRules: billingRules,
                     timeBands: timeBandEnabled ? [{...timeBand,inputRate:Number(timeBand.inputRate),outputRate:Number(timeBand.outputRate),cachedRate:Number(timeBand.cachedRate)}] : [],
                     effectiveAt: new Date(
                       price.effectiveAt + 'Z',
@@ -1362,6 +1366,7 @@ const usagePercent = computed(() =>
                 <label>{{t('Period cached / 1M','时段缓存 / 百万')}}<input type="number" min="0" step="any" v-model="timeBand.cachedRate" required /></label>
                 <p class="price-band-toggle muted">{{t('This period uses its own rates; other times use the base rates above. Overnight periods are supported.','此时段使用独立费率，其他时间使用上方基础费率；支持跨午夜时段。')}}</p>
               </template>
+              <BillingPriceRules v-model="billingRules" />
               <button class="btn primary">
                 {{ t("Add price version", "添加价格版本") }}
               </button>
@@ -1382,7 +1387,7 @@ const usagePercent = computed(() =>
                 </thead>
                 <tbody>
                   <tr v-for="p in Array.isArray(data) ? data : []">
-                    <td>{{ p.provider }} / {{ p.model }}<small v-for="band in p.time_bands" class="muted" style="display:block">{{band.timezone}} {{band.start}}–{{band.end}} · {{band.inputRate}} / {{band.outputRate}} / {{band.cachedRate}}</small></td>
+                    <td>{{ p.provider }} / {{ p.model }}<small v-for="band in p.time_bands" class="muted" style="display:block">{{band.timezone}} {{band.start}}–{{band.end}} · {{band.inputRate}} / {{band.outputRate}} / {{band.cachedRate}}</small><small v-for="rule in p.billing_rules||[]" class="muted" style="display:block">{{rule.batch?'Batch':'Standard'}} · {{rule.serviceTier}} · {{rule.region}} · {{t('Input ≥','输入 ≥')}} {{rule.minInputTokens}} · {{rule.inputRate}} / {{rule.outputRate}} / {{rule.cachedRate}} / {{rule.cacheWrite5mRate??'—'}} / {{rule.cacheWrite1hRate??'—'}}</small></td>
                     <td>{{ money(p.input_rate) }}</td>
                     <td>{{ money(p.output_rate) }}</td>
                     <td>{{ money(p.cached_rate) }}</td>

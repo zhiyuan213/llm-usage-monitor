@@ -74,6 +74,9 @@ final class Protocol {
     var agent = normalized.withObject("agent");
     for (String key : List.of("serviceName", "environment", "instanceId"))
       if (!agent.has(key)) agent.put(key, key + "-1");
+    for (JsonNode event : normalized.path("events"))
+      if (event.path("data") instanceof com.fasterxml.jackson.databind.node.ObjectNode data)
+        ProviderUsage.normalize(data);
     return normalized;
   }
 
@@ -151,12 +154,17 @@ final class Protocol {
                 "provider",
                 "model",
                 "usage",
+                "providerUsage",
+                "usageFormat",
+                "billing",
                 "status",
                 "error",
                 "userId",
                 "customerId",
                 "feature");
     d.fieldNames().forEachRemaining(k -> Support.require(fields.contains(k), "UNKNOWN_DATA_FIELD"));
+    Support.require(d.has("providerUsage")==d.has("usageFormat"),"INVALID_USAGE");
+    if(d.has("providerUsage")||d.has("billing"))Support.require(type.equals("observation")&&d.path("observationType").asText().equals("generation"),"INVALID_USAGE");
     if (type.equals("score")) {
       Support.text(d, "name", 128);
       Support.text(d, "targetId", 128);
@@ -198,11 +206,19 @@ final class Protocol {
               .forEachRemaining(
                   k ->
                       Support.require(
-                          Set.of("inputTokens", "outputTokens", "cachedInputTokens").contains(k),
+                          Set.of("inputTokens", "outputTokens", "cachedInputTokens", "cacheWrite5mTokens", "cacheWrite1hTokens", "reasoningTokens").contains(k),
                           "INVALID_USAGE"));
           for (String k : List.of("inputTokens", "outputTokens", "cachedInputTokens")) {
             Support.require(u.has(k), "INVALID_USAGE");
             nonnegative(u.get(k), true, "INVALID_USAGE");
+          }
+          for (String k : List.of("cacheWrite5mTokens", "cacheWrite1hTokens", "reasoningTokens"))
+            if (u.has(k)) nonnegative(u.get(k), true, "INVALID_USAGE");
+          if (u.path("reasoningTokens").isIntegralNumber() && u.path("outputTokens").isIntegralNumber())
+            Support.require(u.path("reasoningTokens").asLong()<=u.path("outputTokens").asLong(),"INVALID_USAGE");
+          if (u.path("inputTokens").isIntegralNumber()) {
+            long parts=u.path("cachedInputTokens").asLong()+u.path("cacheWrite5mTokens").asLong()+u.path("cacheWrite1hTokens").asLong();
+            Support.require(parts<=u.path("inputTokens").asLong(),"INVALID_USAGE");
           }
           if (!u.path("cachedInputTokens").isNull())
             Support.require(
@@ -210,6 +226,7 @@ final class Protocol {
                     && u.path("cachedInputTokens").asLong() <= u.path("inputTokens").asLong(),
                 "INVALID_USAGE");
         }
+        if (d.has("billing")) PricingRules.context(d.path("billing"));
       }
     }
   }

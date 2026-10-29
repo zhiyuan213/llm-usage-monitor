@@ -14,20 +14,29 @@ final class ModelPricing {
   record Quote(UUID version, BigDecimal cost, String rates) {}
 
   static Quote quote(Store store, UUID project, JsonNode data, Instant started) {
+    Quote q=resolve(store,project,data,started);
+    return q.cost()==null?null:q;
+  }
+  static Quote unknown(String reason) {
+    return new Quote(null,null,JSON.valueToTree(Map.of("reason",reason,"currency","USD")).toString());
+  }
+  static Quote resolve(Store store, UUID project, JsonNode data, Instant started) {
     String provider = data.path("provider").asText(), model = data.path("model").asText();
     JsonNode usage = data.path("usage");
     if (provider.isEmpty() || model.isEmpty()
         || !usage.path("inputTokens").isIntegralNumber()
         || !usage.path("outputTokens").isIntegralNumber()
-        || !usage.path("cachedInputTokens").isIntegralNumber()) return null;
+        || !usage.path("cachedInputTokens").isIntegralNumber()) return unknown("usage_missing");
     var prices = store.queries().queryForList(
         "SELECT pv.* FROM price_versions pv WHERE provider=? AND model=? AND effective_at<=?"
         + " AND (project_id=? OR (project_id IS NULL AND EXISTS(SELECT 1 FROM projects p"
         + " WHERE p.id=? AND p.public_pricing)))"
         + " ORDER BY (project_id IS NOT NULL) DESC,effective_at DESC LIMIT 1",
         provider, model, Timestamp.from(started), project, project);
-    if (prices.isEmpty() || !Boolean.TRUE.equals(prices.get(0).get("available"))) return null;
+    if (prices.isEmpty()) return unknown("price_missing");
+    if (!Boolean.TRUE.equals(prices.get(0).get("available"))) return unknown("price_unavailable");
     var price = prices.get(0);
+    if(!"USD".equals(price.get("currency")))return unknown("currency_unsupported");
     JsonNode bands = Support.parse(price.get("time_bands").toString());
     BigDecimal input = (BigDecimal) price.get("input_rate"), output = (BigDecimal) price.get("output_rate");
     BigDecimal cached = (BigDecimal) price.get("cached_rate");
@@ -41,11 +50,33 @@ final class ModelPricing {
     }
     long in = usage.path("inputTokens").asLong(), out = usage.path("outputTokens").asLong();
     long hit = usage.path("cachedInputTokens").asLong();
-    if (in < 0 || out < 0 || hit < 0 || hit > in || (hit>0 && !Boolean.TRUE.equals(price.get("cached_known")))) return null;
-    BigDecimal cost = BigDecimal.valueOf(in-hit).multiply(input)
+    if (in < 0 || out < 0 || hit < 0 || hit > in) return unknown("usage_missing");
+    long write5=usage.path("cacheWrite5mTokens").asLong(),write1=usage.path("cacheWrite1hTokens").asLong();
+    for(String k:List.of("cacheWrite5mTokens","cacheWrite1hTokens"))
+      if(usage.has(k)&&!usage.path(k).isIntegralNumber())return unknown("usage_missing");
+    if(hit+write5+write1>in)return unknown("usage_missing");
+    JsonNode context=data.path("billing"),rules=Support.parse(price.get("billing_rules").toString());
+    JsonNode rule=PricingRules.select(rules,context,in);
+    boolean special=context.path("batch").asBoolean()||!context.path("serviceTier").asText("standard").equals("standard")||!context.path("region").asText("global").equals("global");
+    if(special&&rule==null)return unknown("billing_rule_missing");
+    if(rule!=null&&!bands.isEmpty())return unknown("billing_rule_ambiguous");
+    if(rule!=null) {
+      input=rule.path("inputRate").decimalValue();output=rule.path("outputRate").decimalValue();cached=rule.path("cachedRate").decimalValue();
+    }
+    if(hit>0&&rule==null&&!Boolean.TRUE.equals(price.get("cached_known")))return unknown("cache_rate_missing");
+    if((write5>0&&(rule==null||!rule.has("cacheWrite5mRate")))||(write1>0&&(rule==null||!rule.has("cacheWrite1hRate"))))return unknown("cache_write_rate_missing");
+    BigDecimal w5=rule==null?BigDecimal.ZERO:rule.path("cacheWrite5mRate").decimalValue();
+    BigDecimal w1=rule==null?BigDecimal.ZERO:rule.path("cacheWrite1hRate").decimalValue();
+    BigDecimal cost = BigDecimal.valueOf(in-hit-write5-write1).multiply(input)
         .add(BigDecimal.valueOf(out).multiply(output)).add(BigDecimal.valueOf(hit).multiply(cached))
+        .add(BigDecimal.valueOf(write5).multiply(w5)).add(BigDecimal.valueOf(write1).multiply(w1))
         .divide(BigDecimal.valueOf(1_000_000));
-    String rates = JSON.valueToTree(Map.of("input",input,"output",output,"cached",cached)).toString();
+    var evidence=JSON.createObjectNode();evidence.put("input",input.stripTrailingZeros());evidence.put("output",output.stripTrailingZeros());evidence.put("cached",cached.stripTrailingZeros());
+    evidence.put("cacheWrite5m",w5);evidence.put("cacheWrite1h",w1);evidence.put("currency","USD");
+    evidence.put("source",price.get("source").toString()); evidence.put("matchedProvider",provider);evidence.put("matchedModel",model);
+    evidence.put("effectiveAt",price.get("effective_at").toString());evidence.put("matchedAt",started.toString());
+    if(rule!=null)evidence.set("billingRule",rule);
+    String rates = evidence.toString();
     return new Quote((UUID) price.get("id"),cost,rates);
   }
 

@@ -47,6 +47,7 @@ onMounted(load);onBeforeUnmount(()=>{requestId++;});
        <div class="public-price-details"><p>{{t('Source','来源')}}：{{p.source}}</p><p>{{t('Fetched at (UTC)','获取时间（UTC）')}}：{{date(p.fetched_at)}}</p>
         <p v-if="!p.time_bands.length">{{t('No time-of-day rules in this price version.','此价格版本无分时规则。')}}</p>
         <p v-for="(band,index) in p.time_bands" :key="index">{{band.timezone}} · {{band.start}}–{{band.end}} · {{t('Input / output / cached','输入 / 输出 / 缓存')}}：{{rate(band.inputRate)}} / {{rate(band.outputRate)}} / {{rate(band.cachedRate)}}</p>
+        <p v-for="(rule,index) in p.billing_rules||[]" :key="`billing-${index}`">{{rule.batch?'Batch':'Standard'}} · {{rule.serviceTier}} · {{rule.region}} · {{t('Input ≥','输入 ≥')}} {{rule.minInputTokens}} · {{t('Input / output / cache read / write 5m / write 1h','输入 / 输出 / 缓存读取 / 写入5分钟 / 写入1小时')}}：{{rate(rule.inputRate)}} / {{rate(rule.outputRate)}} / {{rate(rule.cachedRate)}} / {{rule.cacheWrite5mRate==null?t('Unknown','未知'):rate(rule.cacheWrite5mRate)}} / {{rule.cacheWrite1hRate==null?t('Unknown','未知'):rate(rule.cacheWrite1hRate)}}</p>
        </div></details></td>
       <td>{{rate(p.input_rate)}}</td><td>{{rate(p.output_rate)}}</td><td>{{p.cached_known?rate(p.cached_rate):t('Unknown','未知')}}</td><td>{{date(p.effective_at)}}</td>
      </tr>

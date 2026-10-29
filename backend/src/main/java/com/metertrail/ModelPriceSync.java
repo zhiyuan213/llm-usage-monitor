@@ -63,17 +63,20 @@ class ModelPriceSync {
     public void onComplete() { delegate.onComplete(); }
   }
   record Entry(String provider,String model,BigDecimal input,BigDecimal output,BigDecimal cached,
-      boolean cachedKnown,String bands,Instant effective) {}
+      boolean cachedKnown,String bands,Instant effective,String rules) {}
 
   List<Entry> parse(JsonNode root,Instant fetched) {
     var result=new ArrayList<Entry>();
     if(root.has("prices")) {
       if(root.path("schemaVersion").asInt()!=1 || !root.path("prices").isArray()) throw new IllegalArgumentException("Invalid catalogue");
       for(JsonNode p:root.path("prices")) {
+        if(!p.path("currency").asText("USD").equals("USD"))throw new IllegalArgumentException("Only explicit USD rates supported");
         String provider=identifier(p.path("provider"),64),model=identifier(p.path("model"),256);
         Instant effective=Instant.parse(p.path("effectiveAt").asText());
+        if(!PricingRules.validate(p.path("billingRules")).isEmpty()&&!ModelPricing.bands(p.path("timeBands")).isEmpty())
+          throw new IllegalArgumentException("Combined special and time-band pricing requires an explicit supported rule");
         result.add(new Entry(provider,model,ModelPricing.rate(p.path("inputRate")),ModelPricing.rate(p.path("outputRate")),
-            ModelPricing.rate(p.path("cachedRate")),true,ModelPricing.bands(p.path("timeBands")).toString(),effective));
+            ModelPricing.rate(p.path("cachedRate")),true,ModelPricing.bands(p.path("timeBands")).toString(),effective,PricingRules.validate(p.path("billingRules")).toString()));
       }
     } else {
       if(!root.isObject() || !root.path("openai").path("models").isObject()) throw new IllegalArgumentException("Invalid models.dev catalogue");
@@ -92,7 +95,7 @@ class ModelPriceSync {
           result.add(new Entry(identifier(ModelPricing.JSON.valueToTree(provider.getKey()),64),
               identifier(ModelPricing.JSON.valueToTree(model.getKey()),256),input,output,
               cost.has("cache_read")?ModelPricing.rate(cost.path("cache_read")):BigDecimal.ZERO,
-              cost.has("cache_read"),"[]",fetched));
+              cost.has("cache_read"),"[]",fetched,"[]"));
           } catch (IllegalArgumentException unsupported) {
             // An unusable individual model must not prevent valid models from refreshing.
             // It is absent from this snapshot and any old public price gets a tombstone.
@@ -129,8 +132,8 @@ class ModelPriceSync {
           var p=old.get(0);
           if(same(p,e) && !root.has("prices")) continue;
         }
-        store.db.update("INSERT INTO price_versions(id,provider,model,effective_at,input_rate,output_rate,cached_rate,source,time_bands,fetched_at,cached_known) VALUES(?,?,?,?,?,?,?, ?,?::jsonb,?,?) ON CONFLICT DO NOTHING",
-            UUID.randomUUID(),e.provider(),e.model(),Timestamp.from(e.effective()),e.input(),e.output(),e.cached(),url,e.bands(),Timestamp.from(fetched),e.cachedKnown());
+        store.db.update("INSERT INTO price_versions(id,provider,model,effective_at,input_rate,output_rate,cached_rate,source,time_bands,fetched_at,cached_known,billing_rules) VALUES(?,?,?,?,?,?,?, ?,?::jsonb,?,?,?::jsonb) ON CONFLICT DO NOTHING",
+            UUID.randomUUID(),e.provider(),e.model(),Timestamp.from(e.effective()),e.input(),e.output(),e.cached(),url,e.bands(),Timestamp.from(fetched),e.cachedKnown(),e.rules());
       }
       // Removed/unsupported models stop being priced for future calls, without erasing old evidence.
       var latest=store.db.queryForList("SELECT DISTINCT ON(provider,model) * FROM price_versions WHERE project_id IS NULL ORDER BY provider,model,effective_at DESC");
@@ -144,7 +147,8 @@ class ModelPriceSync {
     return Boolean.TRUE.equals(p.get("available")) && e.input().compareTo((BigDecimal)p.get("input_rate"))==0
         && e.output().compareTo((BigDecimal)p.get("output_rate"))==0 && e.cached().compareTo((BigDecimal)p.get("cached_rate"))==0
         && e.cachedKnown()==Boolean.TRUE.equals(p.get("cached_known"))
-        && Support.parse(p.get("time_bands").toString()).equals(Support.parse(e.bands()));
+        && Support.parse(p.get("time_bands").toString()).equals(Support.parse(e.bands()))
+        && Support.parse(p.get("billing_rules").toString()).equals(Support.parse(e.rules()));
   }
 }
 

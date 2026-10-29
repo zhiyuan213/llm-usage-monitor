@@ -41,6 +41,53 @@ class ModelPricingIntegrationTest {
   String provider;
   final Instant t=Instant.parse("2026-10-26T00:00:00Z");
   ModelPriceSync sync;
+  @Test void billingCardsUseActualUsageAndWholeInputThresholdWithoutRecountingReasoning() {
+    var catalog=(ObjectNode)feed("2",t,"[]");
+    var rules=((ObjectNode)catalog.path("prices").get(0)).putArray("billingRules");
+    var base=rules.addObject().put("batch",false).put("serviceTier","standard").put("region","global").put("minInputTokens",0)
+        .put("inputRate",2).put("outputRate",4).put("cachedRate",0.5).put("cacheWrite5mRate",2.5).put("cacheWrite1hRate",4);
+    rules.add(base.deepCopy().put("minInputTokens",1000).put("inputRate",3).put("outputRate",6));
+    rules.add(base.deepCopy().put("batch",true).put("inputRate",1).put("outputRate",2));
+    sync.apply(catalog,t);
+    var d=data();var u=(ObjectNode)d.path("usage");u.put("cacheWrite5mTokens",100).put("cacheWrite1hTokens",100).put("reasoningTokens",100);
+    // (500*3 + 200*6 + 300*.5 + 100*2.5 + 100*4)/1M
+    var q=ModelPricing.quote(store,project,d,t);assertEquals(0,new BigDecimal(".0035").compareTo(q.cost()));
+    assertEquals("USD",Support.parse(q.rates()).path("currency").asText());
+    d.putObject("billing").put("batch",true);
+    assertEquals(0,new BigDecimal(".0017").compareTo(ModelPricing.quote(store,project,d,t).cost()));
+    ((ObjectNode)d.path("billing")).put("region","eu");
+    assertEquals("billing_rule_missing",Support.parse(ModelPricing.resolve(store,project,d,t).rates()).path("reason").asText());
+    assertNull(ModelPricing.quote(store,project,d,t));
+    assertThrows(Exception.class,()->sync.apply(changedRule(catalog),t));
+  }
+  JsonNode changedRule(ObjectNode catalog) {
+    var changed=catalog.deepCopy();((ObjectNode)changed.path("prices").get(0).path("billingRules").get(0)).put("inputRate",9);return changed;
+  }
+  @Test void cacheWritesNeverUseNormalInputRateAsFallback() {
+    sync.apply(feed("2",t,"[]"),t);
+    var d=data();((ObjectNode)d.path("usage")).put("cacheWrite5mTokens",50);
+    assertEquals("cache_write_rate_missing",Support.parse(ModelPricing.resolve(store,project,d,t).rates()).path("reason").asText());
+    assertEquals("price_missing",Support.parse(ModelPricing.resolve(store,project,d,t.minusSeconds(1)).rates()).path("reason").asText());
+  }
+  @Test void providerMetadataSurvivesWorkerAndUnknownReasonIsStoredWithoutRepricingHistory() throws Exception {
+    Instant now=Instant.now().minusSeconds(5);
+    sync.apply(feed("2",now.minusSeconds(60),"[]"),now);
+    var e=ModelPricing.JSON.createObjectNode();
+    e.put("eventId",UUID.randomUUID().toString()).put("type","observation").put("objectId","native-usage").put("startedAt",now.toString())
+        .put("traceId","0123456789abcdef0123456789abcdef").put("spanId","0123456789abcdef");
+    var d=e.putObject("data");d.put("observationType","generation").put("status","success").put("durationMs",10)
+        .put("provider",provider).put("model","shared").put("usageFormat","openai");
+    d.set("providerUsage",Support.parse("{\"prompt_tokens\":100,\"completion_tokens\":80,\"prompt_tokens_details\":{\"cached_tokens\":20},\"completion_tokens_details\":{\"reasoning_tokens\":60}}"));
+    d.putObject("billing").put("batch",true);
+    var body=ModelPricing.JSON.createObjectNode();body.putArray("events").add(e);
+    var normalized=Protocol.defaults(body);Protocol.validateEvents(normalized);
+    ingest.accept(project,normalized);new Worker(store,tx,mail,true,"test@test.local").process();
+    var row=store.db.queryForMap("SELECT data,applied_rates,cost FROM objects WHERE project_id=?",project);
+    assertNull(row.get("cost"));assertEquals(80,Support.parse(row.get("data").toString()).path("usage").path("outputTokens").asInt());
+    assertEquals("billing_rule_missing",Support.parse(row.get("applied_rates").toString()).path("reason").asText());
+    mvc.perform(get("/api/projects/"+project+"/traces/0123456789abcdef0123456789abcdef").cookie(cookie))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.objects[0].cost_reason").value("billing_rule_missing"));
+  }
   @BeforeEach void setup() {
     user=UUID.randomUUID();UUID workspace=UUID.randomUUID();project=UUID.randomUUID();provider="public-"+project;
     store.db.update("INSERT INTO users(id,email,verified) VALUES(?,?,true)",user,user+"@test.local");

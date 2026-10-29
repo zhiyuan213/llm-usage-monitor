@@ -1578,3 +1578,6 @@
 .ui-v2 .observation-table td:nth-child(8) { padding-left: 20px; }
 
 .ui-v2 .performance-record-link { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+
+/* Trace scores belong to the parent; observations keep this slot empty. */
+.ui-v2 .traces-table > thead > tr > th:nth-child(10), .ui-v2 .traces-table > tbody > tr > td:nth-child(10):not([colspan]) { text-align: center; font-variant-numeric: tabular-nums; }

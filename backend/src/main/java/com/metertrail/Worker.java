@@ -130,7 +130,7 @@ class Worker {
                     Instant started = Instant.parse(e.path("startedAt").asText());
                     if (type.equals("observation")
                         && d.path("observationType").asText().equals("generation")) {
-                      var quote = ModelPricing.quote(store, project, d, started);
+                      var quote = ModelPricing.resolve(store, project, d, started);
                       if (quote != null) {
                         price = quote.version(); cost = quote.cost(); appliedRates = quote.rates();
                       }

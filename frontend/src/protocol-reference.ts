@@ -421,6 +421,18 @@ export const sections = [
     ],
   },
   {
+    en: "Body: optional billing metadata for generation observations",
+    zh: "Body：模型调用的可选计费元数据",
+    rows: [
+      ["events[n].data.usage.cacheWrite5mTokens", "5-minute cache writes, included in inputTokens", "5分钟缓存写入，包含在 inputTokens 内", "integer | null", "Optional", "可选", "Unknown TTL stays null; no guessed rates", "缓存期限未知填 null；不猜测费率", "100"],
+      ["events[n].data.usage.cacheWrite1hTokens", "1-hour cache writes, included in inputTokens", "1小时缓存写入，包含在 inputTokens 内", "integer | null", "Optional", "可选", "Cache reads plus writes must not exceed inputTokens", "缓存读取与写入之和不得超过输入", "0"],
+      ["events[n].data.usage.reasoningTokens", "Reasoning subset already included in outputTokens", "已包含在输出中的推理 Token 子集", "integer | null", "Optional", "可选", "Do not add to outputTokens again", "不得再次累加到输出费用", "20"],
+      ["events[n].data.usageFormat", "Provider usage adapter", "供应商用量适配格式", "string", "Required with providerUsage", "与 providerUsage 同时提供", "openai / anthropic / gemini; text token usage only", "openai / anthropic / gemini；仅文本 Token 用量", "openai"],
+      ["events[n].data.providerUsage", "Original numeric usage metadata; normalized server-side", "供应商原始数字用量，服务端转换为统一 usage", "object", "Optional alternative to usage", "可代替手动填写 usage", "Only documented numerical usage fields; never send messages or response bodies", "仅支持文档列出的数字用量字段，禁止传消息或回答正文", '{"prompt_tokens":100,"completion_tokens":20,"prompt_tokens_details":{"cached_tokens":0}}'],
+      ["events[n].data.billing", "Actual provider billing context", "实际供应商计费上下文", "object", "Optional", "可选", "batch boolean, serviceTier and region strings; defaults false / standard / global; unknown special rates stay unpriced", "batch 布尔值、serviceTier 和 region 字符串；默认 false / standard / global；无特殊费率时保持未知", '{"batch":false,"serviceTier":"standard","region":"global"}'],
+    ],
+  },
+  {
     en: "Body: data for type=score",
     zh: "Body：type=score 的 data对象",
     rows: [

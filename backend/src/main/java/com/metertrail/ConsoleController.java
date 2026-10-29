@@ -248,8 +248,10 @@ class ConsoleController {
   }
 
   List<Map<String, Object>> decode(List<Map<String, Object>> rows) {
-    for (var r : rows)
+    for (var r : rows) {
       if (r.get("data") != null) r.put("data", Support.parse(r.get("data").toString()));
+      if (r.get("applied_rates") != null) r.put("applied_rates", Support.parse(r.get("applied_rates").toString()));
+    }
     return rows;
   }
 
@@ -524,7 +526,7 @@ class ConsoleController {
   List<Map<String, Object>> prices(@PathVariable UUID project, HttpServletRequest req) {
     store.project(uid(req), project);
     var prices=store.queries().queryForList("SELECT * FROM price_versions WHERE project_id=? ORDER BY effective_at DESC",project);
-    prices.forEach(p->p.put("time_bands",Support.parse(p.get("time_bands").toString())));
+    prices.forEach(p->{p.put("time_bands",Support.parse(p.get("time_bands").toString()));p.put("billing_rules",Support.parse(p.get("billing_rules").toString()));});
     return prices;
   }
 
@@ -549,12 +551,12 @@ class ConsoleController {
     String filter=" FROM latest p WHERE p.available AND (?='' OR p.provider=?)"
         + " AND (?='' OR position(lower(?) in lower(p.provider||' '||p.model))>0)";
     var items=store.queries().queryForList(latest+"SELECT p.id,p.provider,p.model,p.input_rate,p.output_rate,"
-        + "p.cached_rate,p.cached_known,p.currency,p.effective_at,p.fetched_at,p.source,p.time_bands,"
+        + "p.cached_rate,p.cached_known,p.currency,p.effective_at,p.fetched_at,p.source,p.time_bands,p.billing_rules,"
         + "EXISTS(SELECT 1 FROM price_versions c WHERE c.project_id=? AND c.provider=p.provider"
         + " AND c.model=p.model AND c.effective_at<=now()) AS custom_override"
         + filter+" ORDER BY p.provider,p.model LIMIT ? OFFSET ?",
         project,provider,provider,q.trim(),q.trim(),size,page*size);
-    items.forEach(p->p.put("time_bands",Support.parse(p.get("time_bands").toString())));
+    items.forEach(p->{p.put("time_bands",Support.parse(p.get("time_bands").toString()));p.put("billing_rules",Support.parse(p.get("billing_rules").toString()));});
     long total=store.queries().queryForObject(latest+"SELECT count(*)"+filter,Long.class,
         provider,provider,q.trim(),q.trim());
     var providers=store.queries().queryForList(latest+"SELECT DISTINCT provider FROM latest WHERE available ORDER BY provider",String.class);
@@ -577,6 +579,7 @@ class ConsoleController {
       @PathVariable UUID project, @RequestBody JsonNode b, HttpServletRequest req) {
     var p = store.project(uid(req), project);
     String provider = Support.text(b, "provider", 64), model = Support.text(b, "model", 256);
+    Support.require(b.path("currency").asText("USD").equals("USD"),"INVALID_PRICE_CURRENCY");
     BigDecimal input = decimal(b, "inputRate"),
         output = decimal(b, "outputRate"),
         cached = decimal(b, "cachedRate");
@@ -586,14 +589,18 @@ class ConsoleController {
     } catch (Exception e) {
       throw new ApiError(400, "INVALID_TIMESTAMP");
     }
+    String rules;
+    try { rules=PricingRules.validate(b.path("billingRules")).toString(); }
+    catch(Exception ex) { throw new ApiError(400,"INVALID_PRICE_RULES"); }
     String bands;
     try { bands=ModelPricing.bands(b.path("timeBands")).toString(); }
     catch (Exception ex) { throw new ApiError(400,"INVALID_PRICE_TIME_BANDS"); }
+    Support.require(rules.equals("[]")||bands.equals("[]"),"INVALID_PRICE_RULES");
     UUID id = UUID.randomUUID();
     store.db.update(
         "INSERT INTO"
-            + " price_versions(id,project_id,provider,model,effective_at,input_rate,output_rate,cached_rate,time_bands)"
-            + " VALUES(?,?,?,?,?,?,?,?,?::jsonb)",
+            + " price_versions(id,project_id,provider,model,effective_at,input_rate,output_rate,cached_rate,time_bands,billing_rules)"
+            + " VALUES(?,?,?,?,?,?,?,?,?::jsonb,?::jsonb)",
         id,
         project,
         provider,
@@ -601,7 +608,7 @@ class ConsoleController {
         Timestamp.from(effective),
         input,
         output,
-        cached, bands);
+        cached, bands, rules);
     store.audit(uid(req), (UUID) p.get("workspace_id"), "price.create", id.toString(), true, req);
     return Map.of("id", id);
   }
