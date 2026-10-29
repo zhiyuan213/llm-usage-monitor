@@ -71,3 +71,7 @@ Observation filter/event IDs follow-up: full mvn -B -f backend/pom.xml verify pa
 - 移除套餐顶部静态说明与订阅状态区域，保留支付确认交互；调整列表列宽、评分说明及消息页面样式。
 - frontend test 24 files / 69 tests passed；production build passed；三项 generated-example synchronization passed；dependency audit 114 packages / 0 advisories；git diff --check passed。
 - 本批未完成浏览器视觉验收，以上不视为视觉验收。
+
+## 费用列留白与对象表头统一
+- 父子表费用右侧及相邻列左侧留白同步调整；Observation 表头统一为对象 ID。
+- frontend test 24 files / 69 tests passed；production build passed；三项示例同步 passed；依赖审计114 packages / 0 advisories；diff check passed。未完成浏览器视觉验收。

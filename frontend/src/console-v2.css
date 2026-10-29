@@ -1566,3 +1566,13 @@
 .ui-v2 .support-original { background: #fafbff; }
 @media(max-width:1000px) { .ui-v2 .support-layout { grid-template-columns: minmax(0,1fr); } .ui-v2 .support-intro { flex-wrap: wrap; } .ui-v2 .support-email { margin-left: 70px; } }
 @media(max-width:600px) { .ui-v2 .support-intro { padding: 16px; gap: 12px; } .ui-v2 .support-intro-copy { flex-basis: calc(100% - 70px); } .ui-v2 .support-email { margin-left: 0; width: 100%; box-sizing: border-box; } .ui-v2 .support-list, .ui-v2 .support-conversation { min-height: 300px; } }
+
+/* Keep a clear gutter between right-aligned costs and the next text column. */
+.ui-v2 .traces-table > thead > tr > th:nth-child(7),
+.ui-v2 .traces-table > tbody > tr > td:nth-child(7):not([colspan]),
+.ui-v2 .observation-table th:nth-child(7),
+.ui-v2 .observation-table td:nth-child(7) { padding-right: 24px; }
+.ui-v2 .traces-table > thead > tr > th:nth-child(8),
+.ui-v2 .traces-table > tbody > tr > td:nth-child(8):not([colspan]),
+.ui-v2 .observation-table th:nth-child(8),
+.ui-v2 .observation-table td:nth-child(8) { padding-left: 20px; }
