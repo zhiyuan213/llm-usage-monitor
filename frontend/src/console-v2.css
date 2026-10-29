@@ -1501,3 +1501,26 @@
 .ui-v2 .request-cost-tooltip { width: min(820px, calc(100vw - 56px)); max-height: min(560px, 65vh); }
 .ui-v2 .cost-formula-call { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
 .ui-v2 .request-cost-tooltip .cost-formula-call code { display: inline; }
+
+.ui-v2 .trace-title { background: linear-gradient(110deg,#fff 55%,#f4f6ff); border-top: 3px solid #7889eb; }
+.ui-v2 .trace-detail-metrics { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 14px; }
+.ui-v2 .trace-detail-metrics > article { position: relative; overflow: hidden; border-top: 2px solid var(--trace-accent,#7286e4); background: linear-gradient(135deg,#fff 55%,var(--trace-tint,#f4f6ff)); }
+.ui-v2 .trace-detail-metrics svg { position: absolute; right: 16px; top: 16px; color: var(--trace-accent,#7286e4); }
+.ui-v2 .trace-detail-metrics article > span { display: block; padding-right: 28px; color: #63728a; font-size: 12px; }
+.ui-v2 .trace-detail-metrics strong { color: #263953; font-size: 24px; font-variant-numeric: tabular-nums; }
+.ui-v2 .trace-detail-metrics small { display: block; color: #7a88a0; margin-top: 8px; }
+.ui-v2 .trace-metric-duration { --trace-accent:#c89532; --trace-tint:#fffbef; }
+.ui-v2 .trace-metric-tokens { --trace-accent:#8a6bdd; --trace-tint:#f6f2ff; }
+.ui-v2 .trace-metric-cost { --trace-accent:#4d9d8d; --trace-tint:#f0faf7; }
+.ui-v2 .trace-metric-score { --trace-accent:#d38d79; --trace-tint:#fff5f1; }
+.ui-v2 .trace-score-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.ui-v2 .trace-waterfall { overflow: hidden; }
+.ui-v2 .trace-waterfall > .panel-heading { background: #fafbff; }
+.ui-v2 .trace-waterfall .waterfall { padding-top: 20px; padding-bottom: 20px; row-gap: 10px; }
+.ui-v2 .trace-waterfall .waterfall-object-title b { font-size: 15px; color: #223650; }
+.ui-v2 .trace-waterfall .waterfall-details { border-left: 2px solid #e8edf8; padding-left: 14px; }
+.ui-v2 .trace-waterfall .waterfall-track { border-radius: 6px; overflow: hidden; background: #f1f4fb; }
+.ui-v2 .trace-waterfall .waterfall-track i { border-radius: 4px; }
+@media(max-width:1200px) { .ui-v2 .trace-detail-metrics { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media(max-width:700px) { .ui-v2 .trace-detail-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:440px) { .ui-v2 .trace-detail-metrics { grid-template-columns: 1fr; } }

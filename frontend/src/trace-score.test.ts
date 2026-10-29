@@ -1,0 +1,4 @@
+import {it,expect} from 'vitest';
+import {traceScores,latestTraceScore} from './trace-score';
+it('shows zero without inventing a saved score',()=>{const objects=[{type:'trace',object_id:'root'}];expect(latestTraceScore(objects)).toBe(0);expect(traceScores(objects)).toEqual([]);expect(objects).toHaveLength(1);});
+it('only shows scores targeted at this trace, newest first',()=>{const objects=[{type:'trace',object_id:'root'}, {type:'score',object_id:'old',started_at:'2026-10-28',data:{targetType:'trace',targetId:'root',value:2}}, {type:'score',object_id:'new',started_at:'2026-10-29',data:{targetType:'trace',targetId:'root',value:0}}, {type:'score',data:{targetType:'observation',targetId:'root',value:99}}, {type:'score',data:{targetType:'trace',targetId:'other',value:88}}];expect(traceScores(objects)).toHaveLength(2);expect(latestTraceScore(objects)).toBe(0);});

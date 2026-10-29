@@ -57,3 +57,8 @@ Observation filter/event IDs follow-up: full mvn -B -f backend/pom.xml verify pa
 
 ## 公式浮层尺寸调整
 - 扩大浮层，模型与Observation ID同行；23 files / 67 tests passed，build、三项示例同步、114 packages依赖审计0 advisories及diff检查通过。
+
+## 详情视觉及只读Trace评分
+- 五项指标卡、瀑布图分区及状态标签；只展示目标为当前Trace的Score，默认0不保存，多项按事件时间最新优先。
+- frontend test：24 files / 69 tests passed；build passed；三项示例同步检查 passed；依赖审计114 packages / 0 advisories；diff check passed。
+- 新增默认0、错误目标排除、最新真实0评分回归；未声称浏览器视觉验收通过。

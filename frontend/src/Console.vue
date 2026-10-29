@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useToastNotice } from "./toast";
+import {traceScores,latestTraceScore} from "./trace-score";
 import {traceColumnWidths} from "./trace-column-layout";
 import TraceObservationsRow from "./TraceObservationsRow.vue";
 import PublicModelPrices from "./PublicModelPrices.vue";
@@ -858,8 +859,8 @@ const usagePercent = computed(() =>
               >{{ traceObjects.length }} {{ traceObjects.length===1?t("object", "个对象"):t("objects", "个对象") }}</span
             >
           </div>
-          <div class="insight-metrics"><article class="panel"><span>{{t('Request duration','请求总耗时')}}</span><strong>{{n(traceSummary.duration)}} ms</strong></article><article class="panel"><span>{{t('Model calls','模型调用数')}}</span><strong>{{n(traceSummary.calls)}}</strong></article><article class="panel"><span>{{t('Known tokens','已知 Token')}}</span><strong>{{n(traceSummary.tokens)}}</strong></article><article class="panel"><span>{{t('Known estimated cost','已知估算费用')}}</span><strong>{{money(traceSummary.cost)}}</strong><small>{{traceSummary.priced}}/{{traceSummary.calls}} {{t('model calls priced','条模型调用已定价')}}</small></article></div>
-          <section class="panel">
+          <div class="insight-metrics trace-detail-metrics"><article class="panel trace-metric-duration"><Clock :size="20"/><span>{{t('Request duration','请求总耗时')}}</span><strong>{{n(traceSummary.duration)}} ms</strong></article><article class="panel trace-metric-calls"><GitBranch :size="20"/><span>{{t('Model calls','模型调用数')}}</span><strong>{{n(traceSummary.calls)}}</strong></article><article class="panel trace-metric-tokens"><Activity :size="20"/><span>{{t('Known tokens','已知 Token')}}</span><strong>{{n(traceSummary.tokens)}}</strong></article><article class="panel trace-metric-cost"><Coins :size="20"/><span>{{t('Known estimated cost','已知估算费用')}}</span><strong>{{money(traceSummary.cost)}}</strong><small>{{traceSummary.priced}}/{{traceSummary.calls}} {{t('model calls priced','条模型调用已定价')}}</small></article><article class="panel trace-metric-score"><MessageSquare :size="20"/><span>{{t('Trace score','Trace 评分')}}</span><strong>{{latestTraceScore(traceObjects)}}</strong><small>{{traceScores(traceObjects)[0]?.data.name||t('Not scored','未评分')}}</small></article></div><div v-if="traceScores(traceObjects).length>1" class="trace-score-list"><span v-for="score in traceScores(traceObjects)" :key="score.object_id" class="badge">{{score.data.name}}：{{score.data.value}}</span></div>
+          <section class="panel trace-waterfall">
             <div class="panel-heading">
               <h2>{{ t("Execution waterfall", "执行瀑布图") }}</h2>
               <span class="muted">ms · UTC</span>
@@ -898,8 +899,8 @@ const usagePercent = computed(() =>
               </div>
               <span v-if="o.type!=='score'">{{ n(o.data.durationMs) }} ms</span>
               <div class="waterfall-details">
-                <div class="waterfall-event-meta"><span>{{t('Event time','事件时间')}}: {{date(o.started_at)}}</span><span>{{t('Status','状态')}}: {{o.data.status||'—'}}</span></div>
-            <p v-if="o.data.observationType==='generation'">{{t('Known estimated cost','已知估算费用')}}: {{money(o.cost)}}</p>
+                <div class="waterfall-event-meta"><span>{{t('Event time','事件时间')}}: {{date(o.started_at)}}</span><span>{{t('Status','状态')}}: <span class="badge" :class="o.data.status==='success'?'success':o.data.status==='error'?'danger':''">{{o.data.status||'—'}}</span></span></div>
+            <p v-if="o.type==='score'" class="trace-score-value">{{o.data.name}}：{{o.data.value}}</p><p v-if="o.data.observationType==='generation'">{{t('Known estimated cost','已知估算费用')}}: {{money(o.cost)}}</p>
             <p v-if="o.data.observationType==='generation'" class="muted">{{t('Input / output / cached tokens','输入 / 输出 / 缓存 Token')}}: {{n(o.data.usage?.inputTokens)}} / {{n(o.data.usage?.outputTokens)}} / {{n(o.data.usage?.cachedInputTokens)}}</p>
             <p v-if="o.data.observationType==='generation' && o.cost==null" class="notice">{{costReason(o)}}</p>
 
