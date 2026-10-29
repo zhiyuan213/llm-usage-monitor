@@ -2,7 +2,7 @@
 import {computed,onBeforeUnmount,ref,watch} from 'vue';
 import {api,t,n,money,date,errorText} from './lib';
 import QueryControls from './QueryControls.vue';
-import {requestSummary,stepWidth} from './request-explorer';
+import {requestSummary,stepWidth,costFormula} from './request-explorer';
 import {traceObjectLabel} from './trace-object-label';
 const props=defineProps<{project:string;window:{from:string;to:string};refreshToken:boolean}>();
 const filter=ref('all'),page=ref(0),size=ref(10),total=ref(0),items=ref<any[]>([]),selected=ref<any>(null),objects=ref<any[]>([]);
@@ -12,6 +12,7 @@ onBeforeUnmount(()=>{alive=false;++listEpoch;++detailEpoch;});
 const query=computed(()=>new URLSearchParams({project:props.project,...props.window,observation:filter.value==='all'?'':filter.value,sort:'started_at',direction:'desc'}).toString());
 const summary=computed(()=>requestSummary(objects.value));
 const steps=computed(()=>objects.value.filter(o=>o.type==='observation'));
+const formulaCalls=computed(()=>objects.value.filter(o=>o.type==='observation'&&o.data.observationType==='generation'));
 const scores=computed(()=>objects.value.filter(o=>o.type==='score'));
 async function choose(row:any){
  const id=++detailEpoch;selected.value=row;objects.value=[];detailError.value='';detailBusy.value=true;
@@ -45,7 +46,8 @@ watch(()=>props.refreshToken,(value,old)=>{if(old&&!value)void load();});
  </section>
  <section class="panel request-detail" aria-live="polite"><template v-if="selected"><span class="badge">{{t('Request details','请求详情')}}</span><h2>{{selected.data.name||selected.object_id}}</h2><p v-if="detailBusy" role="status">{{t('Loading steps…','正在加载调用步骤…')}}</p><div v-else-if="detailError" role="alert">{{detailError}} <button class="btn" @click="choose(selected)">{{t('Retry','重试')}}</button></div><template v-else>
  <dl><div><dt>{{t('Request duration','请求总耗时')}}</dt><dd>{{n(selected.data.durationMs)}} ms</dd></div><div><dt>{{t('Input / output / cached tokens','输入 / 输出 / 缓存 Token')}}</dt><dd>{{n(summary.input)}} / {{n(summary.output)}} / {{n(summary.cached)}}</dd></div><div><dt>{{t('Known estimated cost','已知估算费用')}}</dt><dd>{{money(summary.cost)}}<small>{{summary.priced}}/{{summary.calls}} {{t('model calls priced','条模型调用已定价')}}</small></dd></div></dl>
- <h3>{{t('Where the time went','耗时分布')}}</h3><ol class="request-steps"><li v-for="step in steps" :key="step.object_id"><div><strong>{{traceObjectLabel(step)}}</strong><span>{{n(step.data.durationMs)}} ms</span></div><code class="waterfall-object-id">{{step.object_id}}</code><div class="request-step-track"><span :style="{width:stepWidth(step.data.durationMs,selected.data.durationMs)+'%'}"></span></div></li></ol><p v-if="!steps.length">{{t('No retained steps were reported for this request.','该请求暂无保留的调用步骤。')}}</p>
+ <section v-if="formulaCalls.length" class="request-cost-formula"><h3>{{t('Current cost calculation','当前结果计算公式')}}</h3><p>{{t('Rates are USD per million tokens; cached tokens are included in input and charged separately. Each call uses its recorded rates.','单价单位：美元/百万 Token；缓存包含在输入中，扣除后单独计费。每次调用使用当时记录的实际费率。')}}</p><ol><li v-for="call in formulaCalls" :key="call.object_id"><strong>{{traceObjectLabel(call)}}</strong><code>{{call.object_id}}</code><p>{{costFormula(call)||t('Unknown usage or price; excluded from known cost.','用量或价格未知，不计入已知费用。')}}</p></li></ol><p>{{t('Sum of known call costs','已知调用费用合计')}} = {{money(summary.cost)}}</p></section>
+ <h3>{{t('Where the time went' ,'耗时分布')}}</h3><ol class="request-steps"><li v-for="step in steps" :key="step.object_id"><div><strong>{{traceObjectLabel(step)}}</strong><span>{{n(step.data.durationMs)}} ms</span></div><code class="waterfall-object-id">{{step.object_id}}</code><div class="request-step-track"><span :style="{width:stepWidth(step.data.durationMs,selected.data.durationMs)+'%'}"></span></div></li></ol><p v-if="!steps.length">{{t('No retained steps were reported for this request.','该请求暂无保留的调用步骤。')}}</p>
  <div v-if="scores.length" class="request-scores"><h3>{{t('Scores','评分')}}</h3><p v-for="score in scores" :key="score.object_id">{{score.data.name}}: {{score.data.value}} <small>{{objects.find(o=>o.type===score.data.targetType&&o.object_id===score.data.targetId)?.data.name||score.data.targetId}}</small></p></div>
  <RouterLink class="request-full" :to="'/app/trace/'+selected.trace_id+'?project='+project">{{t('View full request','查看完整请求')}}</RouterLink></template></template><p v-else>{{t('Select a request to see its steps.','选择一条请求查看调用步骤。')}}</p></section>
 </div>

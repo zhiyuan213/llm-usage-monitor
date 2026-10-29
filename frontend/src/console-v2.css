@@ -1437,3 +1437,12 @@
 .ui-v2 .waterfall-object-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 5px; }
 .ui-v2 .traces-table .record-id code { white-space: normal; overflow-wrap: anywhere; }
 .ui-v2 .waterfall-event-meta { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+.ui-v2 .request-cost-formula { padding: 12px 0; border-bottom: 1px solid #edf0f7; font-size: 12px; overflow-wrap: anywhere; }
+.ui-v2 .request-cost-formula code { display: block; font-size: 11px; margin-top: 4px; }
+.ui-v2 .request-cost-formula ol { padding-left: 20px; }
+
+.ui-v2 .trace-expand { border: 0; background: transparent; color: #3156e8; cursor: pointer; padding: 6px; font-size: 18px; }
+.ui-v2 .trace-observations > td { padding: 16px 24px; background: #f5f7fb; }
+.ui-v2 .trace-observations code { white-space: normal; overflow-wrap: anywhere; }
+.ui-v2 .trace-observations table { min-width: 1000px; background: white; }

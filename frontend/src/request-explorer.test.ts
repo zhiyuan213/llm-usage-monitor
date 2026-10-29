@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {requestSummary,stepWidth,pageItems} from './request-explorer';
+import {requestSummary,stepWidth,pageItems,costFormula} from './request-explorer';
 describe('request explorer',()=>{
  it('groups model calls without counting trace or score twice',()=>{
  const result=requestSummary([{type:'trace',data:{}},{type:'score',data:{value:5}},{type:'observation',cost:0.2,data:{observationType:'generation',model:'a',usage:{inputTokens:10,outputTokens:4}}},{type:'observation',cost:null,data:{observationType:'generation',model:'b'}},{type:'observation',data:{observationType:'tool'}}]);
@@ -9,4 +9,11 @@ describe('request explorer',()=>{
  it('sums cached input separately without counting trace usage',()=>{const result=requestSummary([{type:'trace',data:{usage:{cachedInputTokens:999}}},...[0,5,7].map(cached=>({type:'observation',data:{observationType:'generation',usage:{cachedInputTokens:cached}}}))]);expect(result.cached).toBe(12);expect(requestSummary([{type:'observation',data:{observationType:'generation',usage:{cachedInputTokens:0}}}]).cached).toBe(0);});
  it('caps overlapping steps and preserves zero durations',()=>{expect(stepWidth(200,100)).toBe(100);expect(stepWidth(0,100)).toBe(0);expect(stepWidth(undefined,100)).toBe(0);});
  it('paginates the filtered collection without omissions',()=>{const rows=[1,2,3,4,5,6];expect(pageItems(rows,0,5)).toEqual([1,2,3,4,5]);expect(pageItems(rows,1,5)).toEqual([6]);expect(pageItems(rows.filter(n=>n%2===0),0,5)).toEqual([2,4,6]);});
+});
+
+it('explains cached input using recorded per-call rates and preserves unknowns',()=>{
+ const call={cost:'0.00545',input_rate:'2',output_rate:'8',cached_rate:'0.5',data:{usage:{inputTokens:1500,outputTokens:400,cachedInputTokens:500}}};
+ expect(costFormula(call)).toBe('((1500 − 500) × 2 + 400 × 8 + 500 × 0.5) ÷ 1,000,000 = US$0.00545');
+ expect(costFormula({...call,cost:null})).toBeNull();
+ expect(costFormula({...call,input_rate:null})).toBeNull();
 });

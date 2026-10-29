@@ -25,3 +25,12 @@ Observation filter/event IDs follow-up: full mvn -B -f backend/pom.xml verify pa
 - sync-doc-examples、sync-scenario-examples、write-sdk-id-guides --check：passed。
 - git diff --check：passed。
 - 本次为前端展示调整；浏览器本地预览连接失败，未将其记录为视觉验证通过。
+
+## 费用公式及 Trace 子记录展开
+- 前端展示改动，复用现有 traces API 的 event_id、费率和 Observation 数据；未修改后端或导出契约。
+- npm --prefix frontend test：22 files / 65 tests passed，新增缓存输入公式及未知价格回归。
+- npm --prefix frontend run build：passed（含 vue-tsc、Vite、11 public pages）。
+- 三项 generated examples --check：passed。
+- audit-locked-dependencies.py：114 packages，0 advisories。
+- git diff --check：passed。
+- 窄屏保持容器横向滚动，未声称完成浏览器视觉验收。

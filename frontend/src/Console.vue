@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useToastNotice } from "./toast";
+import TraceObservationsRow from "./TraceObservationsRow.vue";
 import PublicModelPrices from "./PublicModelPrices.vue";
 import ModelPricePolicy from "./ModelPricePolicy.vue";
 import RequestExplorer from "./RequestExplorer.vue";
@@ -82,6 +83,7 @@ function returnToRequests() {
  if(typeof previous==='string' && /^\/app\/(overview|traces)(?:[?#]|$)/.test(previous)) router.back();
  else void router.push('/app/traces?project='+encodeURIComponent(selected.value));
 }
+const expandedTraces = ref<Record<string,boolean>>({});
 const route = useRoute(),
   router = useRouter(),
   page = computed(() => String(route.params.page || "workspace"));
@@ -762,6 +764,7 @@ const usagePercent = computed(() =>
               <table class="traces-table">
                 <thead>
                   <tr>
+                    <th :aria-label="t('Expand observations','展开 Observation')"></th><th>eventId</th>
                     <th>{{ t("Object ID", "对象 ID") }}</th>
                     <th>{{ t("Name", "名称") }}</th>
                     <th><button type="button" class="sort-heading" @click="sortTraces('duration')">{{t("Duration", "耗时")}} {{traceSort==='duration'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th>
@@ -773,7 +776,9 @@ const usagePercent = computed(() =>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="o in data.items || []" :key="o.object_id">
+                  <template v-for="o in data.items || []" :key="selected+o.object_id"><tr>
+                    <td><button type="button" class="trace-expand" :aria-expanded="!!expandedTraces[selected+o.object_id]" :aria-label="t('Toggle observations','展开或收起 Observation')" @click="expandedTraces[selected+o.object_id]=!expandedTraces[selected+o.object_id]">{{expandedTraces[selected+o.object_id]?'▾':'▸'}}</button></td>
+                    <td data-label="eventId"><span class="record-id"><code>{{o.event_id||'—'}}</code><button v-if="o.event_id" type="button" class="copy-id" :aria-label="t('Copy event ID','复制事件 ID')" @click="copyRecordId(o.event_id)"><Copy :size="14" /></button></span></td>
                     <td :data-label="t('Object ID','对象 ID')"><span class="record-id"><code :title="o.object_id">{{o.object_id}}</code><button type="button" class="copy-id" :aria-label="t('Copy full ID','复制完整 ID')" @click="copyRecordId(o.object_id)"><Copy :size="14" /></button></span></td>
                     <td :data-label="t('Name','名称')">
                       <strong>{{ o.data.name || "—" }}</strong>
@@ -801,8 +806,9 @@ const usagePercent = computed(() =>
                       >
                     </td>
                   </tr>
+                  <TraceObservationsRow v-if="expandedTraces[selected+o.object_id]" :project="selected" :trace-id="o.trace_id" /></template>
                   <tr v-if="!data.items?.length">
-                    <td colspan="9" class="empty-cell">
+                    <td colspan="11" class="empty-cell">
                       {{
                         t(
                           "No traces match these filters.",
