@@ -82,3 +82,7 @@
 - Root cause: the remote deployment inherited umask 077. Git wrote newly changed Nginx configuration and public verification files with mode 0600. Docker COPY preserved the mode with root ownership, while runtime USER nginx could not read them. Existing local Nginx checks ran as root and did not reproduce this boundary.
 - Fix: COPY both Nginx configuration files with explicit 0644 permissions; normalize public output directories to 0755 and files to 0644 before switching to USER nginx. Do not weaken the runtime user or operator backup permissions.
 - Prevention: `scripts/check-web-image.py` creates a real build context with 0600 files / 0700 directories, builds the production Dockerfile, starts its default non-root user, checks nginx configuration and serves HTML, JS/CSS, font, verification, robots and sitemap files over HTTP. It also checks private-page noindex and retained CSP headers. The images CI job now requires this check before uploading artifacts.
+
+## 2026-10-29 local payment fixture timestamp precision
+- Full backend verification exposed `wrongPriceDeclineAndLatePaymentNeverGrantPack`: expected refund_required, observed failed. Sequential synthetic webhook events used wall-clock nanoseconds; PostgreSQL microsecond rounding could make a later event compare as non-newer and be ignored.
+- Fix test fixtures to use monotonically increasing, one-second-separated event times. Production event ordering and payment logic stay unchanged. Keep the full late-payment/refund assertions and full verify regression.

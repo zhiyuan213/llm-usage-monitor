@@ -75,3 +75,9 @@ Observation filter/event IDs follow-up: full mvn -B -f backend/pom.xml verify pa
 ## 费用列留白与对象表头统一
 - 父子表费用右侧及相邻列左侧留白同步调整；Observation 表头统一为对象 ID。
 - frontend test 24 files / 69 tests passed；production build passed；三项示例同步 passed；依赖审计114 packages / 0 advisories；diff check passed。未完成浏览器视觉验收。
+
+## 性能分析职责与默认口径
+- 导航和周报入口改为性能分析；默认 generation/model，完整范围按失败率或P95取前50组；Core默认阈值5秒，Pro保留自定义。移除重复请求表，保留调用记录跳转和错误聚合。
+- mvn -B -f backend/pom.xml verify：225 tests / 0 failures / 0 errors / 0 skipped / BUILD SUCCESS。新增5秒边界与排行回归。
+- frontend tests 24 files / 69 tests；生产构建、三项示例同步、114 packages依赖审计0 advisories通过。
+- 本地合成数据页面核对默认模型分组/5000ms、切换P95排行、调用记录入口；390px视口body375px，表格容器内滚动。未部署。

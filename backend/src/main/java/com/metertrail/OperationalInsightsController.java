@@ -16,7 +16,7 @@ class OperationalInsightsController {
   @GetMapping("/api/projects/{project}/insights/reliability")
   Map<String,Object> reliability(@PathVariable UUID project,@RequestParam(defaultValue="7") int days,
       @RequestParam(defaultValue="trace") String scope,@RequestParam(defaultValue="feature") String dimension,
-      @RequestParam(defaultValue="errors") String view,@RequestParam(defaultValue="3000") long slowMs,
+      @RequestParam(defaultValue="errors") String view,@RequestParam(defaultValue="5000") long slowMs,
       @RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="5") int size,HttpServletRequest req) {
     limits.check("operational-read:"+SessionFilter.uid(req),30);
     return reliability.analyze(SessionFilter.uid(req),project,days,scope,dimension,view,slowMs,page,size);

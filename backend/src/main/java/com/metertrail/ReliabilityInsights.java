@@ -18,7 +18,7 @@ class ReliabilityInsights {
       && Set.of("feature","model").contains(dimension) && Set.of("errors","slow").contains(view)
       && slowMs>=500 && slowMs<=600000,"INVALID_RELIABILITY_FILTER");
     InsightsController.pagination(page,size);
-    if(!"Pro".equals(workspace.get("plan")) && slowMs!=3000)throw new ApiError(403,"PRO_CUSTOM_RULES_REQUIRED");
+    if(!"Pro".equals(workspace.get("plan")) && slowMs!=5000)throw new ApiError(403,"PRO_CUSTOM_RULES_REQUIRED");
     Instant end=Instant.now(),start=end.minus(Duration.ofDays(days));
     String where=" FROM objects WHERE project_id=? AND started_at>=? AND started_at<? AND "+
       (scope.equals("trace")?"type='trace'":"type='observation' AND data->>'observationType'='generation'");
@@ -34,7 +34,7 @@ class ReliabilityInsights {
     summary.put("slow_rate",Insights.divide(summary.get("slow"),summary.get("timed")));
     summary.put("timing_coverage",Insights.divide(summary.get("timed"),summary.get("total")));
     String key=dimension.equals("model")?"jsonb_build_array(data->>'provider',data->>'model')::text":"data->>'feature'";
-    String order=view.equals("errors")?"errors DESC,total DESC":"slow DESC,p95_ms DESC NULLS LAST";
+    String order=view.equals("errors")?"(count(*) FILTER(WHERE data->>'status'='error'))::numeric / NULLIF(count(*),0) DESC NULLS LAST,errors DESC,total DESC":"p95_ms DESC NULLS LAST,slow DESC,total DESC";
     var groups=store.queries().queryForList("SELECT "+key+" AS label,count(*) AS total,count(*) FILTER(WHERE data->>'status'='error') AS errors,"
       +"count(*) FILTER(WHERE (data->>'durationMs')::numeric>=?) AS slow,"
       +"percentile_cont(0.95) WITHIN GROUP(ORDER BY (data->>'durationMs')::double precision) AS p95_ms"

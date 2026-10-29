@@ -17,6 +17,6 @@ defineProps<{report:any;project:string}>();
     <p v-if="report.comparison?.cost_change_pct!=null">{{ t('Known cost change from previous week','较上周已知费用变化') }}：{{ n(report.comparison.cost_change_pct) }}%</p>
     <p v-if="report.after.priced_generations<report.after.generations" class="notice">{{ t('Some model calls have unknown cost. The known subtotal is not the total cost.','部分模型调用费用未知，已知费用不代表完整总费用。') }}</p>
     <p class="muted">{{ t('Model costs are estimates, excluding MeterTrail subscription charges. Open the analysis pages for details.','模型费用为估算值，不含 MeterTrail 订阅费。详细分析请前往对应页面。') }}</p>
-    <div class="insight-toolbar"><RouterLink :to="`/app/cost-insights?project=${project}`">{{ t('Cost diagnosis →','查看费用诊断 →') }}</RouterLink><RouterLink :to="`/app/reliability?project=${project}`">{{ t('Failures and slow calls →','查看失败与慢调用 →') }}</RouterLink></div>
+    <div class="insight-toolbar"><RouterLink :to="`/app/cost-insights?project=${project}`">{{ t('Cost diagnosis →','查看费用诊断 →') }}</RouterLink><RouterLink :to="`/app/reliability?project=${project}`">{{ t('Performance analysis →','查看性能分析 →') }}</RouterLink></div>
   </section>
 </template>

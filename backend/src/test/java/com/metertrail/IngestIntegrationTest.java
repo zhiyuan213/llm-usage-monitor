@@ -51,9 +51,11 @@ class IngestIntegrationTest {
     var price=new HashMap<String,Object>();price.put("description",ChargeLedger.marker(id));price.put("billing_cycle",null);price.put("unit_price",Map.of("amount",cents,"currency_code","USD"));
     return new ObjectMapper().valueToTree(Map.of("id","txn_"+id,"status",status,"currency_code","USD","custom_data",Map.of("metertrail_charge",id),"items",List.of(Map.of("quantity",1,"price",price)),"details",Map.of("totals",Map.of("grand_total","800"))));
   }
+  Instant packEventTime=Instant.now().minusSeconds(60);
   void packEvent(UUID id,String status,String cents) {
+    packEventTime=packEventTime.plusSeconds(1);
     JsonNode data=packTransaction(id,status,cents);
-    JsonNode event=new ObjectMapper().valueToTree(Map.of("event_id",UUID.randomUUID(),"event_type","transaction.updated","occurred_at",Instant.now().toString(),"data",data));
+    JsonNode event=new ObjectMapper().valueToTree(Map.of("event_id",UUID.randomUUID(),"event_type","transaction.updated","occurred_at",packEventTime.toString(),"data",data));
     tx.executeWithoutResult(x->payments.applyEvent(event));
   }
   @Test void purchasedPackIsVerifiedOnceAndRefundCannotRegrantIt() {

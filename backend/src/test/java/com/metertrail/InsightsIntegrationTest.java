@@ -97,6 +97,7 @@ class InsightsIntegrationTest {
     for(int i=0;i<20;i++)object("trace",at,"{\"name\":\"request\",\"status\":\""+(i<5?"error":i==5?"cancelled":"success")+"\",\"feature\":\"support\",\"error\":\"upstream timeout <script>\""+(i<2?"":",\"durationMs\":"+(i<10?1000:5000))+"}","999");
     budgetCalls(at,1,"0.1");
     var data=getJson(url("reliability"));
+    assertEquals(5000,data.path("slow_ms").asInt());
     assertEquals(20,data.path("summary").path("total").asInt());assertEquals(5,data.path("summary").path("errors").asInt());
     assertEquals(1,data.path("summary").path("cancelled").asInt());assertEquals(18,data.path("summary").path("timed").asInt());
     assertEquals(10,data.path("summary").path("slow").asInt());assertEquals(0.25,data.path("summary").path("error_rate").asDouble());
@@ -105,15 +106,26 @@ class InsightsIntegrationTest {
     assertEquals("upstream timeout <script>",data.path("error_groups").get(0).path("message").asText());
     data=getJson(url("reliability?view=slow&page=1&size=5"));assertEquals(10,data.path("total").asInt());assertEquals(5,data.path("items").size());
     assertEquals(1,getJson(url("reliability?scope=generation&dimension=model")).path("summary").path("total").asInt());
-    mvc.perform(get(url("reliability?slowMs=5000")).cookie(cookie)).andExpect(status().isForbidden());
+    mvc.perform(get(url("reliability?slowMs=3000")).cookie(cookie)).andExpect(status().isForbidden());
     store.db.update("UPDATE workspaces SET plan='Pro' WHERE id=?",workspace);
-    assertEquals(10,getJson(url("reliability?slowMs=5000")).path("summary").path("slow").asInt());
+    assertEquals(10,getJson(url("reliability?slowMs=3000")).path("summary").path("slow").asInt());
     mvc.perform(get(url("reliability?scope=score")).cookie(cookie)).andExpect(status().isBadRequest());
     mvc.perform(get(url("reliability")).param("dimension","model' OR 1=1").cookie(cookie)).andExpect(status().isBadRequest());
     mvc.perform(get(url("reliability?page=-1")).cookie(cookie)).andExpect(status().isBadRequest());
     mvc.perform(get(url("reliability"))).andExpect(status().isUnauthorized());
     mvc.perform(get(url("reliability?slowMs=0")).cookie(cookie)).andExpect(status().isBadRequest());
     mvc.perform(get(url("reliability")).cookie(otherCookie)).andExpect(status().isNotFound());
+  }
+  @Test void performanceRanksByFailureRateAndLatencyWithFiveSecondDefault() throws Exception {
+    Instant at=Instant.now().minusSeconds(60);
+    for(int i=0;i<4;i++)object("trace",at,"{\"name\":\"request\",\"feature\":\"frequent\",\"status\":\""+(i<2?"error":"success")+"\",\"durationMs\":4999}","0");
+    object("trace",at,"{\"name\":\"request\",\"feature\":\"highest-rate\",\"status\":\"error\",\"durationMs\":5000}","0");
+    var data=getJson(url("reliability"));
+    assertEquals(1,data.path("summary").path("slow").asInt());
+    assertEquals("highest-rate",data.path("groups").get(0).path("label").asText());
+    data=getJson(url("reliability?view=slow"));
+    assertEquals("highest-rate",data.path("groups").get(0).path("label").asText());
+    assertEquals(5000,data.path("groups").get(0).path("p95_ms").asDouble());
   }
   @Test void budgetValidatesPlanPrecisionAndOptIn() throws Exception {
     assertFalse(getJson(url("budget")).path("configured").asBoolean());
