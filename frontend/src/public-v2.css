@@ -967,3 +967,11 @@ html[lang="zh-CN"] .public-v2 { --public-font: "MeterTrail Noto Sans SC", system
 .public-v2 .demo-call .demo-error { color:#b42318; }
 @media(max-width:1250px) { .public-v2 .demo-metrics { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media(max-width:700px) { .public-v2 .demo-metrics { grid-template-columns:minmax(0,1fr); } }
+
+.public-v2 .plans .plan-audience { color: #3156e8; font-weight: 600; min-height: 44px; margin: 12px 0 0; }
+.public-v2 .pricing-faq { max-width: 1280px; margin: 24px auto; padding: 24px; }
+.public-v2 .pricing-faq details { border-bottom: 1px solid var(--line); padding: 16px 0; }
+.public-v2 .pricing-faq summary { cursor: pointer; font-weight: 600; line-height: 1.6; }
+.public-v2 .pricing-faq details p { margin: 12px 0 0; line-height: 1.8; }
+.public-v2 .pricing-faq summary:focus-visible { outline: 2px solid #3156e8; outline-offset: 4px; }
+@media (max-width: 680px) { .public-v2 .plans .plan-audience { min-height: 0; } .public-v2 .pricing-faq { padding: 20px; } }

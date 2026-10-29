@@ -239,15 +239,15 @@ import LegalPolicy from './LegalPolicy.vue';
             }}
           </div>
           <h1>
-            {{ t("Track AI calls.", "看清 AI 调用，") }}<br /><span>{{
-              t("Understand the cost.", "掌握用量与成本。")
+            {{ t("Track AI calls and costs.", "看清 AI 调用与成本，") }}<br /><span>{{
+              t("No prompt content required.", "无需上传提示词。")
             }}</span>
           </h1>
           <p>
             {{
               t(
-                "See which requests are slow, where tokens are spent, and how model costs add up. Send data from your backend with Node.js, Python, Java or REST.",
-                "查看哪些请求慢、Token 花在哪里，以及模型费用如何产生。通过 Node.js、Python、Java 或 REST 从服务端接入。",
+                "Trace request steps, model latency and token costs. Report metadata asynchronously without sending prompt content to MeterTrail or routing model requests through a proxy.",
+                "追踪请求链路、模型耗时与 Token 费用。异步上报调用数据，无需向 MeterTrail 上传提示词正文，也无需通过 MeterTrail 转发模型请求。",
               )
             }}
           </p>
@@ -458,13 +458,14 @@ import LegalPolicy from './LegalPolicy.vue';
           :class="['panel', { featured: i === 1 }]"
         >
           <span v-if="i === 1" class="plan-tag">{{
-            t("FOR GROWING TEAMS", "适合成长团队")
+            t("RECOMMENDED", "推荐")
           }}</span>
           <h3>{{ plan }}</h3>
           <div class="price">
             ${{ [0, 29, 199][i] }}<small>/ {{ t("month", "月") }}</small>
           </div>
-          <PlanFeatures :index="i" />
+          <p class="plan-audience">{{ [t('For personal projects and trying an idea','适合个人项目与验证想法'),t('For growing teams','适合成长中的团队'),t('For high-volume apps and long-term tracking','适合高调用量与长期追踪的应用')][i] }}</p>
+          <PlanFeatures :index="i" compact-retention />
           <RouterLink
             :to="session ? '/app/billing' : '/register'"
             :class="['btn', i === 1 ? 'primary' : '']"
@@ -477,12 +478,12 @@ import LegalPolicy from './LegalPolicy.vue';
         <p>
           {{
             t(
-              "Core and Pro can opt into metered overage with an email-confirmed monthly cap. Free must upgrade or wait for a new month.",
-              "Core 和 Pro 可经邮箱验证开启超额计费并设置月度上限。Free 需升级或等待下个账期。",
+              "Ingestion stops at quota by default. Where supported by your payment integration, Core and Pro can opt into metered overage with an email-confirmed monthly cap. Check Billing for availability. Free must upgrade or wait for a new month.",
+              "默认额度用尽后停止接收。支付渠道支持时，Core 和 Pro 可经邮箱验证主动开启超额计费并设置月度上限，是否开放以控制台套餐与账单页为准。Free 需升级或等待下个账期。",
             )
           }}
         </p>
-        <table>
+        <div class="table-wrap"><table>
           <thead>
             <tr>
               <th>{{ t("Billable overage units", "超出套餐与加购额度的 units") }}</th>
@@ -504,17 +505,19 @@ import LegalPolicy from './LegalPolicy.vue';
               <td>{{ row[1] }}</td>
             </tr>
           </tbody>
-        </table>
+        </table></div>
         <p class="muted">
           {{
             t(
-              "Progressive rates, prorated to actual units. Core at 500,000 units = $29 + $32 = $61 before tax. Model provider costs are separate. Add-on packs are not yet available.",
-              "分段累进，按实际 units 比例计费。Core 使用 500,000 units 时为 $29 + $32 = $61（税前）。模型供应商费用单独核算。加量包暂未开放。",
+              "Progressive rates, prorated to actual units. For supported metered overage, Core at 500,000 units = $29 + $32 = $61 before tax. Model provider costs are separate. Add-on packs are not yet available.",
+              "分段累进，按实际 units 比例计费。支持超额计费时，Core 使用 500,000 units 时为 $29 + $32 = $61（税前）。模型供应商费用单独核算。加量包暂未开放。",
             )
           }}
         </p>
       </section>
       <section id="units" class="panel units-guide"><h2>{{t('How units work','units 如何计算')}}</h2><p>{{t('Each new Trace, Observation or Score uses one unit. These are example structures, not fixed limits on your requests. Model-provider charges are separate.','每新建一个 Trace、Observation 或 Score 使用 1 unit。下表是示例结构，不是每次请求的固定消耗；模型供应商费用另计。')}}</p><div class="table-wrap"><table><thead><tr><th>{{t('Example','示例')}}</th><th>{{t('Objects per request','每次新建对象')}}</th><th>{{t('Units per request','每次 units')}}</th><th>{{t('Requests within 50,000 units','50,000 units 可记录次数')}}</th></tr></thead><tbody><tr><td>{{t('One model call','一次模型调用')}}</td><td>1 Trace + 1 Observation</td><td>2</td><td>25,000</td></tr><tr><td>{{t('With a score','附加评分')}}</td><td>1 Trace + 1 Observation + 1 Score</td><td>3</td><td>16,666</td></tr><tr><td>{{t('Multiple steps and a score','多步骤及评分')}}</td><td>1 Trace + 2 Observations + 1 Score</td><td>4</td><td>12,500</td></tr></tbody></table></div><p>{{t('Updates and exact retries do not add units. Extra steps create extra objects. Units are not tokens.','更新和原样重试不增加 units；更多步骤会产生更多对象。units 不是 Token 数。')}}</p></section>
+      <section class="panel units-guide sizing-guide"><h2>{{t('Estimate your monthly units','估算每月需要多少 units')}}</h2><p>{{t('Count the objects you actually report: Traces + Observations + Scores. These examples include one Trace per request and no scores.','按实际上报的对象估算：Trace 数 + Observation 数 + Score 数。以下示例每次请求包含一个 Trace，不含评分。')}}</p><div class="table-wrap"><table><thead><tr><th>{{t('Scenario','场景')}}</th><th>{{t('Objects per request','每次上报对象')}}</th><th>{{t('Units per request','单次 units')}}</th><th>{{t('Units for 100,000 requests','10 万次请求所需 units')}}</th></tr></thead><tbody><tr><td>{{t('Single model Q&A','单次模型问答')}}</td><td>1 Trace + 1 Observation</td><td>2</td><td>200,000</td></tr><tr><td>{{t('Three model calls','三次模型调用')}}</td><td>1 Trace + 3 Observations</td><td>4</td><td>400,000</td></tr><tr><td>{{t('20 reported steps','20 个已上报步骤')}}</td><td>1 Trace + 20 Observations</td><td>21</td><td>2,100,000</td></tr></tbody></table></div><p class="muted">{{t('Each additional Score adds one unit. Only reported objects count; a conversation turn or tool action does not automatically equal one unit.','每新增一个 Score 再增加 1 unit。只计算已上报对象，不能直接把一轮对话或一次工具操作当作 1 unit。')}}</p></section>
+      <section class="panel pricing-faq"><h2>{{t('Plan and billing questions','套餐与计费常见问题')}}</h2><details><summary>{{t('What happens after cancellation or expiry?','取消订阅或到期后，数据如何保留？')}}</summary><p>{{t('Retention applies while subscribed. Cancellation returns the account to Free with Free quota. Previous paid data has a 30-day retention grace period; afterward Free retention applies. Expired unpaid subscriptions may pause ingestion. Deleted data cannot be recovered by renewing.','订阅有效期间按套餐期限保留数据。正式取消后恢复 Free，新增接入按 Free 额度执行；原付费数据保留30天宽限期，之后按 Free 规则保留。到期未续费可能暂停接入。续费无法恢复已删除数据。')}}</p></details><details><summary>{{t('Will exceeding quota automatically charge me?','额度用尽后会自动扣费吗？')}}</summary><p>{{t('Ingestion stops at quota by default. Metered overage requires explicit opt-in and a monthly cap, and is only available when supported by the current payment integration. Check Billing for availability and confirmation. Model provider charges are separate.','默认额度用尽后停止接收。超额计费需要主动开启并确认月度上限，且须当前支付渠道支持；以控制台套餐与账单页面的开放状态和确认为准。模型供应商费用另计。')}}</p></details><p class="muted"><RouterLink to="/terms">{{t('Read the full terms','查看完整条款')}}</RouterLink> · <RouterLink to="/refunds">{{t('Refund policy','退款政策')}}</RouterLink></p></section>
     </main>
     <main v-else-if="page === 'pay'" class="public-content checkout-page"><Checkout /></main>
     <main v-else-if="authPage" class="auth-layout">

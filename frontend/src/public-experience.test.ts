@@ -18,7 +18,8 @@ async function render(path:string){
 }
 it('keeps unit arithmetic on pricing and provides meaningful product navigation',async()=>{
  const home=await render('/');expect(home).not.toContain('12,500');expect(home).toContain('href="/#product"');expect(home).toContain('aria-controls="public-navigation"');expect(home).toContain('What counts as a unit?');
- const pricing=await render('/pricing');for(const value of ['25,000','16,666','12,500'])expect(pricing).toContain(value);
+ expect(home).toContain('without sending prompt content to MeterTrail');
+ const pricing=await render('/pricing');expect(pricing).toContain('2,100,000');expect(pricing).toContain('1 Trace + 20 Observations');expect(pricing).toContain('For high-volume apps and long-term tracking');expect(pricing).toContain('<details>');expect(pricing).not.toContain('Compliance —');for(const value of ['25,000','16,666','12,500'])expect(pricing).toContain(value);
 });
 it('quickstart works without repository scripts and links standalone guides',async()=>{
  const html=await render('/docs');expect(html).not.toContain('repository root');expect(html).not.toContain('scripts/send-example.mjs');

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Check } from "lucide-vue-next";
 import { t } from "./lib";
-defineProps<{ index: number }>();
+defineProps<{ index: number; compactRetention?: boolean }>();
 </script>
 <template>
   <p>
@@ -30,5 +30,5 @@ defineProps<{ index: number }>();
       }}
     </li>
   </ul>
-  <p v-if="index > 0" class="muted">{{ t("Retention applies while subscribed. Cancellation returns the account to Free with Free quota. Previous paid data has a 30-day retention grace period; afterward Free retention applies. Expired unpaid subscriptions may pause ingestion. Deleted data cannot be recovered by renewing.", "订阅有效期间按上述期限保留数据。正式取消后恢复 Free，新增接入按 Free 额度执行；原付费数据保留30天宽限期，之后按 Free 规则保留。到期未续费可能暂停接入。续费无法恢复已删除数据。") }}</p>
+  <p v-if="index > 0 && !compactRetention" class="muted">{{ t("Retention applies while subscribed. Cancellation returns the account to Free with Free quota. Previous paid data has a 30-day retention grace period; afterward Free retention applies. Expired unpaid subscriptions may pause ingestion. Deleted data cannot be recovered by renewing.", "订阅有效期间按上述期限保留数据。正式取消后恢复 Free，新增接入按 Free 额度执行；原付费数据保留30天宽限期，之后按 Free 规则保留。到期未续费可能暂停接入。续费无法恢复已删除数据。") }}</p>
 </template>
