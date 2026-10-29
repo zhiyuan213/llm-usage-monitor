@@ -1497,3 +1497,7 @@
  .ui-v2 .traces-table td { display: table-cell; }
  .ui-v2 .traces-table td::before { display: none; }
 }
+
+.ui-v2 .request-cost-tooltip { width: min(820px, calc(100vw - 56px)); max-height: min(560px, 65vh); }
+.ui-v2 .cost-formula-call { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.ui-v2 .request-cost-tooltip .cost-formula-call code { display: inline; }
