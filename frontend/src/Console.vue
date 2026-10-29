@@ -899,19 +899,7 @@ const usagePercent = computed(() =>
             <p v-if="o.data.observationType==='generation'" class="muted">{{t('Input / output / cached tokens','输入 / 输出 / 缓存 Token')}}: {{n(o.data.usage?.inputTokens)}} / {{n(o.data.usage?.outputTokens)}} / {{n(o.data.usage?.cachedInputTokens)}}</p>
             <p v-if="o.data.observationType==='generation' && o.cost==null" class="notice">{{costReason(o)}}</p>
             <p v-if="o.price_version" class="muted">{{t('Matched price version','命中价格版本')}}: {{o.price_version}} · {{t('Effective at','生效时间')}}: {{date(o.price_effective_at)}} · {{t('Input / output / cached USD per million tokens','输入 / 输出 / 缓存价格（美元/百万 Token）')}}: {{o.input_rate}} / {{o.output_rate}} / {{o.cached_rate}}</p>
-            <details><summary>{{t('Reported fields','查看上报字段')}}</summary><dl>
-              <template v-for="(value, key) in o.data" :key="key"
-                ><dt :title="String(key)">{{ fieldLabel(String(key)) }}</dt>
-                <dd>
-                  <code v-if="typeof value === 'object'">{{
-                    JSON.stringify(value)
-                  }}</code
-                  ><span v-else>{{ value ?? t("Unknown", "未知") }}</span>
-                </dd></template
-              >
-              <dt>{{ t("Estimated cost", "估算成本") }}</dt>
-              <dd>{{ o.type === "observation" ? money(o.cost) : "—" }}</dd>
-            </dl></details>
+
               </div>
             </div>
             <p v-if="!traceObjects.length" class="empty-cell">

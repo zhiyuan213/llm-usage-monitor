@@ -9,3 +9,5 @@
 - Overview fixture: cards show only request name, timestamp and status; 62px row height; page size 10. Request duration and usage appear in right detail.
 
 These are frontend checks; no backend or export contract changes. Exact commit CI remains a deployment gate.
+
+Follow-up: removed the overview Trace-level model row and duplicate reported-fields expander. Frontend: 63 tests and production build passed; locked dependency audit reported zero advisories; all three generated-example checks and git diff --check passed.
