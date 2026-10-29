@@ -109,6 +109,27 @@ class ConsoleMetricsIntegrationTest {
     mvc.perform(get("/api/projects/"+project+"/traces/"+trace).cookie(userCookie)).andExpect(status().isOk());
   }
 
+  @Test void twoModelCallsInOneTraceAreOneOverviewRequestAndOneListRow() throws Exception {
+    UUID project=UUID.randomUUID();
+    UUID workspace=store.db.queryForObject("SELECT id FROM workspaces WHERE owner_id=?",UUID.class,owner);
+    store.db.update("INSERT INTO projects(id,workspace_id,name) VALUES(?,?,'multi-model request')",project,workspace);
+    String trace=UUID.randomUUID().toString().replace("-","");
+    var start=java.time.Instant.now().minusSeconds(30);
+    // Trace metadata may repeat aggregate usage. It must not count as a model call.
+    store.db.update("INSERT INTO objects(project_id,type,object_id,trace_id,revision,started_at,data) VALUES(?,'trace','group-trace',?,1,?::timestamptz,?::jsonb)",project,trace,start.toString(),json.writeValueAsString(Map.of("name","One business request","status","success","durationMs",3000,"observationType","generation","usage",Map.of("inputTokens",28,"outputTokens",158,"cachedInputTokens",0))));
+    for(int i=0;i<2;i++)store.db.update("INSERT INTO objects(project_id,type,object_id,trace_id,revision,started_at,data,cost) VALUES(?,'observation',?,?,1,?::timestamptz,?::jsonb,0.0001)",project,"model-step-"+i,trace,start.plusSeconds(i).toString(),json.writeValueAsString(Map.of("name","Model step","model","model-"+i,"observationType","generation","status","success","durationMs",1000,"usage",Map.of("inputTokens",14,"outputTokens",79,"cachedInputTokens",0))));
+    mvc.perform(get("/api/projects/"+project+"/overview").cookie(userCookie))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.summary.traces").value(1))
+        .andExpect(jsonPath("$.summary.calls").value(2)).andExpect(jsonPath("$.summary.objects").value(3))
+        .andExpect(jsonPath("$.summary.tokens").value(186)).andExpect(jsonPath("$.summary.cost").value(0.0002))
+        .andExpect(jsonPath("$.summary.unknown_costs").value(0)).andExpect(jsonPath("$.summary.slow_requests").value(0));
+    mvc.perform(get("/api/reports/traces").cookie(userCookie).param("project",project.toString()))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1))
+        .andExpect(jsonPath("$.items[0].tokens").value(186)).andExpect(jsonPath("$.items[0].priced_calls").value(2));
+    mvc.perform(get("/api/projects/"+project+"/traces/"+trace).cookie(userCookie))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.objects.length()").value(3));
+  }
+
   @Test void overviewCountsTraceRequestsAndDeleteRequiresLiteralAndProof() throws Exception {
     UUID project=UUID.randomUUID();
     UUID workspace=store.db.queryForObject("SELECT id FROM workspaces WHERE owner_id=?",UUID.class,owner);

@@ -39,9 +39,10 @@ async function copy(text:string,id:string) { try { await navigator.clipboard.wri
       <button v-for="item in scenarios" :key="item.id" class="btn" :class="{primary:selected===item.id || (item.id==='score-trace' && selected==='score')}" :aria-pressed="selected===item.id || (item.id==='score-trace' && selected==='score')" @click="choose(item.id)">{{t(item.en,item.zh)}}</button>
     </div>
     <div v-if="selected.startsWith('score')" class="scenario-tabs" role="group" :aria-label="t('Feedback target','评分对象')">
-      <button class="btn" :class="{primary:selected==='score-trace'}" :aria-pressed="selected==='score-trace'" @click="choose('score-trace')">{{t('Whole request','评价整次请求')}}</button>
-      <button class="btn" :class="{primary:selected==='score'}" :aria-pressed="selected==='score'" @click="choose('score')">{{t('One model call','评价某次模型调用')}}</button>
+      <button class="btn" :class="{primary:selected==='score-trace'}" :aria-pressed="selected==='score-trace'" @click="choose('score-trace')">{{t('User feedback on the whole request','用户评价整次请求')}}</button>
+      <button class="btn" :class="{primary:selected==='score'}" :aria-pressed="selected==='score'" @click="choose('score')">{{t('Developer step evaluation (advanced)','开发者步骤评测（高级）')}}</button>
     </div>
+    <p v-if="selected.startsWith('score')">{{t('End-user ratings belong to the Trace: users rate the final answer or task result without knowing internal model calls. Observation scores are for developer evaluation of an individual step, not a model choice presented to end users.','终端用户评分关联 Trace，评价最终回答或任务结果，无需了解内部模型调用。Observation 评分用于开发者评测某个步骤，不要求终端用户选择内部模型。')}}</p>
     <p v-if="selected==='score-trace'"><code>targetType: trace → targetId: trace-{{traceId}}</code></p>
     <p v-if="selected==='score'"><code>targetType: observation → targetId: obs-{{traceId}}-1</code></p>
     <ScenarioFlow :selected="selected" />

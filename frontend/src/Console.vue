@@ -7,6 +7,7 @@ import {usePageSize} from "./page-size";
 import KeyQuickstart from "./KeyQuickstart.vue";
 import IngestionNotice from "./IngestionNotice.vue";
 import {readTraceView,traceViewKey} from "./trace-view-state";
+import {traceObjectLabel} from "./trace-object-label";
 import {inferWindowPolicy,refreshWindow,rollingWindow,type WindowPolicy} from "./date-range";
 import DateRangeFilter from "./DateRangeFilter.vue";
 import SupportMessages from "./SupportMessages.vue";
@@ -865,11 +866,12 @@ const usagePercent = computed(() =>
             >
               <span class="step-number">{{ Number(i) + 1 }}</span>
               <div>
-                <b>{{ o.data.name || o.data.model || o.object_id }}</b
+                <b>{{ traceObjectLabel(o) }}</b
                 ><small
                   >{{ objectLabel(o.type) }} ·
                   {{ o.data.observationType ? objectLabel(o.data.observationType) : o.data.status }}</small
                 >
+                <code class="waterfall-object-id">{{ o.object_id }}</code>
               </div>
               <div class="waterfall-track">
                 <i
@@ -909,7 +911,7 @@ const usagePercent = computed(() =>
             class="panel detail-card"
           >
             <div class="panel-heading">
-              <h2>{{ o.data.name || o.data.model || objectLabel(o.type) }}</h2>
+              <h2>{{ traceObjectLabel(o) }}</h2>
               <span class="badge">{{t('Revision','修订版本')}} {{ o.revision }}</span>
             </div>
             <p v-if="o.data.observationType==='generation'">{{t('Model','模型')}}: {{o.data.model||'—'}} · {{t('Known estimated cost','已知估算费用')}}: {{money(o.cost)}}</p>

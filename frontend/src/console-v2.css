@@ -1408,6 +1408,7 @@
 }
 .console-toast svg { flex-shrink: 0; color: #279c78; }
 .console-toast-error svg { color: #dc4c64; }
+.ui-v2 .waterfall-object-id { display: block; margin-top: 4px; font-size: 11px; color: #63728a; white-space: normal; overflow-wrap: anywhere; }
 
 .ui-v2 .custom-pricing-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
 .ui-v2[data-page="settings"] .custom-pricing-grid > .panel { min-width: 0; margin-bottom: 0; }

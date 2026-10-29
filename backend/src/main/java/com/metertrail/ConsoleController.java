@@ -264,12 +264,12 @@ class ConsoleController {
             .queryForMap(
                 "SELECT count(*) AS objects,count(*) FILTER(WHERE o.type='trace') AS"
                     + " traces,count(*) FILTER(WHERE o.type='trace' AND (o.data->>'durationMs')::numeric>=5000) AS slow_requests,"
-                    + "count(*) FILTER(WHERE o.type='trace' AND o.data->>'status'='error') AS failed_requests,count(*) FILTER(WHERE o.data->>'observationType'='generation') AS"
+                    + "count(*) FILTER(WHERE o.type='trace' AND o.data->>'status'='error') AS failed_requests,count(*) FILTER(WHERE o.type='observation' AND o.data->>'observationType'='generation') AS"
                     + " calls,count(*) FILTER(WHERE o.data->>'status'='error') AS"
-                    + " errors,sum(o.cost) AS cost,count(*) FILTER(WHERE"
-                    + " o.data->>'observationType'='generation' AND o.cost IS NULL) AS"
+                    + " errors,sum(o.cost) FILTER(WHERE o.type='observation' AND o.data->>'observationType'='generation') AS cost,count(*) FILTER(WHERE"
+                    + " o.type='observation' AND o.data->>'observationType'='generation' AND o.cost IS NULL) AS"
                     + " unknown_costs,sum((o.data->'usage'->>'inputTokens')::numeric+(o.data->'usage'->>'outputTokens')::numeric)"
-                    + " AS tokens,percentile_cont(0.95) WITHIN GROUP(ORDER BY"
+                    + " FILTER(WHERE o.type='observation' AND o.data->>'observationType'='generation') AS tokens,percentile_cont(0.95) WITHIN GROUP(ORDER BY"
                     + " (o.data->>'durationMs')::numeric) FILTER(WHERE o.type='trace') AS p95"
                     + q,
                 overviewArgs.toArray());

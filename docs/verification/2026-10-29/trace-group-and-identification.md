@@ -1,0 +1,17 @@
+# Trace grouping and model call identification
+
+- Desktop v4 groups N manually initiated model calls under one traceId. Submission contains one Trace plus N generation Observations; a completed group starts a new traceId. Retry retains the same finalized event body. Model observation names use the actual returned model. Trace duration spans first call start through last call completion, including inter-call waiting.
+- Waterfall generation rows prioritize actual model over a generic observation name. Full object IDs appear below each row with wrapping. Trace/non-model business names remain unchanged. Model detail card headings use the same label rule.
+- Frozen EXE integration passed with two model calls, exactly three events, one traceId, distinct observation span/object IDs, and a different traceId for the next manually flushed group. Configuration encryption/restart, invalid-key handling and clearing logs while retaining pending data also passed (`.local/model-tester-frozen-v4.json`).
+- Frontend Vitest 22 files / 63 tests pass; vue-tsc, Vite production build and 11 public-page generation pass. Official npm advisory check: 114 package names, zero advisories. All three generated example synchronization checks pass; git diff --check passes.
+- Local browser fixture: one Trace + two same-model observations render Model calls=2, Known tokens=186; generic reported names are superseded by deepseek-flash and distinct full IDs. Desktop screenshot `.local/trace-model-id-preview.png`. Requested 390px narrow viewport has no horizontal page overflow and IDs wrap; viewport reset afterward.
+- Read-only production check of the user's eight DeepSeek records confirmed their saved usage and version rates reproduce all stored costs. Exact sum USD 0.0014184; display differences are rounding.
+- Website changes are local, not pushed or deployed. Desktop distribution `.local/MeterTrailTester-Windows-v4.0.zip`.
+
+Follow-up review:
+- Production records counted as two requests have different traceIds. No historical records were rewritten or merged.
+- Found and fixed overview aggregates treating Trace metadata with observationType/usage as model usage. Overview calls, known model cost, unknown costs and Token aggregation now select only generation Observations, matching trace-list aggregation. Request/slow/error counts continue to select Trace objects.
+- Full `mvn -B -f backend/pom.xml verify` passed after this final backend change: 223 tests, zero failures/errors/skips; `.local/trace-group-backend-final.log`. New regression checks one root plus two steps gives one overview request, one list row, two priced calls, 186 tokens, 0.0002 cost and three detail objects, even if root metadata repeats usage.
+- Overview request detail step labels now use the same model-first label and full object ID as the detail waterfall. Frontend final build and 22 files / 63 tests passed, sync checks passed; dependency audit remains zero advisories with unchanged dependencies.
+- Public scoring guide clarifies end-user feedback belongs to Trace, default Score target remains Trace, and Observation scoring is labelled advanced developer step evaluation. Existing protocol support is retained for compatibility. Browser checked default Trace target and the explanation. No new API restriction or SDK change.
+- Missing-Trace behavior has not been changed: observations are retained and can contribute usage, but the request list still requires a Trace; no synthetic request state has been introduced in this patch.
