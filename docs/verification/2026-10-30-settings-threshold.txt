@@ -1,0 +1,8 @@
+Settings layout and millisecond threshold verification — 2026-10-30
+Backend: docker maven:3.9-eclipse-temurin-17 mvn -B -f backend/pom.xml verify — BUILD SUCCESS (3:29), migration V30 applied.
+Frontend: npm --prefix frontend test — 24 files, 73 tests passed.
+Frontend: npm --prefix frontend run build — passed, 11 public pages generated (existing chunk-size warning).
+Generated examples: sync-doc-examples.mjs --check, sync-scenario-examples.mjs --check, write-sdk-id-guides.mjs --check — all passed.
+Dependency audit: .local/audit-locked-dependencies.py — official registry, 114 locked packages, 0 advisories.
+Browser: desktop equal-height side-by-side cards; narrow 390px stacked cards, body width 375px without horizontal overflow; default input 2000.
+Not committed, pushed or deployed.

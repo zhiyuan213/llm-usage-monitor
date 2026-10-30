@@ -1604,3 +1604,15 @@
 .ui-v2 #project-keys, .ui-v2 #project-alerts { display: grid; gap: 16px; scroll-margin-top: 24px; }
 
 .ui-v2 .project-config-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
+
+/* Settings sections use one spacing system, without stacked panel margins. */
+.ui-v2 #project-alerts { margin-top: 24px; gap: 16px; }
+.ui-v2 #project-alerts > h2 { margin: 0; }
+.ui-v2 #project-alerts > .panel { margin: 0; }
+.ui-v2 #project-alerts .notifications-section > .panel-heading { padding: 0 0 12px; margin: 0; }
+.ui-v2 .project-settings-top-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-bottom: 20px; }
+.ui-v2 .project-settings-top-grid > .panel { min-width: 0; margin: 0; }
+.ui-v2 .project-threshold-panel form { display: flex; flex-direction: column; gap: 12px; }
+.ui-v2 .project-threshold-panel p { margin: 0; }
+.ui-v2 .project-threshold-panel button { align-self: flex-end; margin-top: auto; }
+@media (max-width: 900px) { .ui-v2 .project-settings-top-grid { grid-template-columns: 1fr; gap: 16px; } }

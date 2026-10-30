@@ -36,9 +36,10 @@ class WorkspaceController {
   @Transactional
   Map<String,Object> slowThreshold(@PathVariable UUID project,@RequestBody JsonNode body,HttpServletRequest req) {
     UUID user=SessionFilter.uid(req);var p=store.project(user,project);
-    JsonNode value=body.path("seconds");
-    Support.require(value.isIntegralNumber()&&value.canConvertToInt()&&value.asInt()>=1&&value.asInt()<=600,"INVALID_SLOW_THRESHOLD");
-    int ms=value.asInt()*1000;
+    boolean milliseconds=body.has("milliseconds");
+    JsonNode value=body.path(milliseconds?"milliseconds":"seconds");
+    Support.require(value.isIntegralNumber()&&value.canConvertToInt()&&value.asInt()>=1&&value.asInt()<=(milliseconds?600000:600),"INVALID_SLOW_THRESHOLD");
+    int ms=value.asInt()*(milliseconds?1:1000);
     store.db.update("UPDATE projects SET slow_call_threshold_ms=? WHERE id=?",ms,project);
     store.audit(user,(UUID)p.get("workspace_id"),"project.slow-threshold",project+":"+ms,true,req);
     return Map.of("slow_call_threshold_ms",ms);

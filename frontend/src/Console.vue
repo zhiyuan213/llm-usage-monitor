@@ -706,7 +706,7 @@ const usagePercent = computed(() =>
                 [
                   t('Slow calls', '慢调用数'),
                   n(overview.summary?.slow_requests),
-                  t('Observation · project threshold ≥ ', 'Observation · 项目阈值 ≥ ') + (Number(project?.slow_call_threshold_ms||10000)/1000) + t(' s',' 秒'),
+                  t('Observation · project threshold ≥ ', 'Observation · 项目阈值 ≥ ') + Number(project?.slow_call_threshold_ms??2000) + t(' ms',' 毫秒'),
                 ],
                 [
                   t('Failed calls', '失败调用数'),
