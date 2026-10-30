@@ -86,6 +86,7 @@ function returnToRequests() {
  if(typeof previous==='string' && /^\/app\/(overview|traces)(?:[?#]|$)/.test(previous)) router.back();
  else void router.push('/app/traces?project='+encodeURIComponent(selected.value));
 }
+const requestExplorer = ref<InstanceType<typeof RequestExplorer>|null>(null);
 const expandedTraces = ref<Record<string,boolean>>({});
 const route = useRoute(),
   router = useRouter(),
@@ -151,16 +152,17 @@ const projects = ref<any[]>([]),
 const reportPolicy=ref<WindowPolicy>({live:true,days:7});
 const reportWindow=ref(rollingWindow(7));
 const reportWindowQuery=computed(()=>new URLSearchParams(reportWindow.value).toString());
+const observationFilter=ref('');
 const traceSort=ref('started_at'),traceDirection=ref('desc'),costFilter=ref('all'),costReasonFilter=ref('');
 let restoreTrace=true;
 function restoreTraceView(){
  const key=traceViewKey(session.value?.id||'',selected.value),saved=readTraceView(sessionStorage,key);
- if(saved&&(saved.route===route.fullPath||Object.keys(route.query).every(k=>k==='project'))){search.value=saved.search;status.value=saved.status;costFilter.value=saved.cost;costReasonFilter.value=saved.reason;traceSort.value=saved.sort;traceDirection.value=saved.direction;tracePage.value=saved.page;reportSize.value=saved.size;reportWindow.value=saved.window;reportPolicy.value=saved.windowPolicy??inferWindowPolicy(saved.window);}
- else {search.value='';status.value='';costFilter.value=['unknown','known'].includes(String(route.query.cost))?String(route.query.cost):'all';costReasonFilter.value=['usage_missing','model_missing','pricing_evidence_missing','price_missing','price_unavailable','billing_rule_missing','billing_rule_ambiguous','cache_rate_missing','cache_write_rate_missing','currency_unsupported'].includes(String(route.query.costReason))?String(route.query.costReason):'';tracePage.value=0;if(typeof route.query.from==='string'&&typeof route.query.to==='string'&&Number.isFinite(Date.parse(route.query.from))&&Date.parse(route.query.from)<Date.parse(route.query.to)) {reportWindow.value={from:route.query.from,to:route.query.to};reportPolicy.value={live:false};}}
+ if(saved&&(saved.route===route.fullPath||Object.keys(route.query).every(k=>k==='project'))){observationFilter.value=saved.observation||'';search.value=saved.search;status.value=saved.status;costFilter.value=saved.cost;costReasonFilter.value=saved.reason;traceSort.value=saved.sort;traceDirection.value=saved.direction;tracePage.value=saved.page;reportSize.value=saved.size;reportWindow.value=saved.window;reportPolicy.value=saved.windowPolicy??inferWindowPolicy(saved.window);}
+ else {observationFilter.value=['slow','error'].includes(String(route.query.observation))?String(route.query.observation):'';search.value='';status.value='';costFilter.value=['unknown','known'].includes(String(route.query.cost))?String(route.query.cost):'all';costReasonFilter.value=['usage_missing','model_missing','pricing_evidence_missing','price_missing','price_unavailable','billing_rule_missing','billing_rule_ambiguous','cache_rate_missing','cache_write_rate_missing','currency_unsupported'].includes(String(route.query.costReason))?String(route.query.costReason):'';tracePage.value=0;if(typeof route.query.from==='string'&&typeof route.query.to==='string'&&Number.isFinite(Date.parse(route.query.from))&&Date.parse(route.query.from)<Date.parse(route.query.to)) {reportWindow.value={from:route.query.from,to:route.query.to};reportPolicy.value={live:false};}}
  if(costReasonFilter.value)costFilter.value='unknown';
  restoreTrace=false;
 }
-function saveTraceView(){try{sessionStorage.setItem(traceViewKey(session.value?.id||'',selected.value),JSON.stringify({search:search.value,status:status.value,cost:costFilter.value,reason:costReasonFilter.value,sort:traceSort.value,direction:traceDirection.value,page:tracePage.value,size:reportSize.value,window:reportWindow.value,windowPolicy:reportPolicy.value,route:route.fullPath}));}catch{}}
+function saveTraceView(){try{sessionStorage.setItem(traceViewKey(session.value?.id||'',selected.value),JSON.stringify({observation:observationFilter.value,search:search.value,status:status.value,cost:costFilter.value,reason:costReasonFilter.value,sort:traceSort.value,direction:traceDirection.value,page:tracePage.value,size:reportSize.value,window:reportWindow.value,windowPolicy:reportPolicy.value,route:route.fullPath}));}catch{}}
 
 function refreshPage(){if(page.value==='traces'||page.value==='overview'){reportWindow.value=refreshWindow(reportWindow.value,reportPolicy.value);tracePage.value=0;}return refresh();}
 async function copyRecordId(value:string){try{await navigator.clipboard.writeText(value);notice.value=t('ID copied.','ID 已复制。');}catch{error.value=t('Could not copy. Select the full ID from its tooltip or detail page.','复制失败，请从提示或详情页获取完整 ID。');}}
@@ -188,7 +190,7 @@ const reportExportUrl = computed(
       dimension: dimension.value,
       search: search.value,
       status: status.value,
-      ...reportWindow.value, sort:traceSort.value,direction:traceDirection.value,cost:costFilter.value,costReason:costReasonFilter.value,
+      ...reportWindow.value, sort:traceSort.value,direction:traceDirection.value,cost:costFilter.value,costReason:costReasonFilter.value,observation:observationFilter.value,
     }),
 );
 async function reportTurn(next: number) {
@@ -334,7 +336,7 @@ async function refresh(force = true) {
               status: status.value,
               page: String(tracePage.value),
               size: String(reportSize.value),
-              ...reportWindow.value,sort:traceSort.value,direction:traceDirection.value,cost:costFilter.value,costReason:costReasonFilter.value,
+              ...reportWindow.value,sort:traceSort.value,direction:traceDirection.value,cost:costFilter.value,costReason:costReasonFilter.value,observation:observationFilter.value,
             }),
         );
       } else if (page.value === "trace")
@@ -727,11 +729,11 @@ const usagePercent = computed(() =>
                   :size="24"
                 /></span>
               <div class="overview-stat-copy"><span>{{ v[0] }}</span>
-              <strong>{{ v[1] }}</strong
+              <strong><a v-if="i<3" href="#overview-requests" class="overview-metric-link" @click.prevent="requestExplorer?.setFilter(['all','slow','error'][i])">{{v[1]}}</a><template v-else>{{ v[1] }}</template></strong
               ><small>{{ v[2] }}</small><RouterLink v-if="i===4" :to="modelPricesLink">{{t('Review model rates','查看模型价格')}}</RouterLink></div>
             </article>
           </div>
-          <RequestExplorer :project="selected" :window="reportWindow" :refresh-token="loading" /></template>
+          <RequestExplorer ref="requestExplorer" :project="selected" :window="reportWindow" :refresh-token="loading" /></template>
         <template v-if="page === 'traces' && selected"
           ><DateRangeFilter class="trace-query-toolbar" :busy="loading" :value="reportWindow" @change="applyDates">
             <div class="trace-query-fields">
@@ -748,7 +750,7 @@ const usagePercent = computed(() =>
                 <option value="success">success</option>
                 <option value="error">error</option>
                 <option value="cancelled">cancelled</option></select
-              ><select v-model="costFilter" :aria-label="t('Cost completeness','费用完整性')" @change="costFilter!=='unknown'&&(costReasonFilter='')"><option value="all">{{t('All costs','全部费用状态')}}</option><option value="unknown">{{t('Has unknown cost','含未知费用')}}</option><option value="known">{{t('Fully priced model calls','模型调用全部已定价')}}</option></select><select v-if="costFilter==='unknown'" v-model="costReasonFilter" :aria-label="t('Unknown cost reason','未知费用原因')"><option value="">{{t('All reasons','全部原因')}}</option><option value="usage_missing">{{t('Usage missing','缺少用量')}}</option><option value="model_missing">{{t('Model or provider missing','缺少模型或供应商')}}</option><option v-for="reason in ['price_missing','price_unavailable','billing_rule_missing','billing_rule_ambiguous','cache_rate_missing','cache_write_rate_missing','currency_unsupported']" :value="reason">{{costReason({cost_reason:reason})}}</option><option value="pricing_evidence_missing">{{t('Pricing evidence missing','缺少计价证据')}}</option></select>
+              ><select v-model="costFilter" :aria-label="t('Cost completeness','费用完整性')" @change="costFilter!=='unknown'&&(costReasonFilter='')"><option value="all">{{t('All costs','全部费用状态')}}</option><option value="unknown">{{t('Has unknown cost','含未知费用')}}</option><option value="known">{{t('Fully priced model calls','模型调用全部已定价')}}</option></select><select v-model="observationFilter" :aria-label="t('Call filter','调用筛选')"><option value="">{{t('All calls','全部调用')}}</option><option value="slow">{{t('Slow calls (≥ 5 s)','慢调用（≥ 5 秒）')}}</option><option value="error">{{t('Failed calls','失败调用')}}</option></select><select v-if="costFilter==='unknown'" v-model="costReasonFilter" :aria-label="t('Unknown cost reason','未知费用原因')"><option value="">{{t('All reasons','全部原因')}}</option><option value="usage_missing">{{t('Usage missing','缺少用量')}}</option><option value="model_missing">{{t('Model or provider missing','缺少模型或供应商')}}</option><option v-for="reason in ['price_missing','price_unavailable','billing_rule_missing','billing_rule_ambiguous','cache_rate_missing','cache_write_rate_missing','currency_unsupported']" :value="reason">{{costReason({cost_reason:reason})}}</option><option value="pricing_evidence_missing">{{t('Pricing evidence missing','缺少计价证据')}}</option></select>
             </div>
             <template #actions>
               <div class="query-export trace-export">

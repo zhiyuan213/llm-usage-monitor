@@ -33,14 +33,15 @@ async function load(reset=false){
  finally{if(alive&&id===listEpoch)busy.value=false;}
 }
 function setFilter(value:string){filter.value=value;void load(true);}
+defineExpose({setFilter});
 function turn(value:number){page.value=value;void load();}
 watch(()=>[props.project,props.window.from,props.window.to],()=>void load(true),{immediate:true});
 watch(()=>props.refreshToken,(value,old)=>{if(old&&!value)void load();});
 </script>
 <template>
 <div class="request-explorer">
- <section class="panel request-list">
- <div class="request-filters"><button v-for="f in [{id:'all',en:'All',zh:'全部'},{id:'slow',en:'Slow calls (≥ 5 s)',zh:'慢调用（≥ 5 秒）'},{id:'error',en:'Failed calls',zh:'失败调用'}]" :key="f.id" class="btn" :class="{primary:filter===f.id}" :aria-pressed="filter===f.id" @click="setFilter(f.id)">{{t(f.en,f.zh)}}</button></div>
+ <section id="overview-requests" class="panel request-list">
+ <div class="request-filters"><button v-for="f in [{id:'all',en:'All',zh:'全部'},{id:'slow',en:'Slow calls (≥ 5 s)',zh:'慢调用（≥ 5 秒）'},{id:'error',en:'Failed calls',zh:'失败调用'}]" :key="f.id" class="btn" :class="{primary:filter===f.id}" :aria-pressed="filter===f.id" @click="setFilter(f.id)">{{t(f.en,f.zh)}}</button><RouterLink class="btn request-view-more" :to="{path:'/app/traces',query:{project:props.project,...props.window}}">{{t('View more','查看更多')}}</RouterLink></div>
  <p v-if="busy" role="status">{{t('Loading requests…','正在加载请求…')}}</p><div v-else-if="error" role="alert">{{error}} <button class="btn" @click="load()">{{t('Retry','重试')}}</button></div>
  <div v-else class="request-cards"><button v-for="row in items" :key="row.object_id" class="request-card" :class="{selected:selected?.object_id===row.object_id}" :aria-pressed="selected?.object_id===row.object_id" @click="choose(row)"><span><strong>{{row.data.name||row.object_id}}</strong><small>{{date(row.started_at)}}</small></span><span>{{row.data.status==='success'?t('Success','成功'):row.data.status==='error'?t('Failed','失败'):row.data.status||'—'}}</span></button><p v-if="!items.length" class="empty-cell">{{t('No requests in this range.','该时间范围内暂无请求。')}}</p></div>
  <QueryControls :page="page" :size="size" :total="total" :loading="busy" @change="turn" @resize="size=$event;load(true)" />

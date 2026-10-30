@@ -9,3 +9,4 @@
 - Observation score tests cover target type/ID isolation, latest result, reported zero/false and unreported default zero. Existing backend detail response already includes matching Score objects; no API/report export contract changed.
 - Exact-commit backend/frontend-sdk/security/images CI required before deployment.
 `nFollow-up: clear expanded Observation rows when page/project changes; repeat frontend tests (72 passed), build, generated checks and registry audit (114 packages, 0 advisories) passed.
+Overview metric links call the existing request filter; View more carries project/date range; trace Observation dropdown uses existing API observation filter for list and export. Analytics guidance moved above query controls into a scoped card. Repeated 72 frontend tests/build/example sync and official registry bulk audit passed.

@@ -1583,3 +1583,14 @@
 .ui-v2 .traces-table > thead > tr > th:nth-child(10), .ui-v2 .traces-table > tbody > tr > td:nth-child(10):not([colspan]) { text-align: center; font-variant-numeric: tabular-nums; }
 .ui-v2 .analytics-report .notification-rules { margin-bottom:16px; }
 .ui-v2 .analytics-report .notification-rules pre { max-width:100%; overflow-x:auto; padding:12px; background:#f5f7fb; border-radius:6px; }
+
+.ui-v2 .overview-metric-link { color:var(--primary, #3156e8); text-decoration:none; }
+.ui-v2 .overview-metric-link:hover { text-decoration:underline; }
+.ui-v2 .request-filters .request-view-more { margin-left:auto; }
+
+.ui-v2 .analytics-guidance { padding:16px 20px; margin:0 0 18px; background:#f0f5ff; border-color:#dce5fb; }
+.ui-v2 .analytics-guidance .analytics-grouping-note { margin:0 0 10px; line-height:1.7; }
+.ui-v2 .analytics-label-help summary { color:#3156e8; font-weight:600; cursor:pointer; }
+.ui-v2 .analytics-label-help p { line-height:1.7; margin:12px 0; }
+.ui-v2 .analytics-label-help pre { max-width:100%; overflow:auto; background:white; border:1px solid #dce5fb; border-radius:6px; padding:12px; }
+.ui-v2 .analytics-label-help p:last-child { margin-bottom:0; }
