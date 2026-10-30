@@ -5,3 +5,9 @@ export function traceScores(objects:any[]) {
   .sort((a,b)=>String(b.started_at||'').localeCompare(String(a.started_at||''))||String(a.object_id).localeCompare(String(b.object_id)));
 }
 export function latestTraceScore(objects:any[]) {const scores=traceScores(objects);return scores.length?scores[0].data.value:0;}
+
+export function observationScore(objects:any[],objectId:string) {
+ const scores=objects.filter(o=>o.type==='score'&&o.data?.targetType==='observation'&&o.data?.targetId===objectId)
+  .sort((a,b)=>String(b.started_at||'').localeCompare(String(a.started_at||''))||String(a.object_id).localeCompare(String(b.object_id)));
+ return {value:scores[0]?.data.value??0,reported:scores.length>0};
+}

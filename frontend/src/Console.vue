@@ -774,7 +774,7 @@ const usagePercent = computed(() =>
                     <th><button type="button" class="sort-heading" @click="sortTraces('tokens')">Token {{traceSort==='tokens'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th><th><button type="button" class="sort-heading" @click="sortTraces('estimated_cost')">{{t("Cost","费用")}} {{traceSort==='estimated_cost'?(traceDirection==='desc'?'↓':'↑'):'↕'}}</button></th>
                     <th>{{ t("User / Customer", "用户 / 客户") }}</th>
                     <th>{{ t("Status", "状态") }}</th>
-                    <th>{{t("★ Score","★打分")}}</th>
+                    <th>{{t("Score","打分")}}</th>
                     <th>{{ t("Started at (UTC)", "开始时间 (UTC)") }}</th>
                     <th>{{t("Actions","操作")}}</th>
                   </tr>
@@ -801,7 +801,7 @@ const usagePercent = computed(() =>
                         >{{ o.data.status }}</span
                       >
                     </td>
-                    <td :data-label="t('★ Score','★打分')" :title="o.score_reported?t('Latest Score reported for this Trace','关联当前 Trace 的最新 Score 评分'):t('No Score reported; displaying 0','未上报 Score，默认显示 0')">{{o.score??0}}</td>
+                    <td :data-label="t('Score','打分')" :title="o.score_reported?t('Latest Score reported for this Trace','关联当前 Trace 的最新 Score 评分'):t('No Score reported; displaying 0','未上报 Score，默认显示 0')">{{o.score??0}}</td>
                     <td :data-label="t('Started at (UTC)','开始时间（UTC）')">{{ date(o.started_at) }}</td>
                     <td :data-label="t('Actions','操作')">
                       <RouterLink
