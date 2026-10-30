@@ -1503,7 +1503,7 @@
 .ui-v2 .request-cost-tooltip .cost-formula-call code { display: inline; }
 
 .ui-v2 .trace-title { background: linear-gradient(110deg,#fff 55%,#f4f6ff); border-top: 3px solid #7889eb; }
-.ui-v2 .trace-detail-metrics { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 14px; }
+.ui-v2 .trace-detail-metrics { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
 .ui-v2 .trace-detail-metrics > article { position: relative; overflow: hidden; border-top: 2px solid var(--trace-accent,#7286e4); background: linear-gradient(135deg,#fff 55%,var(--trace-tint,#f4f6ff)); }
 .ui-v2 .trace-detail-metrics svg { position: absolute; right: 16px; top: 16px; color: var(--trace-accent,#7286e4); }
 .ui-v2 .trace-detail-metrics article > span { display: block; padding-right: 28px; color: #63728a; font-size: 12px; }
@@ -1594,3 +1594,6 @@
 .ui-v2 .analytics-label-help p { line-height:1.7; margin:12px 0; }
 .ui-v2 .analytics-label-help pre { max-width:100%; overflow:auto; background:white; border:1px solid #dce5fb; border-radius:6px; padding:12px; }
 .ui-v2 .analytics-label-help p:last-child { margin-bottom:0; }
+
+.ui-v2 .waterfall-id-line { display:block; overflow-wrap:anywhere; font:inherit; color:#63728a; margin-bottom:6px; }
+.ui-v2 .waterfall-result { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }

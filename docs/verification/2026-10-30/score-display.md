@@ -10,3 +10,4 @@
 - Exact-commit backend/frontend-sdk/security/images CI required before deployment.
 `nFollow-up: clear expanded Observation rows when page/project changes; repeat frontend tests (72 passed), build, generated checks and registry audit (114 packages, 0 advisories) passed.
 Overview metric links call the existing request filter; View more carries project/date range; trace Observation dropdown uses existing API observation filter for list and export. Analytics guidance moved above query controls into a scoped card. Repeated 72 frontend tests/build/example sync and official registry bulk audit passed.
+Waterfall follow-up: IDs moved below object name into detail typography; score metric removed, per-object scores shown alongside duration (Score rows use their own value). Repeated 72 tests, production build, generated synchronization and 114-package registry audit passed.
