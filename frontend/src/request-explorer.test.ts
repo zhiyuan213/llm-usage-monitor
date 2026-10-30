@@ -22,3 +22,5 @@ it('shows both cache write costs and does not add reasoning twice',()=>{
  expect(costFormula(call)).toBe('((1000 − 300 − 100 − 100) × 3 + 200 × 6 + 300 × 0.5 + 100 × 2.5 + 100 × 4) ÷ 1,000,000 = US$0.0035');
  expect(costFormula({...call,applied_rates:null})).toBeNull();
 });
+
+it("identifies manual corrections without inventing a rate formula",()=>{expect(costFormula({cost:"0.0123",applied_rates:{manual:true},data:{}})).toContain("0.0123");});

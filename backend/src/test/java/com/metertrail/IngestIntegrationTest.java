@@ -1872,6 +1872,34 @@ class IngestIntegrationTest {
     }
   }
 
+  @Test void manualCostsAreAtomicOwnedAuditedAndReflectedInReports() throws Exception {
+    String token=Support.token();
+    store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(token),user,"cost-edit");
+    var cookie=new jakarta.servlet.http.Cookie("mt_session",token);
+    var root=event("trace","cost-root",1);var a=event("observation","cost-a",1);var b=event("observation","cost-b",1);
+    ingest.accept(project,batch(root,a,b));new Worker(store,tx,mail,true,"test@test.local").process();
+    store.db.update("UPDATE objects SET cost=NULL WHERE project_id=?",project);
+    long units=store.db.queryForObject("SELECT used_units FROM workspaces WHERE id=?",Long.class,workspace);
+    String path="/api/projects/"+project+"/traces/0123456789abcdef0123456789abcdef/costs";
+    var mapper=new ObjectMapper();var body=mapper.createObjectNode();var changes=body.putArray("changes");
+    changes.addObject().put("objectId","cost-a").put("revision",1).putNull("expectedCost").put("cost",new java.math.BigDecimal("0.0123"));
+    changes.addObject().put("objectId","cost-b").put("revision",2).putNull("expectedCost").put("cost",0);
+    mvc.perform(post(path).cookie(cookie).contentType("application/json").content(body.toString())).andExpect(status().isForbidden());
+    mvc.perform(post(path).cookie(cookie).header("X-CSRF-Token","cost-edit").contentType("application/json").content(body.toString())).andExpect(status().isConflict());
+    assertNull(store.db.queryForObject("SELECT cost FROM objects WHERE project_id=? AND object_id='cost-a'",java.math.BigDecimal.class,project));
+    ((ObjectNode)changes.get(1)).put("revision",1);
+    mvc.perform(post(path).cookie(cookie).header("X-CSRF-Token","cost-edit").contentType("application/json").content(body.toString())).andExpect(status().isOk()).andExpect(jsonPath("$.updated").value(2));
+    mvc.perform(get("/api/reports/traces?project="+project).cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.items[0].estimated_cost").value(0.0123));
+    assertEquals(units,store.db.queryForObject("SELECT used_units FROM workspaces WHERE id=?",Long.class,workspace));
+    assertEquals(2,store.db.queryForObject("SELECT count(*) FROM audit_logs WHERE user_id=? AND action='observation.cost.correct'",Integer.class,user));
+    mvc.perform(post(path).cookie(cookie).header("X-CSRF-Token","cost-edit").contentType("application/json").content(body.toString())).andExpect(status().isConflict());
+    ((ObjectNode)changes.get(0)).put("cost",-1);
+    mvc.perform(post(path).cookie(cookie).header("X-CSRF-Token","cost-edit").contentType("application/json").content(body.toString())).andExpect(status().isBadRequest());
+    UUID foreign=UUID.randomUUID();store.db.update("INSERT INTO users(id,email) VALUES(?,?)",foreign,foreign+"@test.local");
+    String foreignToken=Support.token();store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(foreignToken),foreign,"cost-edit");
+    mvc.perform(post(path).cookie(new jakarta.servlet.http.Cookie("mt_session",foreignToken)).header("X-CSRF-Token","cost-edit").contentType("application/json").content(body.toString())).andExpect(status().isNotFound());
+  }
+
   ObjectNode event(String type, String object, int revision) {
     ObjectNode e = new ObjectMapper().createObjectNode();
     e.put("eventId", UUID.randomUUID().toString());

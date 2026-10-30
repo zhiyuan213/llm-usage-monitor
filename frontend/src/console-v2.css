@@ -1597,3 +1597,10 @@
 
 .ui-v2 .waterfall-id-line { display:block; overflow-wrap:anywhere; font:inherit; color:#63728a; margin-bottom:6px; }
 .ui-v2 .waterfall-result { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+
+.ui-v2 .cost-correction-input { width:100%; min-width:0; text-align:right; padding:6px; }
+.ui-v2 .trace-cost-actions { display:flex; flex-wrap:wrap; gap:8px; }
+
+.ui-v2 #project-keys, .ui-v2 #project-alerts { display: grid; gap: 16px; scroll-margin-top: 24px; }
+
+.ui-v2 .project-config-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px; }

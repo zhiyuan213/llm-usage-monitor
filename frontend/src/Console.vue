@@ -87,10 +87,16 @@ function returnToRequests() {
  else void router.push('/app/traces?project='+encodeURIComponent(selected.value));
 }
 const requestExplorer = ref<InstanceType<typeof RequestExplorer>|null>(null);
+const editingCosts=ref<Record<string,boolean>>({});
+const costEditors=ref<Record<string,any>>({});
 const expandedTraces = ref<Record<string,boolean>>({});
 const route = useRoute(),
   router = useRouter(),
-  page = computed(() => String(route.params.page || "workspace"));
+  page = computed(() => ["keys", "alerts"].includes(String(route.params.page)) ? "settings" : String(route.params.page || "workspace"));
+watch(() => route.params.page, (value) => {
+  if (value === "keys" || value === "alerts") void router.replace({path:"/app/settings",query:route.query,hash:value === "keys" ? "#project-keys" : "#project-alerts"});
+}, {immediate:true});
+const keysData=ref<any[]>([]),alertsData=ref<any>({});
 const nav = [
   ["workspace", "Project management", "项目管理", LayoutDashboard],
   ["overview", "Overview", "概览", Activity],
@@ -101,8 +107,6 @@ const nav = [
   ["weekly", "Weekly reports", "自动周报", ScrollText],
   ["budgets", "Budget reminders", "预算提醒", Bell],
   ["reliability", "Performance analysis", "性能分析", Activity],
-  ["keys", "API key management", "密钥管理", KeyRound],
-  ["alerts", "Alert configuration", "告警配置", Bell],
   ["billing", "Billing", "套餐与账单", CreditCard],
   ["settings", "Project settings", "项目设置", Settings],
   ["account", "Account security", "账号安全", ShieldCheck],
@@ -342,15 +346,13 @@ async function refresh(force = true) {
       } else if (page.value === "trace")
         data.value = await request(path("/traces/" + route.params.detail));
       else if (page.value === "analytics") data.value = {};
-      else if (page.value === "keys") data.value = await request(path("/keys"));
-      else if (page.value === "alerts")
-        data.value = await request(path("/alerts"));
       else if (page.value === "model-prices") {
         pricingStatus.value = await request(path("/pricing-status"));
         data.value = {};
       }
       else if (page.value === "settings") {
-        const [prices, pricing] = await Promise.all([request(path("/prices")),request(path("/pricing-status"))]);
+        const [prices, pricing, keys, alerts] = await Promise.all([request(path("/prices")),request(path("/pricing-status")),request(path("/keys")),request(path("/alerts"))]);
+        keysData.value=keys;alertsData.value=alerts;
         data.value = prices; pricingStatus.value = pricing;
       }
     }
@@ -369,7 +371,7 @@ onBeforeUnmount(() => {
   refreshId++;
 });
 onMounted(() => refresh(false));
-watch([page,selected], () => { expandedTraces.value = {}; });
+watch([page,selected], () => { expandedTraces.value = {}; editingCosts.value={}; });
 watch(
   () => route.fullPath,
   () => {
@@ -704,7 +706,7 @@ const usagePercent = computed(() =>
                 [
                   t('Slow calls', '慢调用数'),
                   n(overview.summary?.slow_requests),
-                  t('Observation · single call ≥ 5 seconds', 'Observation · 单次调用耗时 ≥5 秒'),
+                  t('Observation · project threshold ≥ ', 'Observation · 项目阈值 ≥ ') + (Number(project?.slow_call_threshold_ms||10000)/1000) + t(' s',' 秒'),
                 ],
                 [
                   t('Failed calls', '失败调用数'),
@@ -750,7 +752,7 @@ const usagePercent = computed(() =>
                 <option value="success">success</option>
                 <option value="error">error</option>
                 <option value="cancelled">cancelled</option></select
-              ><select v-model="costFilter" :aria-label="t('Cost completeness','费用完整性')" @change="costFilter!=='unknown'&&(costReasonFilter='')"><option value="all">{{t('All costs','全部费用状态')}}</option><option value="unknown">{{t('Has unknown cost','含未知费用')}}</option><option value="known">{{t('Fully priced model calls','模型调用全部已定价')}}</option></select><select v-if="costFilter==='unknown'" v-model="costReasonFilter" :aria-label="t('Unknown cost reason','未知费用原因')"><option value="">{{t('All reasons','全部原因')}}</option><option value="usage_missing">{{t('Usage missing','缺少用量')}}</option><option value="model_missing">{{t('Model or provider missing','缺少模型或供应商')}}</option><option v-for="reason in ['price_missing','price_unavailable','billing_rule_missing','billing_rule_ambiguous','cache_rate_missing','cache_write_rate_missing','currency_unsupported']" :value="reason">{{costReason({cost_reason:reason})}}</option><option value="pricing_evidence_missing">{{t('Pricing evidence missing','缺少计价证据')}}</option></select><select v-model="observationFilter" :aria-label="t('Call filter','调用筛选')"><option value="">{{t('All calls','全部调用')}}</option><option value="slow">{{t('Slow calls (≥ 5 s)','慢调用（≥ 5 秒）')}}</option><option value="error">{{t('Failed calls','失败调用')}}</option></select>
+              ><select v-model="costFilter" :aria-label="t('Cost completeness','费用完整性')" @change="costFilter!=='unknown'&&(costReasonFilter='')"><option value="all">{{t('All costs','全部费用状态')}}</option><option value="unknown">{{t('Has unknown cost','含未知费用')}}</option><option value="known">{{t('Fully priced model calls','模型调用全部已定价')}}</option></select><select v-if="costFilter==='unknown'" v-model="costReasonFilter" :aria-label="t('Unknown cost reason','未知费用原因')"><option value="">{{t('All reasons','全部原因')}}</option><option value="usage_missing">{{t('Usage missing','缺少用量')}}</option><option value="model_missing">{{t('Model or provider missing','缺少模型或供应商')}}</option><option v-for="reason in ['price_missing','price_unavailable','billing_rule_missing','billing_rule_ambiguous','cache_rate_missing','cache_write_rate_missing','currency_unsupported']" :value="reason">{{costReason({cost_reason:reason})}}</option><option value="pricing_evidence_missing">{{t('Pricing evidence missing','缺少计价证据')}}</option></select><select v-model="observationFilter" :aria-label="t('Call filter','调用筛选')"><option value="">{{t('All calls','全部调用')}}</option><option value="slow">{{t('Slow calls','慢调用')}}</option><option value="error">{{t('Failed calls','失败调用')}}</option></select>
             </div>
             <template #actions>
               <div class="query-export trace-export">
@@ -784,7 +786,7 @@ const usagePercent = computed(() =>
                 </thead>
                 <tbody>
                   <template v-for="o in data.items || []" :key="selected+o.object_id"><tr :class="{'trace-row-expanded':expandedTraces[selected+o.object_id]}">
-                    <td><button type="button" class="trace-expand" :aria-expanded="!!expandedTraces[selected+o.object_id]" :aria-label="t('Toggle observations','展开或收起 Observation')" @click="expandedTraces[selected+o.object_id]=!expandedTraces[selected+o.object_id]">{{expandedTraces[selected+o.object_id]?'▾':'▸'}}</button></td>
+                    <td><button type="button" class="trace-expand" :disabled="!!editingCosts[selected+o.object_id]" :aria-expanded="!!expandedTraces[selected+o.object_id]" :aria-label="t('Toggle observations','展开或收起 Observation')" @click="expandedTraces[selected+o.object_id]=!expandedTraces[selected+o.object_id]">{{expandedTraces[selected+o.object_id]?'▾':'▸'}}</button></td>
                     <td :data-label="t('Name','名称')">
                       <strong>{{ o.data.name || "—" }}</strong>
                     </td>
@@ -806,7 +808,7 @@ const usagePercent = computed(() =>
                     </td>
                     <td :data-label="t('Score','打分')" :title="o.score_reported?t('Latest Score reported for this Trace','关联当前 Trace 的最新 Score 评分'):t('No Score reported; displaying 0','未上报 Score，默认显示 0')">{{o.score??0}}</td>
                     <td :data-label="t('Started at (UTC)','开始时间（UTC）')">{{ date(o.started_at) }}</td>
-                    <td :data-label="t('Actions','操作')">
+                    <td :data-label="t('Actions','操作')"><span class="trace-cost-actions"><template v-if="editingCosts[selected+o.object_id]"><button class="btn" :disabled="costEditors[selected+o.object_id]?.saving" @click="costEditors[selected+o.object_id]?.save()">{{t('Save','保存')}}</button><button class="btn" :disabled="costEditors[selected+o.object_id]?.saving" @click="editingCosts[selected+o.object_id]=false">{{t('Cancel','取消')}}</button></template><button v-else class="btn" @click="expandedTraces[selected+o.object_id]=true;editingCosts[selected+o.object_id]=true">{{t('Edit','编辑')}}</button></span>
                       <RouterLink
                         class="btn"
                         :to="'/app/trace/' + o.trace_id + '?project='+selected"
@@ -814,7 +816,7 @@ const usagePercent = computed(() =>
                       >
                     </td>
                   </tr>
-                  <TraceObservationsRow v-if="expandedTraces[selected+o.object_id]" :project="selected" :trace-id="o.trace_id" /></template>
+                  <TraceObservationsRow :ref="(el:any)=>{if(el)costEditors[selected+o.object_id]=el}" :editing="!!editingCosts[selected+o.object_id]" @saved="editingCosts[selected+o.object_id]=false;refresh(false)" v-if="expandedTraces[selected+o.object_id]" :project="selected" :trace-id="o.trace_id" /></template>
                   <tr v-if="!data.items?.length">
                     <td colspan="11" class="empty-cell">
                       {{
@@ -927,257 +929,6 @@ const usagePercent = computed(() =>
         <AdminProjects v-if="page === 'admin-projects' && accountReady" :refresh-token="loading" />
         <AdminPayments v-if="page === 'admin-payments' && accountReady" :refresh-token="loading" />
         <AnalyticsReport v-if="page === 'analytics' && selected" :project="selected" :refresh-token="data" />
-        <template v-if="page === 'keys' && selected"
-          ><section class="panel integration-banner">
-            <CodeIcon />
-            <div>
-              <h2>{{ t("Connect your application", "接入你的应用") }}</h2>
-              <p>
-                {{
-                  t(
-                    "Project-scoped, write-only keys. Full keys appear once and are never stored in your browser.",
-                    "密钥仅限当前项目写入，完整值只展示一次，不保存到浏览器。",
-                  )
-                }}
-              </p>
-            </div>
-            <RouterLink class="btn" to="/docs"
-              >{{ t("Quickstart", "快速开始") }}<ArrowUpRight :size="15"
-            /></RouterLink>
-          </section>
-          <section v-if="createdKey" class="notice success">
-            <b>{{
-              t(
-                "Copy your key now. It will not be shown again.",
-                "请立即复制密钥，之后无法再次查看。",
-              )
-            }}</b>
-            <div class="key-reveal">
-              <code>{{ createdKey }}</code
-              ><button class="btn" @click="copyKey">
-                <component :is="copied ? Check : Copy" :size="16" /></button
-              ><button class="btn" @click="createdKey = ''">
-                {{ t("Dismiss", "关闭") }}
-              </button>
-            </div>
-            <KeyQuickstart :api-key="createdKey" />
-          </section>
-          <section v-if="Array.isArray(data) && !data.some((key:any)=>!key.revoked_at) && !createdKey" class="notice"><strong>{{t('Create an active key to connect your application','创建有效密钥以接入应用')}}</strong><p>{{t('Click Create key and enter a name in the dialog. After creation, copy your key and run the example to send your first request. Revoked keys cannot send data.','点击创建密钥，在弹窗中填写名称；创建后复制密钥，运行示例发送第一条数据。已撤销的密钥不能上报。')}}</p></section>
-          <section class="panel report-section keys-section">
-            <div class="panel-heading">
-              <h2>{{ t("API keys", "API 密钥") }}</h2>
-              <button class="btn primary" type="button" @click="createKey">
-                <Plus :size="16" />{{ t("Create key", "创建密钥") }}
-              </button>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{{ t("Name", "名称") }}</th>
-                    <th>{{ t("Prefix", "前缀") }}</th>
-                    <th>{{ t("Status", "状态") }}</th>
-                    <th>{{ t("Created", "创建时间") }}</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="k in Array.isArray(data) ? data : []" :key="k.id">
-                    <td>{{ k.name }}</td>
-                    <td>
-                      <code>{{ k.prefix }}…</code>
-                    </td>
-                    <td>
-                      <span :class="['badge', k.revoked_at ? '' : 'success']">{{
-                        k.revoked_at
-                          ? t("Revoked", "已撤销")
-                          : t("Active", "有效")
-                      }}</span>
-                    </td>
-                    <td>{{ date(k.created_at) }}</td>
-                    <td>
-                      <button
-                        v-if="!k.revoked_at"
-                        class="btn danger-text"
-                        @click="revoke(k.id, k.name)"
-                      >
-                        {{ t("Revoke", "撤销") }}
-                      </button>
-                      <button
-                        v-else
-                        class="btn danger-text"
-                        @click="removeEntry('keys', k.id)"
-                      >
-                        {{ t("Delete", "删除") }}
-                      </button>
-                    </td>
-                  </tr>
-                  <tr v-if="!data.length">
-                    <td colspan="5" class="empty-cell">
-                      {{
-                        t(
-                          "No keys yet. Create one to start sending events.",
-                          "暂无密钥，创建后即可上报事件。",
-                        )
-                      }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-          </section></template
-        >
-        <template v-if="page === 'alerts' && selected"
-          ><section class="panel form-panel">
-            <h2>{{ t("Create alert rule", "创建告警规则") }}</h2>
-            <p>{{t('Notifications are emailed to the workspace owner’s account email. Recipients and Webhook/Slack channels cannot currently be customized.','通知发送到工作空间所有者的账号邮箱，当前不支持自定义收件人或 Webhook/Slack 渠道。')}}</p>
-            <details class="notification-rules"><summary>{{t('Metrics and notification scope','指标口径与通知范围')}}</summary><p>{{t('Error count counts error objects in the last hour; latency compares the maximum matching object duration in milliseconds; cost sums positive known object costs in USD. Rules examine both Trace and Observation records, so request and step records may both match. This differs from Overview’s slow/failure counts, which count individual Observations only.','错误数量统计最近一小时状态为 error 的对象数；耗时按匹配对象的最大毫秒数比较；费用累加对象的已知正费用（USD）。规则同时检查 Trace 和 Observation，请求与步骤可能分别匹配；这与概览只统计单次 Observation 的慢调用、失败调用口径不同。')}}</p><p>{{t('For calendar-month model spending and forecast warnings, use Budget reminders. Neither feature charges your payment method or stops ingestion.','按自然月的模型费用与预测提醒请使用“预算提醒”。两种提醒都不会扣款或停止接入。')}} <RouterLink to="/app/budgets">{{t('Budget reminders','预算提醒')}}</RouterLink></p></details>
-            <p>
-              {{
-                t(
-                  "Checks the last hour every minute. Each object revision is notified once; new matches during the one-hour cooldown are merged.",
-                  "每分钟检查最近一小时数据。同一对象版本只通知一次；一小时冷却期间的新异常合并通知。",
-                )
-              }}
-            </p>
-            <form
-              class="alert-create-form"
-              @submit.prevent="
-                run(async () => {
-                  await api(path('/alerts'), alert);
-                  alert.name = '';
-                  await refresh();
-                })
-              "
-            >
-              <label
-                >{{ t("Rule name", "规则名称")
-                }}<input
-                  v-model="alert.name"
-                  :placeholder="t('Enter rule name', '请输入规则名称')"
-                  required
-                  maxlength="128" /></label
-              ><label
-                >{{ t("Metric", "指标")
-                }}<select v-model="alert.metric">
-                  <option value="error_count">
-                    {{ t("Error count", "错误数量") }}
-                  </option>
-                  <option value="cost_usd">
-                    {{ t("Known cost (USD)", "已知费用 (USD)") }}
-                  </option>
-                  <option value="latency_ms">
-                    {{ t("Maximum latency (ms)", "最大延迟 (ms)") }}
-                  </option>
-                </select></label
-              ><label
-                >{{ t("Threshold ≥", "阈值 ≥")
-                }}<input
-                  v-model="alert.threshold"
-                  type="number"
-                  min="0.000001"
-                  step="any"
-                  required /></label
-              ><button class="btn primary">
-                {{ t("Create rule", "创建规则") }}
-              </button>
-            </form>
-          </section>
-          <section class="panel table-wrap">
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{{ t("Rule", "规则") }}</th>
-                    <th>{{ t("Metric", "指标") }}</th>
-                    <th>{{ t("Threshold", "阈值") }}</th>
-                    <th>{{ t("Last triggered", "最近触发") }}</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="r in data.rules || []">
-                    <td>{{ r.name }}</td>
-                    <td>{{ r.metric }}</td>
-                    <td>{{ r.threshold }}</td>
-                    <td>{{ date(r.last_triggered_at) }}</td>
-                    <td class="table-actions">
-                      <button
-                        class="btn"
-                        @click="
-                          run(async () => {
-                            await api(path('/alerts/' + r.id), {
-                              enabled: !r.enabled,
-                            });
-                            await refresh();
-                          })
-                        "
-                      >
-                        {{
-                          r.enabled ? t("Disable", "停用") : t("Enable", "启用")
-                        }}
-                      </button>
-                      <button
-                        class="btn danger-text"
-                        @click="removeEntry('alerts', r.id)"
-                      >
-                        {{ t("Delete", "删除") }}
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p v-if="!data.rules?.length" class="empty-cell">
-              {{ t("No rules configured.", "尚未配置规则。") }}
-            </p>
-          </section>
-          <section class="panel report-section notifications-section">
-            <div class="panel-heading">
-              <h2>{{ t("Recent notifications", "最近告警") }}</h2>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{{ t("Rule", "规则") }}</th>
-                    <th>{{ t("Trigger value", "触发值") }}</th>
-                    <th>{{ t("New matching objects", "新增匹配对象数") }}</th>
-                    <th>
-                      {{ t("Event time range (UTC)", "事件时间范围 (UTC)") }}
-                    </th>
-                    <th>
-                      {{ t("Notification time (UTC)", "通知时间 (UTC)") }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="e in data.events || []">
-                    <td>{{ e.name }}</td>
-                    <td>{{ e.value }}</td>
-                    <td>{{ n(e.evidence_count) }}</td>
-                    <td>
-                      {{
-                        e.first_started_at
-                          ? date(e.first_started_at) +
-                            " — " +
-                            date(e.last_started_at)
-                          : "—"
-                      }}
-                    </td>
-                    <td>{{ date(e.created_at) }}</td>
-                  </tr>
-                  <tr v-if="!data.events?.length">
-                    <td colspan="5" class="empty-cell">
-                      {{ t("No alerts triggered.", "暂无触发记录。") }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section></template
-        >
         <template v-if="page === 'billing'">
           <BillingSubscription v-model:target-plan="changeTargetPlan" :data="data" :checkout-id="String(route.query.checkout || route.query.checkout_id || '')" @refresh="refresh(false)" />
           <div class="plans">
@@ -1285,6 +1036,105 @@ const usagePercent = computed(() =>
         </template>
         <template v-if="page === 'settings' && selected">
           <ProjectInfoEditor v-if="project" :project="project" @saved="refresh()" />
+<div id="project-keys"><section class="panel integration-banner">
+            <CodeIcon />
+            <div>
+              <h2>{{ t("Connect your application", "接入你的应用") }}</h2>
+              <p>
+                {{
+                  t(
+                    "Project-scoped, write-only keys. Full keys appear once and are never stored in your browser.",
+                    "密钥仅限当前项目写入，完整值只展示一次，不保存到浏览器。",
+                  )
+                }}
+              </p>
+            </div>
+            <RouterLink class="btn" to="/docs"
+              >{{ t("Quickstart", "快速开始") }}<ArrowUpRight :size="15"
+            /></RouterLink>
+          </section>
+          <section v-if="createdKey" class="notice success">
+            <b>{{
+              t(
+                "Copy your key now. It will not be shown again.",
+                "请立即复制密钥，之后无法再次查看。",
+              )
+            }}</b>
+            <div class="key-reveal">
+              <code>{{ createdKey }}</code
+              ><button class="btn" @click="copyKey">
+                <component :is="copied ? Check : Copy" :size="16" /></button
+              ><button class="btn" @click="createdKey = ''">
+                {{ t("Dismiss", "关闭") }}
+              </button>
+            </div>
+            <KeyQuickstart :api-key="createdKey" />
+          </section>
+          <section v-if="Array.isArray(keysData) && !keysData.some((key:any)=>!key.revoked_at) && !createdKey" class="notice"><strong>{{t('Create an active key to connect your application','创建有效密钥以接入应用')}}</strong><p>{{t('Click Create key and enter a name in the dialog. After creation, copy your key and run the example to send your first request. Revoked keys cannot send data.','点击创建密钥，在弹窗中填写名称；创建后复制密钥，运行示例发送第一条数据。已撤销的密钥不能上报。')}}</p></section>
+          <section class="panel report-section keys-section">
+            <div class="panel-heading">
+              <h2>{{ t("API keys", "API 密钥") }}</h2>
+              <button class="btn primary" type="button" @click="createKey">
+                <Plus :size="16" />{{ t("Create key", "创建密钥") }}
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{{ t("Name", "名称") }}</th>
+                    <th>{{ t("Prefix", "前缀") }}</th>
+                    <th>{{ t("Status", "状态") }}</th>
+                    <th>{{ t("Created", "创建时间") }}</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="k in Array.isArray(keysData) ? keysData : []" :key="k.id">
+                    <td>{{ k.name }}</td>
+                    <td>
+                      <code>{{ k.prefix }}…</code>
+                    </td>
+                    <td>
+                      <span :class="['badge', k.revoked_at ? '' : 'success']">{{
+                        k.revoked_at
+                          ? t("Revoked", "已撤销")
+                          : t("Active", "有效")
+                      }}</span>
+                    </td>
+                    <td>{{ date(k.created_at) }}</td>
+                    <td>
+                      <button
+                        v-if="!k.revoked_at"
+                        class="btn danger-text"
+                        @click="revoke(k.id, k.name)"
+                      >
+                        {{ t("Revoke", "撤销") }}
+                      </button>
+                      <button
+                        v-else
+                        class="btn danger-text"
+                        @click="removeEntry('keys', k.id)"
+                      >
+                        {{ t("Delete", "删除") }}
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="!keysData.length">
+                    <td colspan="5" class="empty-cell">
+                      {{
+                        t(
+                          "No keys yet. Create one to start sending events.",
+                          "暂无密钥，创建后即可上报事件。",
+                        )
+                      }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </section></div>
           <section class="panel form-panel">
             <h2>{{ t("Public model pricing", "公共模型价格") }}</h2>
             <RouterLink :to="modelPricesLink">{{t("View model prices", "查看模型价格")}}</RouterLink>
@@ -1413,7 +1263,154 @@ const usagePercent = computed(() =>
             </div>
           </section>
           </div>
-          </template
+<div id="project-alerts"><h2>{{t('Alert configuration','告警配置')}}</h2><section class="panel form-panel">
+            <h2>{{ t("Create alert rule", "创建告警规则") }}</h2>
+            <p>{{t('Notifications are emailed to the workspace owner’s account email. Recipients and Webhook/Slack channels cannot currently be customized.','通知发送到工作空间所有者的账号邮箱，当前不支持自定义收件人或 Webhook/Slack 渠道。')}}</p>
+            <details class="notification-rules"><summary>{{t('Metrics and notification scope','指标口径与通知范围')}}</summary><p>{{t('Error count counts error objects in the last hour; latency compares the maximum matching object duration in milliseconds; cost sums positive known object costs in USD. Rules examine both Trace and Observation records, so request and step records may both match. This differs from Overview’s slow/failure counts, which count individual Observations only.','错误数量统计最近一小时状态为 error 的对象数；耗时按匹配对象的最大毫秒数比较；费用累加对象的已知正费用（USD）。规则同时检查 Trace 和 Observation，请求与步骤可能分别匹配；这与概览只统计单次 Observation 的慢调用、失败调用口径不同。')}}</p><p>{{t('For calendar-month model spending and forecast warnings, use Budget reminders. Neither feature charges your payment method or stops ingestion.','按自然月的模型费用与预测提醒请使用“预算提醒”。两种提醒都不会扣款或停止接入。')}} <RouterLink to="/app/budgets">{{t('Budget reminders','预算提醒')}}</RouterLink></p></details>
+            <p>
+              {{
+                t(
+                  "Checks the last hour every minute. Each object revision is notified once; new matches during the one-hour cooldown are merged.",
+                  "每分钟检查最近一小时数据。同一对象版本只通知一次；一小时冷却期间的新异常合并通知。",
+                )
+              }}
+            </p>
+            <form
+              class="alert-create-form"
+              @submit.prevent="
+                run(async () => {
+                  await api(path('/alerts'), alert);
+                  alert.name = '';
+                  await refresh();
+                })
+              "
+            >
+              <label
+                >{{ t("Rule name", "规则名称")
+                }}<input
+                  v-model="alert.name"
+                  :placeholder="t('Enter rule name', '请输入规则名称')"
+                  required
+                  maxlength="128" /></label
+              ><label
+                >{{ t("Metric", "指标")
+                }}<select v-model="alert.metric">
+                  <option value="error_count">
+                    {{ t("Error count", "错误数量") }}
+                  </option>
+                  <option value="cost_usd">
+                    {{ t("Known cost (USD)", "已知费用 (USD)") }}
+                  </option>
+                  <option value="latency_ms">
+                    {{ t("Maximum latency (ms)", "最大延迟 (ms)") }}
+                  </option>
+                </select></label
+              ><label
+                >{{ t("Threshold ≥", "阈值 ≥")
+                }}<input
+                  v-model="alert.threshold"
+                  type="number"
+                  min="0.000001"
+                  step="any"
+                  required /></label
+              ><button class="btn primary">
+                {{ t("Create rule", "创建规则") }}
+              </button>
+            </form>
+          </section>
+          <section class="panel table-wrap">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{{ t("Rule", "规则") }}</th>
+                    <th>{{ t("Metric", "指标") }}</th>
+                    <th>{{ t("Threshold", "阈值") }}</th>
+                    <th>{{ t("Last triggered", "最近触发") }}</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in alertsData.rules || []">
+                    <td>{{ r.name }}</td>
+                    <td>{{ r.metric }}</td>
+                    <td>{{ r.threshold }}</td>
+                    <td>{{ date(r.last_triggered_at) }}</td>
+                    <td class="table-actions">
+                      <button
+                        class="btn"
+                        @click="
+                          run(async () => {
+                            await api(path('/alerts/' + r.id), {
+                              enabled: !r.enabled,
+                            });
+                            await refresh();
+                          })
+                        "
+                      >
+                        {{
+                          r.enabled ? t("Disable", "停用") : t("Enable", "启用")
+                        }}
+                      </button>
+                      <button
+                        class="btn danger-text"
+                        @click="removeEntry('alerts', r.id)"
+                      >
+                        {{ t("Delete", "删除") }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p v-if="!alertsData.rules?.length" class="empty-cell">
+              {{ t("No rules configured.", "尚未配置规则。") }}
+            </p>
+          </section>
+          <section class="panel report-section notifications-section">
+            <div class="panel-heading">
+              <h2>{{ t("Recent notifications", "最近告警") }}</h2>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{{ t("Rule", "规则") }}</th>
+                    <th>{{ t("Trigger value", "触发值") }}</th>
+                    <th>{{ t("New matching objects", "新增匹配对象数") }}</th>
+                    <th>
+                      {{ t("Event time range (UTC)", "事件时间范围 (UTC)") }}
+                    </th>
+                    <th>
+                      {{ t("Notification time (UTC)", "通知时间 (UTC)") }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="e in alertsData.events || []">
+                    <td>{{ e.name }}</td>
+                    <td>{{ e.value }}</td>
+                    <td>{{ n(e.evidence_count) }}</td>
+                    <td>
+                      {{
+                        e.first_started_at
+                          ? date(e.first_started_at) +
+                            " — " +
+                            date(e.last_started_at)
+                          : "—"
+                      }}
+                    </td>
+                    <td>{{ date(e.created_at) }}</td>
+                  </tr>
+                  <tr v-if="!alertsData.events?.length">
+                    <td colspan="5" class="empty-cell">
+                      {{ t("No alerts triggered.", "暂无触发记录。") }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section></div>          </template
         >
         <template v-if="page === 'account'"
           ><section class="panel form-panel">

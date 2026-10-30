@@ -8,6 +8,7 @@ export function stepWidth(duration:unknown,total:unknown){return typeof duration
 export function pageItems<T>(items:T[],page:number,size:number){return items.slice(page*size,(page+1)*size);}
 
 export function costFormula(o:any):string|null {
+ if(o.applied_rates?.manual)return `Manually corrected / 人工修正 = US$${o.cost}`;
  const u=o.data?.usage;
  const values=[u?.inputTokens,u?.outputTokens,u?.cachedInputTokens,o.input_rate,o.output_rate,o.cached_rate];
  if(o.cost==null||values.some(v=>v==null||!Number.isFinite(Number(v))))return null;

@@ -265,7 +265,7 @@ class ConsoleController {
             .queries()
             .queryForMap(
                 "SELECT count(*) AS objects,count(*) FILTER(WHERE o.type='trace') AS"
-                    + " traces,count(*) FILTER(WHERE o.type='observation' AND (o.data->>'durationMs')::numeric>=5000) AS slow_requests,"
+                    + " traces,count(*) FILTER(WHERE o.type='observation' AND (o.data->>'durationMs')::numeric>=p.slow_call_threshold_ms) AS slow_requests,"
                     + "count(*) FILTER(WHERE o.type='observation' AND o.data->>'status'='error') AS failed_requests,count(*) FILTER(WHERE o.type='observation' AND o.data->>'observationType'='generation') AS"
                     + " calls,count(*) FILTER(WHERE o.data->>'status'='error') AS"
                     + " errors,sum(o.cost) FILTER(WHERE o.type='observation' AND o.data->>'observationType'='generation') AS cost,count(*) FILTER(WHERE"
@@ -390,6 +390,41 @@ class ConsoleController {
                     uid(req),
                     trace,
                     trace)));
+  }
+
+  @PostMapping("/api/projects/{project}/traces/{trace}/costs")
+  @Transactional
+  Map<String,Object> correctCosts(@PathVariable UUID project,@PathVariable String trace,
+      @RequestBody JsonNode body,HttpServletRequest req) {
+    UUID user=uid(req);var p=store.project(user,project);
+    Support.require(trace.matches("[0-9a-fA-F]{32}"),"INVALID_TRACE_ID");
+    JsonNode changes=body.path("changes");
+    Support.require(changes.isArray()&&changes.size()>0&&changes.size()<=1000,"INVALID_COST_CORRECTION");
+    var ordered=new TreeMap<String,JsonNode>();
+    for(JsonNode change:changes) {
+      String id=change.path("objectId").asText("");
+      Support.require(!id.isBlank()&&id.length()<=128&&ordered.putIfAbsent(id,change)==null,"INVALID_COST_CORRECTION");
+      Support.require(change.path("revision").isIntegralNumber()&&change.path("revision").canConvertToLong()&&change.path("revision").asLong()>0&&change.has("expectedCost")&&(change.get("expectedCost").isNull()||change.get("expectedCost").isNumber()),"INVALID_COST_CORRECTION");
+      Support.require(change.path("cost").isNumber(),"INVALID_COST_CORRECTION");
+      BigDecimal amount=change.get("cost").decimalValue();
+      Support.require(amount.signum()>=0&&amount.scale()<=12&&amount.precision()-amount.scale()<=24,"INVALID_COST_CORRECTION");
+    }
+    int updated=0;
+    for(var entry:ordered.entrySet()) {
+      JsonNode change=entry.getValue();
+      var rows=store.db.queryForList("SELECT o.* FROM objects o JOIN projects p ON p.id=o.project_id JOIN workspaces w ON w.id=p.workspace_id WHERE o.project_id=? AND o.trace_id=? AND o.type='observation' AND o.object_id=? AND o.started_at>workspace_retention_cutoff(w) FOR UPDATE OF o",project,trace,entry.getKey());
+      if(rows.isEmpty())throw new ApiError(404,"OBJECT_NOT_FOUND");
+      var row=rows.get(0);BigDecimal before=(BigDecimal)row.get("cost");
+      BigDecimal expected=change.get("expectedCost").isNull()?null:change.get("expectedCost").decimalValue();
+      if(((Number)row.get("revision")).longValue()!=change.get("revision").asLong()||(before==null?expected!=null:expected==null||before.compareTo(expected)!=0))throw new ApiError(409,"COST_CHANGED");
+      BigDecimal amount=change.get("cost").decimalValue();
+      if(before!=null&&before.compareTo(amount)==0)continue;
+      var evidence=new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode();evidence.put("manual",true);evidence.put("source","console");evidence.put("correctedAt",Instant.now().toString());evidence.put("correctedBy",user.toString());
+      store.db.update("UPDATE objects SET cost=?,applied_rates=?::jsonb,price_version=NULL WHERE project_id=? AND type='observation' AND object_id=?",amount,evidence.toString(),project,entry.getKey());
+      var audit=evidence.deepCopy();audit.put("objectId",entry.getKey());audit.put("revision",change.get("revision").asLong());audit.put("beforeCost",before);audit.put("afterCost",amount);audit.put("beforeRates",Objects.toString(row.get("applied_rates"),"null"));
+      store.audit(user,(UUID)p.get("workspace_id"),"observation.cost.correct",audit.toString(),true,req);updated++;
+    }
+    return Map.of("updated",updated);
   }
 
   @GetMapping("/api/projects/{project}/objects")

@@ -141,6 +141,9 @@ const errors: Record<string, [string, string]> = {
     "This email cannot be registered. Try signing in or resetting your password.",
     "此邮箱无法注册，请尝试登录或找回密码。",
   ],
+  COST_CHANGED: ["The cost or revision changed. Cancel editing and reload before trying again.", "费用或版本已变更，请取消编辑并刷新后重试。"],
+  INVALID_SLOW_THRESHOLD: ["Enter a threshold between 1 and 600 seconds.", "慢调用阈值需为1至600之间的整数秒数。"],
+  INVALID_COST_CORRECTION: ["Enter a nonnegative USD cost with at most 12 decimal places.", "请输入非负美元费用，最多 12 位小数。"],
   CONFLICT: [
     "This record already exists or conflicts with another record.",
     "记录已存在或与现有记录冲突。",
