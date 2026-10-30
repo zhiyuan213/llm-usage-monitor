@@ -3,6 +3,7 @@ import { useToastNotice } from "./toast";
 import {traceScores,latestTraceScore,observationScore} from "./trace-score";
 import {traceColumnWidths} from "./trace-column-layout";
 import TraceObservationsRow from "./TraceObservationsRow.vue";
+import ExportTypeSelect from "./ExportTypeSelect.vue";
 import PublicModelPrices from "./PublicModelPrices.vue";
 import BillingPriceRules from "./BillingPriceRules.vue";
 import ModelPricePolicy from "./ModelPricePolicy.vue";
@@ -769,7 +770,7 @@ const usagePercent = computed(() =>
             </div>
             <template #actions>
               <div class="query-export trace-export">
-                <label v-for="type in ['trace','observation']" :key="type" class="export-type-option"><input v-model="exportTypes" type="checkbox" :value="type" :disabled="exportTypes.length===1 && exportTypes.includes(type)" />{{type==='trace'?'Trace':'Observation'}}</label>
+                <ExportTypeSelect v-model="exportTypes" :label="t('Export types','导出类型')" />
                 <a
                   class="btn"
                   :href="reportExportUrl + '&format=xlsx&lang=' + language"

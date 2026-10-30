@@ -20,7 +20,7 @@ class CreemPayments {
   final String key, secret, core, pro, url, publicUrl;
   final boolean checkoutEnabled;
 
-  CreemPayments(Store store, TransactionTemplate tx,
+  CreemPayments(Store store, TransactionTemplate tx, org.springframework.core.env.Environment environment,
       @Value("${metertrail.creem-api-key:}") String key,
       @Value("${metertrail.creem-secret:}") String secret,
       @Value("${metertrail.creem-core-product:}") String core,
@@ -28,8 +28,9 @@ class CreemPayments {
       @Value("${metertrail.creem-url:https://api.creem.io}") String url,
       @Value("${metertrail.public-url}") String publicUrl,
       @Value("${metertrail.creem-checkout-enabled:false}") boolean checkoutEnabled) {
-    this.store=store;this.tx=tx;this.key=key;this.secret=secret;this.core=core;this.pro=pro;
-    this.url=url.replaceAll("/+$","");this.publicUrl=publicUrl.replaceAll("/+$","");
+    var config=CreemEnvironment.select(environment,new CreemEnvironment(key,secret,core,pro,url));
+    this.store=store;this.tx=tx;this.key=config.key();this.secret=config.secret();this.core=config.core();this.pro=config.pro();
+    this.url=config.url().replaceAll("/+$","");this.publicUrl=publicUrl.replaceAll("/+$","");
     this.checkoutEnabled=checkoutEnabled;
     var factory=new org.springframework.http.client.JdkClientHttpRequestFactory(
         java.net.http.HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build());
