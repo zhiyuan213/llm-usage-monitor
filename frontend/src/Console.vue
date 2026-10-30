@@ -367,6 +367,7 @@ onBeforeUnmount(() => {
   refreshId++;
 });
 onMounted(() => refresh(false));
+watch([page,selected], () => { expandedTraces.value = {}; });
 watch(
   () => route.fullPath,
   () => {

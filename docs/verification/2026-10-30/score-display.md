@@ -8,3 +8,4 @@
 - `git diff --check` — passed.
 - Observation score tests cover target type/ID isolation, latest result, reported zero/false and unreported default zero. Existing backend detail response already includes matching Score objects; no API/report export contract changed.
 - Exact-commit backend/frontend-sdk/security/images CI required before deployment.
+`nFollow-up: clear expanded Observation rows when page/project changes; repeat frontend tests (72 passed), build, generated checks and registry audit (114 packages, 0 advisories) passed.
