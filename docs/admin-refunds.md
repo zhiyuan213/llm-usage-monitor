@@ -25,3 +25,23 @@ When a refund initially returns `pending`, use **Reconcile status** after provid
 - Feature is implemented locally; no implementation commit, push or production deployment is claimed by this record.
 
 Provider contracts: https://docs.creem.io/api-reference/endpoint/refund-payment and https://docs.creem.io/api-reference/endpoint/cancel-subscription.
+
+## Refund diagnostics — 2026-10-30
+
+A historical live refund submission returned a non-transient HTTP 4xx. The controller retained only `rejected`, so its exact provider error cannot be recovered. This does not establish a bank rejection or a particular permission/configuration cause.
+
+Migration V32 adds the last failure's HTTP status, structured error code, redacted JSON message, operation stage, timestamp and application request ID. Raw provider bodies and exception messages are not logged or retained. Configured secrets, common credential patterns, URLs, emails, long tokens and card-like digit sequences are redacted from messages. Diagnostics remain admin-only. Warning logs contain only transaction ID, stage, status, safe code and request ID.
+
+`payment.refund.request` still records the durable local claim. The additional `payment.refund.submission` audit event separately records whether the provider accepted the submission; neither event promises bank arrival. The console labels rejected submissions as **Refund request not accepted**, shows diagnostics and directs an operator to inspect Creem before reconciling. Legacy rows explicitly state that error details were not retained.
+
+No automatic resubmission or retry endpoint was added. Uncertain HTTP responses and timeouts remain `unknown`; the unique transaction claim remains intact. Reconciliation can recognize an externally completed full refund and finish subscription cancellation without issuing another refund. It can itself cancel the subscription after a confirmed full refund; it is not a read-only operation. Cancellation failures retain independent diagnostics. Do not use production refunds merely to reproduce an error.
+
+The historical transaction was independently observed as `succeeded`, with an approved USD 29 adjustment and an already canceled subscription/Free plan after the merchant used the Creem dashboard. Its refund-row cancellation marker still required reconciliation. No real refund, cancellation or database update was performed during this diagnosis/fix.
+
+Local verification for the diagnostic change:
+- Docker Maven/JDK 17: `mvn -B -f backend/pom.xml verify` — 241 tests, zero failures/errors/skips; BUILD SUCCESS. Includes 12 administrator-refund integration tests for rejected/uncertain outcomes, secret/email redaction, audit outcomes, duplicate suppression, external refund reconciliation and independent cancellation failures.
+- `npm test` — 26 files, 79 tests passed. `npm run build` — successful production bundle and 11 public pages. Existing bundle-size warning and a Vite background dependency-scan shutdown warning were emitted after page generation; process exited zero.
+- Docker Node 24: `npm audit --audit-level=high --fetch-retries=0 --fetch-timeout=20000` — zero vulnerabilities. Native Windows audit invocation was unavailable due to a local npm runtime error; it was not counted as a successful audit.
+- `node scripts/sync-doc-examples.mjs --check`, `node scripts/sync-scenario-examples.mjs --check`, `node scripts/write-sdk-id-guides.mjs --check` — all passed.
+- Actual AdminPayments component inspected with synthetic local fixtures on desktop and at 390px: errors/legacy explanation visible, table scroll contained inside its wrapper. No real refund submitted.
+- `git diff --check` passed. Changes are local only: no commit/push, CI or deployment is claimed.

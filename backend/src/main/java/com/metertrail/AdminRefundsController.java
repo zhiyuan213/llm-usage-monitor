@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClientResponseException;
 /** Refund submission is claimed durably before contacting the provider; uncertain calls are never retried. */
 @RestController
 class AdminRefundsController {
+  private static final org.slf4j.Logger log=org.slf4j.LoggerFactory.getLogger(AdminRefundsController.class);
   final Store store;
   final CreemPayments creem;
   final TransactionTemplate tx;
@@ -28,7 +29,7 @@ class AdminRefundsController {
       @RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="25") int size,HttpServletRequest req) {
     admin(req);Support.require(page>=0&&page<=100000&&Set.of(5,10,25,50,100).contains(size)&&search.length()<=256,"INVALID_PAGE");
     String where=" FROM payments p JOIN workspaces w ON w.id=p.workspace_id JOIN users u ON u.id=w.owner_id LEFT JOIN admin_refunds r ON r.transaction_id=p.id WHERE (position(lower(?) in lower(u.email))>0 OR position(lower(?) in lower(p.id))>0)";
-    return Map.of("items",store.db.queryForList("SELECT p.*,u.email,w.name AS workspace_name,w.payment_provider,r.status AS refund_status,r.cancellation_status,r.reason,r.updated_at AS refund_updated_at"+where+" ORDER BY p.created_at DESC,p.id LIMIT ? OFFSET ?",search,search,size,(long)page*size),
+    return Map.of("items",store.db.queryForList("SELECT p.*,u.email,w.name AS workspace_name,w.payment_provider,r.status AS refund_status,r.cancellation_status,r.reason,r.updated_at AS refund_updated_at,r.provider_http_status,r.provider_error_code,r.provider_error_message,r.provider_error_stage,r.provider_error_at,r.provider_error_request_id"+where+" ORDER BY p.created_at DESC,p.id LIMIT ? OFFSET ?",search,search,size,(long)page*size),
         "total",store.db.queryForObject("SELECT count(*)"+where,Long.class,search,search),"page",page,"size",size);
   }
   Map<String,Object> payment(String id) {
@@ -104,24 +105,29 @@ class AdminRefundsController {
         String status=result==null?"unknown":result.path("status").asText();
         if(!Set.of("pending","requiresAction","succeeded","failed","canceled").contains(status))status="unknown";
         update(id,status);
+        store.audit(SessionFilter.uid(req),(UUID)quote.get("workspaceId"),"payment.refund.submission",id,Set.of("pending","requiresAction","succeeded").contains(status),req);
       } catch(RestClientResponseException e) {
         update(id,e.getStatusCode().is4xxClientError()&&!Set.of(408,409,429).contains(e.getStatusCode().value())?"rejected":"unknown");
-      } catch(Exception e){update(id,"unknown");}
+        recordFailure(id,"submission",e,req);
+        store.audit(SessionFilter.uid(req),(UUID)quote.get("workspaceId"),"payment.refund.submission",id,false,req);
+      } catch(Exception e){update(id,"unknown");recordFailure(id,"submission",e,req);store.audit(SessionFilter.uid(req),(UUID)quote.get("workspaceId"),"payment.refund.submission",id,false,req);}
     }
-    return reconcile(id);
+    return reconcile(id,req);
   }
   void update(String id,String status){store.db.update("UPDATE admin_refunds SET status=?,updated_at=now() WHERE transaction_id=? AND status<>'succeeded'",status,id);}
   @PostMapping("/api/admin/payments/{id}/refund-status")
-  Map<String,Object> refresh(@PathVariable String id,HttpServletRequest req){admin(req);payment(id);return reconcile(id);}
-  Map<String,Object> reconcile(String id) {
+  Map<String,Object> refresh(@PathVariable String id,HttpServletRequest req){admin(req);payment(id);return reconcile(id,req);}
+  Map<String,Object> reconcile(String id,HttpServletRequest req) {
     var rows=store.db.queryForList("SELECT * FROM admin_refunds WHERE transaction_id=?",id);
     if(rows.isEmpty())throw new ApiError(404,"REFUND_NOT_FOUND");
     var row=rows.get(0);
+    String stage="reconciliation";
     try {
       var data=transaction(id,payment(id));
       if("refunded".equals(data.path("status").asText()))update(id,"succeeded");
       row=store.db.queryForMap("SELECT * FROM admin_refunds WHERE transaction_id=?",id);
       if("succeeded".equals(row.get("status"))&&Set.of("pending","unknown").contains(row.get("cancellation_status"))) {
+        stage="cancellation";
         String sub=(String)row.get("subscription_id");var subscription=creem.subscription(sub);
         if(!id.equals(subscription.path("last_transaction_id").asText()))throw new ApiError(409,"REFUND_NEWER_PAYMENT_EXISTS");
         if(!"canceled".equals(subscription.path("status").asText())) {
@@ -138,9 +144,42 @@ class AdminRefundsController {
         });
       }
     } catch(Exception e) {
+      recordFailure(id,stage,e,req);
       store.db.update("UPDATE admin_refunds SET cancellation_status='unknown',updated_at=now() WHERE transaction_id=? AND status='succeeded' AND cancellation_status='pending'",id);
     }
     return store.db.queryForMap("SELECT * FROM admin_refunds WHERE transaction_id=?",id);
+  }
+  // Retain structured, redacted diagnostics; never retain raw response bodies or exception messages.
+  void recordFailure(String id,String stage,Exception error,HttpServletRequest req) {
+    Integer http=null;String code="PROVIDER_UNAVAILABLE",message=null;
+    if(error instanceof RestClientResponseException response) {
+      http=response.getStatusCode().value();code="HTTP_"+http;
+      try {
+        var body=Support.parse(response.getResponseBodyAsString());
+        JsonNode detail=body.path("message");
+        if(!detail.isTextual())detail=body.path("error").path("message");
+        if(detail.isTextual())message=safeMessage(detail.asText());
+        String candidate=body.path("code").asText("");
+        if(candidate.isBlank())candidate=body.path("error").path("code").asText("");
+        if(candidate.matches("[A-Z][A-Z0-9_]{1,63}")&&!candidate.startsWith("CREEM_"))code=candidate;
+      } catch(Exception ignored) { /* Unstructured provider content is not retained. */ }
+    } else if(error instanceof ApiError) {code="PROVIDER_VALIDATION_FAILED";}
+    String requestId=req==null?null:Objects.toString(req.getAttribute("requestId"),null);
+    store.db.update("UPDATE admin_refunds SET provider_http_status=?,provider_error_code=?,provider_error_message=?,provider_error_stage=?,provider_error_at=now(),provider_error_request_id=? WHERE transaction_id=?",http,code,message,stage,requestId,id);
+    log.warn("Refund provider operation failed: transaction={} stage={} http={} code={} requestId={}",id,stage,http,code,requestId);
+  }
+  String safeMessage(String value) {
+    // Remove configured secrets first, then common credential and customer-data shapes.
+    if(creem.key!=null&&!creem.key.isBlank())value=value.replace(creem.key,"[redacted]");
+    if(creem.secret!=null&&!creem.secret.isBlank())value=value.replace(creem.secret,"[redacted]");
+    value=value.replaceAll("(?i)(creem|sk|rk)[_-][A-Za-z0-9_-]+","[redacted]")
+        .replaceAll("(?i)bearer\\s+\\S+","[redacted]")
+        .replaceAll("(?i)https?://\\S+","[redacted]")
+        .replaceAll("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}","[redacted]")
+        .replaceAll("[A-Za-z0-9_-]{24,}","[redacted]")
+        .replaceAll("(?:[0-9][ -]?){12,19}","[redacted]")
+        .replaceAll("[\\p{Cntrl}]"," ");
+    return value.substring(0,Math.min(value.length(),600));
   }
   UUID rowWorkspace(String id){return store.db.queryForObject("SELECT workspace_id FROM admin_refunds WHERE transaction_id=?",UUID.class,id);}
 }

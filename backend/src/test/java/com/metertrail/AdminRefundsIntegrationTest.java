@@ -87,4 +87,36 @@ class AdminRefundsIntegrationTest {
     payment.put("refunded_amount",100);submit().andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("PAYMENT_NOT_REFUNDABLE"));
     verify(creem,never()).post(eq("/v1/refunds"),any());
   }
+  org.springframework.web.client.RestClientResponseException providerError(int status,String body) {
+    return new org.springframework.web.client.RestClientResponseException("provider error",status,"provider error",org.springframework.http.HttpHeaders.EMPTY,body.getBytes(java.nio.charset.StandardCharsets.UTF_8),java.nio.charset.StandardCharsets.UTF_8);
+  }
+  @Test void rejectedRequestRetainsSafeDiagnosticsAndFailedSubmissionAuditWithoutResubmitting()throws Exception {
+    doThrow(providerError(403,"{\"code\":\"INSUFFICIENT_PERMISSIONS\",\"message\":\"secret creem_live_test customer@example.com\"}")).when(creem).post(eq("/v1/refunds"),any());
+    submit().andExpect(status().isOk()).andExpect(jsonPath("$.status").value("rejected")).andExpect(jsonPath("$.provider_http_status").value(403)).andExpect(jsonPath("$.provider_error_code").value("INSUFFICIENT_PERMISSIONS")).andExpect(jsonPath("$.provider_error_stage").value("submission"));
+    submit().andExpect(status().isOk());verify(creem,times(1)).post(eq("/v1/refunds"),any());
+    var saved=store.db.queryForMap("SELECT * FROM admin_refunds WHERE transaction_id=?",id);
+    assertEquals("secret [redacted] [redacted]",saved.get("provider_error_message"));assertNotNull(saved.get("provider_error_request_id"));
+    assertFalse(saved.toString().contains("creem_live_test"));assertFalse(saved.toString().contains("customer@example.com"));
+    assertEquals(false,store.db.queryForObject("SELECT success FROM audit_logs WHERE action='payment.refund.submission' AND target=?",Boolean.class,id));
+    mvc.perform(get("/api/admin/payments").cookie(admin).param("search",id)).andExpect(status().isOk()).andExpect(jsonPath("$.items[0].provider_http_status").value(403));
+  }
+  @Test void ambiguousHttpAndUnstructuredErrorsRemainUnknownAndAreNotResubmitted()throws Exception {
+    doThrow(providerError(429,"<html>private provider details</html>")).when(creem).post(eq("/v1/refunds"),any());
+    submit().andExpect(status().isOk()).andExpect(jsonPath("$.status").value("unknown")).andExpect(jsonPath("$.provider_error_code").value("HTTP_429"));
+    submit().andExpect(status().isOk());verify(creem,times(1)).post(eq("/v1/refunds"),any());
+  }
+  @Test void externallyCompletedRefundReconcilesRejectedRequestWithoutIssuingAnotherRefund()throws Exception {
+    doThrow(providerError(403,"{}")).when(creem).post(eq("/v1/refunds"),any());submit().andExpect(status().isOk()).andExpect(jsonPath("$.status").value("rejected"));
+    payment.put("status","refunded");subscription.put("status","canceled");
+    mvc.perform(post("/api/admin/payments/"+id+"/refund-status").cookie(admin).header("X-CSRF-Token",csrf).contentType("application/json").content("{}")).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("succeeded")).andExpect(jsonPath("$.cancellation_status").value("completed"));
+    verify(creem,times(1)).post(eq("/v1/refunds"),any());verify(creem,never()).post(eq("/v1/subscriptions/"+sub+"/cancel"),any());
+    assertEquals("Free",store.db.queryForObject("SELECT plan FROM workspaces WHERE id=?",String.class,workspace));
+  }
+  @Test void reconciliationAndCancellationFailuresExposeTheirIndependentStages()throws Exception {
+    doThrow(providerError(403,"{\"error\":{\"code\":\"PERMISSION_DENIED\"}}")).when(creem).post(eq("/v1/subscriptions/"+sub+"/cancel"),any());
+    submit().andExpect(status().isOk()).andExpect(jsonPath("$.status").value("succeeded")).andExpect(jsonPath("$.cancellation_status").value("unknown")).andExpect(jsonPath("$.provider_error_stage").value("cancellation")).andExpect(jsonPath("$.provider_error_code").value("PERMISSION_DENIED"));
+    doThrow(providerError(503,"unavailable")).when(creem).get("/v1/transactions?transaction_id="+id);
+    mvc.perform(post("/api/admin/payments/"+id+"/refund-status").cookie(admin).header("X-CSRF-Token",csrf).contentType("application/json").content("{}")).andExpect(status().isOk()).andExpect(jsonPath("$.provider_error_stage").value("reconciliation")).andExpect(jsonPath("$.provider_http_status").value(503));
+  }
+
 }
