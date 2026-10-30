@@ -1,0 +1,10 @@
+2026-10-30 UI verification (before commit)
+Scope: analytics axis labels, hide cost-insights navigation, UTC release input, weekly timezone selector and remove example/test UI.
+npm.cmd --prefix frontend test: PASS 25 files, 74 tests (.local/weekly-ui-tests.log).
+npm.cmd --prefix frontend run build: PASS; 11 public pages (.local/weekly-ui-build.log).
+node scripts/sync-doc-examples.mjs --check: PASS.
+node scripts/sync-scenario-examples.mjs --check: PASS.
+node scripts/write-sdk-id-guides.mjs --check: PASS.
+python .local/audit-locked-dependencies.py: PASS official registry, 114 packages, 0 advisories.
+Browser localhost fixture: desktop weekly controls absent, timezone has four options, history ordinary button; 390px weekly layout no horizontal overflow (scrollWidth375). Release input UTC 03:43, label UTC; analytics axis Customer ID below chart, no top badge or generic Identifier; cost-insights absent in navigation.
+No backend/report API or SDK contract changes. Exact-commit CI required before deployment.

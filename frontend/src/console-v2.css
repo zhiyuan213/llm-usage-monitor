@@ -1616,3 +1616,5 @@
 .ui-v2 .project-threshold-panel p { margin: 0; }
 .ui-v2 .project-threshold-panel button { align-self: flex-end; margin-top: auto; }
 @media (max-width: 900px) { .ui-v2 .project-settings-top-grid { grid-template-columns: 1fr; gap: 16px; } }
+
+.ui-v2 .analytics-token-chart .chart-axis-title { fill: #7e8da9; font-size: 12px; font-weight: 400; font-family: inherit; }

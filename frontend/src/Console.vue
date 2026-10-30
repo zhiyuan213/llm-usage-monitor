@@ -121,7 +121,7 @@ const navGroups = computed(() => [
     en: "Projects",
     zh: "项目",
     items: nav.filter(
-      (item) => !["account", "billing", "audit", "messages", "admin-messages", "admin-projects", "admin-payments"].includes(item[0]),
+      (item) => !["cost-insights", "account", "billing", "audit", "messages", "admin-messages", "admin-projects", "admin-payments"].includes(item[0]),
     ),
   },
   {
