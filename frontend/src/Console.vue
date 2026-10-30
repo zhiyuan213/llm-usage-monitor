@@ -167,6 +167,16 @@ function restoreTraceView(){
  restoreTrace=false;
 }
 function saveTraceView(){try{sessionStorage.setItem(traceViewKey(session.value?.id||'',selected.value),JSON.stringify({observation:observationFilter.value,search:search.value,status:status.value,cost:costFilter.value,reason:costReasonFilter.value,sort:traceSort.value,direction:traceDirection.value,page:tracePage.value,size:reportSize.value,window:reportWindow.value,windowPolicy:reportPolicy.value,route:route.fullPath}));}catch{}}
+function enterSection(target:string){
+ if(target==='traces'){
+  search.value='';status.value='';costFilter.value='all';costReasonFilter.value='';observationFilter.value='';
+  traceSort.value='started_at';traceDirection.value='desc';tracePage.value=0;
+  reportPolicy.value={live:true,days:7};reportWindow.value=rollingWindow(7);
+  expandedTraces.value={};editingCosts.value={};saveTraceView();
+  if(route.fullPath==='/app/traces'){restoreTrace=false;void refresh(false);return;}
+ }
+ void router.push('/app/'+target);
+}
 
 function refreshPage(){if(page.value==='traces'||page.value==='overview'){reportWindow.value=refreshWindow(reportWindow.value,reportPolicy.value);tracePage.value=0;}return refresh();}
 async function copyRecordId(value:string){try{await navigator.clipboard.writeText(value);notice.value=t('ID copied.','ID 已复制。');}catch{error.value=t('Could not copy. Select the full ID from its tooltip or detail page.','复制失败，请从提示或详情页获取完整 ID。');}}
@@ -184,6 +194,7 @@ const activityPage = ref(0),
   reportPage = ref(0),
   auditSize = ref(10),
   reportSize=usePageSize();
+const exportTypes = ref(['trace', 'observation']);
 const reportExportUrl = computed(
   () =>
     "/api/reports/" +
@@ -194,6 +205,7 @@ const reportExportUrl = computed(
       dimension: dimension.value,
       search: search.value,
       status: status.value,
+      ...(page.value === 'traces' ? {types: exportTypes.value.join(',')} : {}),
       ...reportWindow.value, sort:traceSort.value,direction:traceDirection.value,cost:costFilter.value,costReason:costReasonFilter.value,observation:observationFilter.value,
     }),
 );
@@ -566,6 +578,7 @@ const usagePercent = computed(() =>
             v-for="item in group.items"
             :key="item[0]"
             :to="'/app/' + item[0]"
+            @click.prevent="enterSection(item[0])"
             :aria-label="t(item[1], item[2])"
             :title="t(item[1], item[2])"
             :class="{
@@ -706,7 +719,7 @@ const usagePercent = computed(() =>
                 [
                   t('Slow calls', '慢调用数'),
                   n(overview.summary?.slow_requests),
-                  t('Observation · project threshold ≥ ', 'Observation · 项目阈值 ≥ ') + Number(project?.slow_call_threshold_ms??2000) + t(' ms',' 毫秒'),
+                  t('Observation · project threshold ≥ ', 'Observation · 项目阈值 ≥ ') + Number(project?.slow_call_threshold_ms??10000) + t(' ms',' 毫秒'),
                 ],
                 [
                   t('Failed calls', '失败调用数'),
@@ -756,6 +769,7 @@ const usagePercent = computed(() =>
             </div>
             <template #actions>
               <div class="query-export trace-export">
+                <label v-for="type in ['trace','observation']" :key="type" class="export-type-option"><input v-model="exportTypes" type="checkbox" :value="type" :disabled="exportTypes.length===1 && exportTypes.includes(type)" />{{type==='trace'?'Trace':'Observation'}}</label>
                 <a
                   class="btn"
                   :href="reportExportUrl + '&format=xlsx&lang=' + language"

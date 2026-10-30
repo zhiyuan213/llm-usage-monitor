@@ -30,7 +30,7 @@ function tickLabel(value:number){return metric.value==='cost'?costNumber(value):
             <text x="12" y="18" class="chart-axis-title">{{metric==='tokens'?'Token':'USD'}}</text>
             <g v-for="tick in ticks" :key="tick"><line x1="65" :x2="chartWidth-15" :y1="320-tick/maximum*275" :y2="320-tick/maximum*275" class="chart-grid-line" /><text x="57" :y="324-tick/maximum*275" text-anchor="end">{{tickLabel(tick)}}</text></g>
             <g v-for="(row,i) in chart" :key="row.dimension??'missing'"><title>{{tooltip(row)}}</title><rect v-if="value(row)!=null" :x="65+(i+.5)*barWidth-columnWidth/2" :y="320-Number(value(row))/maximum*275" :width="columnWidth" :height="Number(value(row))/maximum*275" rx="4" class="analytics-bar" :style="{fill:'url(#analytics-fill-'+metric+')'}" tabindex="0" :aria-label="tooltip(row)" /><text v-if="value(row)!=null" :x="65+(i+.5)*barWidth" :y="Math.max(33,310-Number(value(row))/maximum*275)" text-anchor="middle" class="analytics-bar-value">{{valueLabel(row)}}</text><text v-else :x="65+(i+.5)*barWidth" y="305" text-anchor="middle">{{t('Unknown','未知')}}</text><text :x="65+(i+.5)*barWidth" y="344" text-anchor="middle">{{label(row).length>12?label(row).slice(0,4)+'…'+label(row).slice(-5):label(row)}}</text></g>
-            <text :x="chartWidth/2" y="384" text-anchor="middle" class="chart-axis-title">{{dimensionLabel}}</text>
+            <text :x="chartWidth-15" y="384" text-anchor="end" class="chart-axis-title">{{dimensionLabel}}</text>
           </svg>
         </div>
         <div v-else class="empty-cell">{{busy?t('Loading…','加载中…'):t('No data in this period.','所选时间范围内暂无数据。')}}</div>

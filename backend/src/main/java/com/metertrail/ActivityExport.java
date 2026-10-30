@@ -216,6 +216,7 @@ final class ActivityExport {
     final PDType0Font font;
     final String[] headers;
     final float[] widths;
+    final float tableWidth;
     PDPageContentStream stream;
     float y;
     int rowNumber;
@@ -226,7 +227,10 @@ final class ActivityExport {
 
     Pdf(String[] labels, float[] columnWidths) throws IOException {
       headers = labels;
-      widths = columnWidths;
+      widths = columnWidths.clone();
+      float total = 0;
+      for (float width : widths) total += width;
+      tableWidth = Math.max(770, total);
       try (var in = ActivityExport.class.getResourceAsStream("/fonts/NotoSansSC-Regular.ttf")) {
         font = PDType0Font.load(doc, Objects.requireNonNull(in));
       }
@@ -235,7 +239,7 @@ final class ActivityExport {
 
     void newPage() throws IOException {
       if (stream != null) stream.close();
-      var page = new PDPage(new PDRectangle(842, 595));
+      var page = new PDPage(new PDRectangle(tableWidth + 72, 595));
       doc.addPage(page);
       stream = new PDPageContentStream(doc, page);
       stream.setNonStrokingColor(new java.awt.Color(36, 69, 183));
@@ -253,15 +257,17 @@ final class ActivityExport {
           9);
       text("MeterTrail  /  " + doc.getNumberOfPages(), 32, 20, 8);
       stream.setNonStrokingColor(new java.awt.Color(36, 69, 183));
-      stream.addRect(32, 466, 770, 28);
+      stream.addRect(32, 452, tableWidth, 42);
       stream.fill();
       stream.setNonStrokingColor(new java.awt.Color(255, 255, 255));
       float x = 38;
       for (int i = 0; i < headers.length; i++) {
-        text(headers[i], x, 477, 9);
+        var lines = wrap(headers[i], widths[i]);
+        for (int line = 0; line < lines.size(); line++)
+          text(lines.get(line), x, 479 - line * 12, 9);
         x += widths[i];
       }
-      y = 449;
+      y = 435;
     }
 
     String printable(String s) {
@@ -322,7 +328,7 @@ final class ActivityExport {
         if (y < 35) newPage();
         if (rowNumber % 2 == 0) {
           stream.setNonStrokingColor(new java.awt.Color(242, 245, 252));
-          stream.addRect(32, y - 5, 770, 14);
+          stream.addRect(32, y - 5, tableWidth, 14);
           stream.fill();
         }
         stream.setNonStrokingColor(new java.awt.Color(50, 76, 111));

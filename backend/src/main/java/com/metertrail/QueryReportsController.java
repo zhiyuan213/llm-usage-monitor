@@ -74,6 +74,8 @@ class QueryReportsController {
           Set.of("userId", "customerId", "feature").contains(dimension), "INVALID_DIMENSION");
       Support.require(year == null || (year>=2000 && year<=9998), "INVALID_FILTER");
       Support.require(month == null || (year != null && month>=1 && month<=12), "INVALID_FILTER");
+      String dimensionLabel = dimension.equals("customerId") ? (zh ? "客户 ID" : "Customer ID")
+          : dimension.equals("userId") ? (zh ? "用户 ID" : "User ID") : (zh ? "功能" : "Feature");
       var analyticsArgs = new ArrayList<Object>(List.of(dimension,project,user));
       String periodFilter=ReportWindow.filter(req,analyticsArgs);
       if(year!=null && periodFilter.isEmpty()) {
@@ -93,9 +95,9 @@ class QueryReportsController {
           "objects DESC,dimension ASC NULLS LAST",
           analyticsArgs.toArray(),
           zh
-              ? new String[] {"标识", "对象数", "已知 Token", "估算成本 USD", "未知成本调用", "最近活动时间 UTC"}
+              ? new String[] {dimensionLabel, "对象数", "已知 Token", "估算成本 USD", "未知成本调用", "最近活动时间 UTC"}
               : new String[] {
-                "Identifier",
+                dimensionLabel,
                 "Objects",
                 "Known tokens",
                 "Estimated cost USD",
@@ -105,7 +107,7 @@ class QueryReportsController {
           new float[] {180, 80, 100, 130, 120, 160},
           r ->
               new String[] {
-                val(r.get("dimension"), zh ? "未提供" : "Not provided"),
+                val(r.get("dimension"), (zh ? "未设置" : "Not set: ") + dimensionLabel),
                 val(r.get("objects"), "0"),
                 val(r.get("tokens"), "—"),
                 val(r.get("cost"), zh ? "未知" : "Unknown"),
@@ -210,6 +212,33 @@ class QueryReportsController {
     return result;
   }
 
+  Report traceExport(Report parent, String types, boolean zh) {
+    var selected = new HashSet<>(Arrays.asList(types.split(",", -1)));
+    Support.require(!selected.isEmpty() && Set.of("trace", "observation").containsAll(selected), "INVALID_EXPORT_TYPES");
+    // Keep the filtered, ordered Trace set as the scope for both export types.
+    // One query and one transaction preserve hierarchy across every exported page.
+    String sql = "WITH parents AS (SELECT report_rows.*,row_number() OVER(ORDER BY " + parent.order()
+        + ") AS export_parent FROM (" + parent.sql() + ") report_rows) "
+        + "SELECT p.export_parent,0 AS export_child,p.type,p.data,p.event_id,p.object_id,p.started_at,p.tokens,p.estimated_cost,p.score,p.data->>'userId' AS user_id,p.data->>'customerId' AS customer_id FROM parents p WHERE "
+        + selected.contains("trace")
+        + " UNION ALL SELECT p.export_parent,1 AS export_child,g.type,g.data,g.event_id,g.object_id,g.started_at,"
+        + "(g.data->'usage'->>'inputTokens')::numeric+(g.data->'usage'->>'outputTokens')::numeric AS tokens,g.cost AS estimated_cost,coalesce(s.data->>'value','0') AS score,g.data->>'provider' AS user_id,NULL AS customer_id "
+        + "FROM parents p JOIN objects g ON g.project_id=p.project_id AND g.trace_id=p.trace_id AND g.type='observation' "
+        + "JOIN projects gp ON gp.id=g.project_id JOIN workspaces w ON w.id=gp.workspace_id "
+        + "LEFT JOIN LATERAL(SELECT sc.data FROM objects sc WHERE sc.project_id=g.project_id AND sc.type='score' AND sc.data->>'targetType'='observation' AND sc.data->>'targetId'=g.object_id AND sc.started_at>workspace_retention_cutoff(w) ORDER BY sc.started_at DESC,sc.object_id ASC LIMIT 1)s ON true "
+        + "WHERE g.started_at>workspace_retention_cutoff(w) AND " + selected.contains("observation");
+    return new Report(sql,"export_parent,export_child,started_at,object_id",parent.args(),
+        zh ? new String[]{"类型","名称 / 模型名称","eventId","对象 ID","耗时 ms","Token","费用 USD","用户 / 客户 / 供应商","状态","打分","开始时间 UTC"}
+           : new String[]{"Type","Name / model","eventId","Object ID","Duration ms","Token","Cost USD","User / Customer / Provider","Status","Score","Started UTC"},
+        new float[]{65,110,180,200,65,65,85,110,65,50,120}, r -> {
+          var d=Support.parse(r.get("data").toString());
+          boolean trace="trace".equals(r.get("type"));
+          return new String[]{trace?"Trace":"Observation",trace?d.path("name").asText("—"):d.path("model").asText(d.path("name").asText("—")),
+              val(r.get("event_id"),"—"),val(r.get("object_id"),"—"),d.path("durationMs").asText("—"),val(r.get("tokens"),"—"),val(r.get("estimated_cost"),zh?"未知":"Unknown"),
+              trace?val(r.get("user_id"),"—")+" / "+val(r.get("customer_id"),"—"):val(r.get("user_id"),"—"),d.path("status").asText("—"),val(r.get("score"),"0"),utc(r.get("started_at"))};
+        });
+  }
+
   @GetMapping("/api/reports/{kind}/export")
   @Transactional(transactionManager = "readTransactionManager", readOnly = true, isolation = Isolation.REPEATABLE_READ)
   void export(
@@ -226,7 +255,8 @@ class QueryReportsController {
       HttpServletResponse res)
       throws IOException {
     Support.require(Set.of("xlsx", "pdf").contains(format), "INVALID_FORMAT");
-    var r = report(kind, project, dimension, search, status, lang.equals("zh-CN"), year, month, req);
+    var base = report(kind, project, dimension, search, status, lang.equals("zh-CN"), year, month, req);
+    var r = kind.equals("traces") ? traceExport(base, Optional.ofNullable(req.getParameter("types")).orElse("trace,observation"), lang.equals("zh-CN")) : base;
     res.setContentType(
         format.equals("xlsx")
             ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

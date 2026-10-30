@@ -19,6 +19,11 @@ defineProps<{ index: number; compactRetention?: boolean }>();
         ]
       }}
       {{ t("of rolling data retention", "滚动数据保留") }}
+      <span class="retention-help" tabindex="0" :aria-label="t('Data retention details','数据保留说明')">?
+        <span class="retention-tip" role="tooltip">{{ index === 0
+          ? t('Free retains data from the most recent 30 days, based on event time. Older analytical data is cleaned up automatically. Export records you need before they expire.', 'Free 按事件时间滚动保留最近30天的数据，超过期限的分析数据会自动清理，请提前导出需要的记录。')
+          : t('While subscribed, data is retained on a rolling basis for '+(index === 1 ? '90 days' : '3 years')+'. This does not buy that much storage after a single monthly payment. After paid access ends, previous paid data has a 30-day renewal grace period; then Free’s rolling 30-day retention applies. Deleted data cannot be restored by renewing.', '订阅有效期间，按事件时间滚动保留最近'+(index === 1 ? '90天' : '3年')+'的数据，并非支付一个月就能在到期后继续保存这么久。付费权益结束后，原付费数据有30天续费宽限期；之后按 Free 的滚动30天规则清理。续费无法恢复已删除数据。') }}</span>
+      </span>
     </li>
     <li><Check :size="16" />Trace · Observation · Score</li>
     <li><Check :size="16" />{{ t("Audit Excel/PDF export and customer attribution", "审计 Excel/PDF 导出与客户归因") }}</li>
@@ -34,3 +39,8 @@ defineProps<{ index: number; compactRetention?: boolean }>();
   </ul>
   <p v-if="index > 0 && !compactRetention" class="muted">{{ t("Retention applies while subscribed. Cancellation returns the account to Free with Free quota. Previous paid data has a 30-day retention grace period; afterward Free retention applies. Expired unpaid subscriptions may pause ingestion. Deleted data cannot be recovered by renewing.", "订阅有效期间按上述期限保留数据。正式取消后恢复 Free，新增接入按 Free 额度执行；原付费数据保留30天宽限期，之后按 Free 规则保留。到期未续费可能暂停接入。续费无法恢复已删除数据。") }}</p>
 </template>
+<style scoped>
+.retention-help { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 16px; width: 16px; height: 16px; margin-left: 4px; border: 1px solid #98a6c0; border-radius: 50%; font-size: 11px; line-height: 1; cursor: help; }
+.retention-tip { display: none; position: absolute; z-index: 40; top: 24px; right: -8px; width: min(280px, 70vw); padding: 12px; border: 1px solid #dfe5f3; border-radius: 8px; background: #fff; color: #52617b; box-shadow: 0 6px 24px #12213d20; font-size: 12px; font-weight: 400; line-height: 1.8; white-space: normal; }
+.retention-help:hover .retention-tip, .retention-help:focus .retention-tip { display: block; }
+</style>

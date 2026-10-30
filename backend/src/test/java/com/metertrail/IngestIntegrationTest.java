@@ -1251,16 +1251,16 @@ class IngestIntegrationTest {
           }
           assertEquals(126, xml.split("<row r=").length - 1);
           assertEquals(
-              kind.equals("traces") ? 13 : 6,
+              kind.equals("traces") ? 11 : 6,
               xml.substring(xml.indexOf("<row r="), xml.indexOf("</row>")).split("<c r=").length
                   - 1);
           if (kind.equals("traces")) {
             assertTrue(xml.contains("模型"));
-            assertTrue(xml.contains("已知 Token"));
-            assertTrue(xml.contains("已知估算费用 USD"));
-            assertTrue(xml.contains("成本未知调用"));
+            assertTrue(xml.contains("Token"));
+            assertTrue(xml.contains("费用 USD"));
+            assertTrue(xml.contains("类型"));
             assertTrue(xml.contains("eventId"));
-            assertTrue(xml.contains("★打分"));
+            assertTrue(xml.contains("打分"));
           }
         } else
           try (var exported = org.apache.pdfbox.Loader.loadPDF(bytes)) {
@@ -1840,6 +1840,29 @@ class IngestIntegrationTest {
     process.environment().put("DRILL_DB_USER",pg.getUsername());process.environment().put("DRILL_DB_PASSWORD",pg.getPassword());
     process.redirectErrorStream(true);process.redirectOutput(java.nio.file.Path.of("target",application+".log").toFile());
     return process.start();
+  }
+
+  @Test void traceExportSelectsTypesAndPreservesParentOrderAcrossFormats() throws Exception {
+    String token=Support.token();
+    store.db.update("INSERT INTO sessions(token_hash,user_id,csrf,expires_at) VALUES(?,?,?,now()+interval '1 hour')",Support.hash(token),user,"export-types");
+    var cookie=new jakarta.servlet.http.Cookie("mt_session",token);
+    ingest.accept(project,batch(event("trace","export-parent",1),event("observation","export-child",1)));
+    new Worker(store,tx,mail,true,"test@test.local").process();
+    for(String format:List.of("xlsx","pdf")) for(String types:List.of("trace","observation","trace,observation")) {
+      byte[] bytes=mvc.perform(get("/api/reports/traces/export?project="+project+"&format="+format+"&types="+types+"&size=5&page=99").cookie(cookie)).andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+      String text="";
+      if(format.equals("pdf"))try(var pdf=org.apache.pdfbox.Loader.loadPDF(bytes)){
+        text=new org.apache.pdfbox.text.PDFTextStripper().getText(pdf);
+        assertTrue(pdf.getPage(0).getMediaBox().getWidth()>=1187,"All export columns must fit the PDF page");
+      }
+      else try(var zip=new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(bytes))){java.util.zip.ZipEntry e;while((e=zip.getNextEntry())!=null)if(e.getName().endsWith("sheet1.xml"))text=new String(zip.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);}
+      assertEquals(types.contains("trace"),text.contains("export-parent"));
+      assertEquals(types.contains("observation"),text.contains("export-child"));
+      if(types.contains(","))assertTrue(text.indexOf("export-parent")<text.indexOf("export-child"));
+      assertTrue(text.contains("eventId"));assertTrue(text.contains("Token"));assertTrue(text.contains("Score"));
+    }
+    mvc.perform(get("/api/reports/traces/export?project="+project+"&format=xlsx&types=score").cookie(cookie)).andExpect(status().isBadRequest());
+    mvc.perform(get("/api/reports/traces/export?project="+project+"&format=xlsx&types=").cookie(cookie)).andExpect(status().isBadRequest());
   }
 
   @Test void traceListUsesLatestTargetedScoreWithZeroFallbackAndExportsIt() throws Exception {

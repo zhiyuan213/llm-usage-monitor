@@ -138,12 +138,12 @@ class ConsoleMetricsIntegrationTest {
     for(int i=0;i<ids.length;i++) {
       String trace=String.format("%032x",i+1);
       store.db.update("INSERT INTO objects(project_id,type,object_id,revision,trace_id,started_at,data) VALUES(?,'trace',?,1,?,now(),?::jsonb)",project,ids[i],trace,json.writeValueAsString(Map.of("name",ids[i],"status",i==0?"error":"success","durationMs",i==0?30000:1000)));
-      for(int j=0;j<5;j++)store.db.update("INSERT INTO objects(project_id,type,object_id,revision,trace_id,started_at,data) VALUES(?,'observation',?,1,?,now(),?::jsonb)",project,ids[i]+"-step-"+j,trace,json.writeValueAsString(Map.of("status",i==2&&j==0?"error":"success","durationMs",i==1&&j==0?2000:1999)));
+      for(int j=0;j<5;j++)store.db.update("INSERT INTO objects(project_id,type,object_id,revision,trace_id,started_at,data) VALUES(?,'observation',?,1,?,now(),?::jsonb)",project,ids[i]+"-step-"+j,trace,json.writeValueAsString(Map.of("status",i==2&&j==0?"error":"success","durationMs",i==1&&j==0?10000:9999)));
     }
     String endpoint="/api/reports/traces";
     for(String filter:List.of("slow","error"))mvc.perform(get(endpoint).cookie(userCookie).param("project",project.toString()).param("observation",filter)).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].object_id").value(filter.equals("slow")?"slow-child-root":"failed-child-root"));
     String threshold="/api/projects/"+project+"/slow-threshold";
-    assertEquals(2000,store.db.queryForObject("SELECT slow_call_threshold_ms FROM projects WHERE id=?",Integer.class,project));
+    assertEquals(10000,store.db.queryForObject("SELECT slow_call_threshold_ms FROM projects WHERE id=?",Integer.class,project));
     mvc.perform(post(threshold).cookie(userCookie).contentType("application/json").content("{\"seconds\":15}")).andExpect(status().isForbidden());
     mvc.perform(post(threshold).cookie(otherCookie).header("X-CSRF-Token",csrf).contentType("application/json").content("{\"seconds\":15}")).andExpect(status().is4xxClientError());
     for(String milliseconds:List.of("0","600001","1.5"))mvc.perform(post(threshold).cookie(userCookie).header("X-CSRF-Token",csrf).contentType("application/json").content("{\"milliseconds\":"+milliseconds+"}")).andExpect(status().isBadRequest());
@@ -161,7 +161,7 @@ class ConsoleMetricsIntegrationTest {
     var start=java.time.Instant.now().minusSeconds(3600);
     String[] types={"trace","trace","trace","observation","score","observation","observation"};
     String[] statuses={"success","error","cancelled","error","error","success","success"};
-    int[] durations={1999,2000,3000,4000,4000,2000,1999};
+    int[] durations={1999,2000,3000,12000,4000,10000,9999};
     for(int i=0;i<types.length;i++)store.db.update("INSERT INTO objects(project_id,type,object_id,revision,started_at,data) VALUES(?,?,?,1,?::timestamptz,?::jsonb)",project,types[i],"object-"+i,start.toString(),json.writeValueAsString(Map.of("status",statuses[i],"durationMs",durations[i])));
     String endpoint="/api/projects/"+project;
     mvc.perform(get(endpoint+"/overview").cookie(userCookie)).andExpect(status().isOk()).andExpect(jsonPath("$.summary.traces").value(3)).andExpect(jsonPath("$.summary.slow_requests").value(2)).andExpect(jsonPath("$.summary.failed_requests").value(1));
